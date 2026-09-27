@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>トレーニング記録</title>
+<style>
+  :root{
+    --bg:#111418; --card:#1c2128; --card2:#242a33; --line:#303845;
+    --text:#e8ecf1; --sub:#9aa4b2; --accent:#4da3ff; --accent2:#2f7fd6;
+    --good:#3ecf8e; --warn:#ffb454; --danger:#ff6b6b;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;}
+  body{padding:12px 12px 96px; max-width:560px; margin:0 auto;}
+  h1{font-size:20px; margin:8px 0 2px;}
+  .sub{color:var(--sub); font-size:12px; margin-bottom:14px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px;}
+  label{display:block; font-size:13px; color:var(--sub); margin:10px 0 4px;}
+  input[type=date],input[type=text],select{
+    width:100%; padding:12px; font-size:16px; border-radius:10px;
+    border:1px solid var(--line); background:var(--card2); color:var(--text);}
+  select{appearance:none; -webkit-appearance:none;}
+  textarea{width:100%; min-height:92px; padding:10px; font-size:14px; border-radius:10px;
+    border:1px solid var(--line); background:var(--card2); color:var(--text); font-family:inherit;}
+  .row{display:flex; gap:10px;}
+  .row>div{flex:1;}
+  .stepper{display:flex; align-items:stretch; gap:6px;}
+  .stepper button{
+    width:52px; min-height:48px; font-size:22px; font-weight:700; border:none; border-radius:10px;
+    background:var(--card2); color:var(--accent); border:1px solid var(--line);}
+  .stepper button:active{background:var(--accent2); color:#fff;}
+  .stepper input{
+    flex:1; text-align:center; font-size:20px; font-weight:700; padding:10px 4px;
+    border-radius:10px; border:1px solid var(--line); background:var(--card2); color:var(--text);}
+  .setrow{display:flex; align-items:center; gap:8px; background:var(--card2);
+    border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:8px;}
+  .setrow.bwm{background:rgba(77,163,255,.06);}
+  .setnum{width:34px; height:34px; border-radius:50%; background:var(--accent2); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;}
+  .setrow .fld{flex:1; min-width:0;}
+  .setrow .fld .cap{font-size:10px; color:var(--sub); text-align:center; margin-bottom:2px;}
+  .setrow input{width:100%; text-align:center; font-size:18px; font-weight:700; padding:8px 2px;
+    border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text);}
+  .fld.bwnone{display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
+    color:var(--sub); min-height:56px; border:1px dashed var(--line); border-radius:8px; background:var(--bg);}
+  .del{width:34px; height:34px; border:none; border-radius:8px; background:transparent;
+    color:var(--danger); font-size:18px; flex-shrink:0;}
+  .btn{display:block; width:100%; padding:14px; font-size:16px; font-weight:700; border:none;
+    border-radius:12px; margin-top:10px; cursor:pointer;}
+  .btn-primary{background:var(--accent); color:#fff;}
+  .btn-primary:active{background:var(--accent2);}
+  .btn-ghost{background:var(--card2); color:var(--text); border:1px solid var(--line);}
+  .btn-green{background:var(--good); color:#06251a;}
+  .btn-danger{background:transparent; color:var(--danger); border:1px solid var(--danger);}
+  .btn-half{display:flex; gap:10px;}
+  .btn-half .btn{margin-top:10px;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;}
+  .chip{padding:8px 12px; border-radius:20px; background:var(--card2); border:1px solid var(--line);
+    font-size:13px; color:var(--text); cursor:pointer;}
+  .chip:active{background:var(--accent2); color:#fff;}
+  .chip.bwdone{background:rgba(77,163,255,.15); border-color:var(--accent2);}
+  /* クイックボタン編集 */
+  .qedit{margin-top:10px; border-top:1px solid var(--line); padding-top:10px;}
+  .qgrp{margin-top:10px; padding-top:8px; border-top:1px solid var(--line);}
+  .qgtitle{font-size:12px; color:var(--accent); font-weight:700; margin-bottom:6px;}
+  .qrow{display:flex; align-items:center; gap:6px; background:var(--card2); border:1px solid var(--line);
+    border-radius:10px; padding:6px 8px; margin-bottom:6px;}
+  .qrow .qname{flex:1; font-size:14px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .qbtn{width:32px; height:32px; border:1px solid var(--line); border-radius:8px; background:var(--bg);
+    color:var(--accent); font-size:14px; font-weight:700; flex-shrink:0;}
+  .qbtn.rm{color:var(--danger);}
+  .qbtn:active{background:var(--accent2); color:#fff;}
+  .qbtn:disabled{opacity:.3;}
+  .qhint{font-size:12px; color:var(--sub); margin:4px 0 0;}
+  .qadd{display:flex; gap:6px; margin-top:8px;}
+  .qadd select,.qadd input{flex:1; min-width:0;}
+  .qadd .btn{margin-top:0; flex:0 0 88px; padding:12px;}
+  .exhead{display:flex; justify-content:space-between; align-items:center;}
+  .exhead .name{font-size:16px; font-weight:700;}
+  .exhead .rm{color:var(--danger); background:none; border:none; font-size:13px;}
+  .exdone{opacity:.55;}
+  .badge{font-size:10px; background:var(--good); color:#06251a; border-radius:8px; padding:2px 6px; margin-left:6px; font-weight:700;}
+  .bwbadge{font-size:10px; background:var(--accent2); color:#fff; border-radius:8px; padding:2px 6px; margin-left:6px; font-weight:700;}
+  /* 自重チェック */
+  .bwbox{margin:8px 0 6px; padding:8px 10px; border:1px dashed var(--line); border-radius:10px;
+    background:rgba(255,255,255,.02);}
+  .bwlab{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text); margin:0;}
+  .bwlab input[type=checkbox]{width:20px; height:20px; flex-shrink:0; accent-color:var(--accent);}
+  .bwlab.off{color:var(--sub); opacity:.6;}
+  .bwhint{display:block; font-size:11px; color:var(--sub); margin-top:3px; padding-left:28px;}
+  .hitem{background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; font-size:13px;}
+  .hitem .d{color:var(--accent); font-weight:700;}
+  .hitem .s{color:var(--sub); margin-top:2px; line-height:1.5;}
+  .tabbar{position:fixed; left:0; right:0; bottom:0; display:flex; background:var(--card);
+    border-top:1px solid var(--line); max-width:560px; margin:0 auto;}
+  .tabbar button{flex:1; padding:12px 0 14px; background:none; border:none; color:var(--sub);
+    font-size:12px; font-weight:700;}
+  .tabbar button.on{color:var(--accent);}
+  .toast{position:fixed; top:14px; left:50%; transform:translateX(-50%); background:var(--good);
+    color:#06251a; font-weight:700; padding:10px 18px; border-radius:24px; font-size:13px;
+    display:none; z-index:99; box-shadow:0 4px 14px rgba(0,0,0,.4);}
+  .totalvol{font-size:13px; color:var(--sub); text-align:right; margin-top:4px;}
+  .bwsum{font-size:12px; color:var(--accent); text-align:right; margin-top:4px; font-weight:700;}
+  .prevbox{background:rgba(77,163,255,.08); border:1px dashed var(--accent2); border-radius:10px;
+    padding:8px 10px; margin:8px 0; font-size:12px;}
+  .prevbox .pttl{color:var(--accent); font-weight:700; margin-bottom:3px;}
+  .prevbox .psets{color:var(--text); line-height:1.6;}
+  .prevbox .pmeta{color:var(--sub); margin-top:3px;}
+  .prevbox .pcopy{margin-top:6px; padding:6px 12px; font-size:12px; font-weight:700; border:none;
+    border-radius:8px; background:var(--accent2); color:#fff; cursor:pointer;}
+  .prevbox .pcopy:active{background:var(--accent);}
+  .diff-up{color:var(--good); font-weight:700;}
+  .diff-dn{color:var(--danger); font-weight:700;}
+  .hidden{display:none;}
+  /* トレーナーメニュー編集 */
+  .mirow{background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:8px; margin-bottom:8px;}
+  .mihead{display:flex; align-items:center; gap:6px;}
+  .mihead .qname{flex:1; font-size:14px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .minp{display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; align-items:center;}
+  .minp label{display:inline-block; margin:0; font-size:11px; color:var(--sub);}
+  .minp input[type=number]{width:58px; padding:6px; font-size:14px; text-align:center; border-radius:8px;
+    border:1px solid var(--line); background:var(--bg); color:var(--text);}
+  .minp .bwmini{display:inline-flex; align-items:center; gap:4px; font-size:12px; color:var(--text); margin-left:4px;}
+  .minp .bwmini input[type=checkbox]{width:18px; height:18px; accent-color:var(--accent);}
+  .miplan{font-size:11px; color:var(--accent); margin:6px 0 0;}
+  .mn{font-size:11px; color:var(--accent); margin-top:2px;}
+</style>
+</head>
+<body>
+<h1>🏋️ トレーニング記録</h1>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力</div>
+<div class="toast" id="toast"></div>
+
+<div id="tab-entry">
+  <div class="card">
+    <label>日付</label>
+    <input type="date" id="date">
+  </div>
+
+  <div class="card">
+    <label>種目を追加</label>
+    <select id="exSelect"></select>
+    <div class="chips" id="chipBox"></div>
+    <button type="button" class="btn btn-ghost" id="qToggle" style="margin-top:10px; padding:10px;" onclick="toggleQuickEdit()">⚙ クイックボタンを編集</button>
+    <div class="qedit hidden" id="quickEdit">
+      <div class="qgrp" style="border-top:none; padding-top:0; margin-top:0;">
+        <div class="qgtitle">① トレーナーメニュー（既定）</div>
+        <div class="row" style="margin-bottom:8px;"><div><select id="menuPick"></select></div></div>
+        <div class="chips" id="trainerList"></div>
+        <div class="qhint">タップすると②のクイックボタンに追加されます。メニューは複数登録して切り替えられます。</div>
+        <div class="btn-half">
+          <button type="button" class="btn btn-ghost" onclick="menuAdd()">＋ 新しいメニュー</button>
+          <button type="button" class="btn btn-ghost" onclick="menuRename()">名前を変更</button>
+        </div>
+        <div class="btn-half">
+          <button type="button" class="btn btn-ghost" onclick="menuDuplicate()">複製</button>
+          <button type="button" class="btn btn-ghost" onclick="menuDelete()">削除</button>
+        </div>
+        <button type="button" class="btn btn-ghost" id="menuEditToggle" onclick="toggleMenuEdit()">✎ このメニューの種目を編集</button>
+        <div id="menuEdit" class="hidden">
+          <div id="miList"></div>
+          <div class="qadd"><select id="menuExPick"></select></div>
+          <div class="qadd">
+            <input type="text" id="menuNewEx" placeholder="新しい種目名を入力">
+            <button type="button" class="btn btn-ghost" onclick="miAddNew()">追加</button>
+          </div>
+          <div class="qhint">セット数・回数・重量は任意です（入力しておくと「記録に展開」でそのまま反映されます）。自重にチェックを入れるとそのセットは回数だけの記録になります。</div>
+        </div>
+        <button type="button" class="btn btn-ghost" onclick="menuSaveFromQuick()">②の内容をこのメニューに保存</button>
+        <button type="button" class="btn btn-ghost" onclick="applyMenuToQuick()">このメニューを②のクイックボタンに反映</button>
+        <button type="button" class="btn btn-primary" onclick="applyMenuToSession()">このメニューを今日の記録に展開</button>
+        <button type="button" class="btn btn-ghost" onclick="resetQuick()">↺ クイックボタンをメニューへ戻す</button>
+        <button type="button" class="btn btn-ghost" onclick="menuResetAll()">↺ メニューを組み込みの既定に戻す</button>
+      </div>
+      <div class="qgrp">
+        <div class="qgtitle">② 現在のクイックボタン（編集可）</div>
+        <div id="quickList"></div>
+        <div class="qadd"><select id="quickPick"></select></div>
+        <div class="qadd">
+          <input type="text" id="quickNew" placeholder="新しい種目名を入力">
+          <button type="button" class="btn btn-ghost" onclick="addQuickNew()">追加</button>
+        </div>
+        <button type="button" class="btn btn-ghost" onclick="toggleImport()">📋 一括入力（貼り付けでまとめて登録）</button>
+        <div id="importBox" class="hidden" style="margin-top:8px;">
+          <textarea id="importText" placeholder="1行に1種目ずつ貼り付け（例：&#10;ルーマニアンデッドリフト&#10;ラットプルダウン（Vバー）&#10;ケーブルプルオーバー）"></textarea>
+          <button type="button" class="btn btn-primary" onclick="applyImport()">この内容に置き換える</button>
+        </div>
+        <button type="button" class="btn btn-ghost hidden" id="restoreBtn" onclick="restoreOldQuick()">↩ 切替前の登録を復元</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <label>＋ 種目プリセット（自重／重量の扱いを決めて登録）</label>
+    <select id="presetEx"></select>
+    <div class="row" style="margin-top:8px;">
+      <div><select id="presetBw">
+        <option value="never">重量種目（自重チェックなし）</option>
+        <option value="sometimes">自重でも行う種目</option>
+        <option value="always">自重種目（既定でチェック）</option>
+      </select></div>
+      <div style="flex:0 0 96px;"><button class="btn btn-ghost" style="margin-top:0;" onclick="addPreset()">登録</button></div>
+    </div>
+    <div class="qhint">新しい種目は「自重でも行う種目」にすると、記録時に自重チェックを使えます。プランクのような完全な自重種目は「自重種目」を選んでください。</div>
+  </div>
+
+  <div class="card">
+    <label>＋ カスタム種目（マスターに無い種目）</label>
+    <div class="row">
+      <div><input type="text" id="customEx" placeholder="種目名を入力"></div>
+      <div style="flex:0 0 90px;"><button class="btn btn-ghost" style="margin-top:0;" onclick="addCustomEx()">追加</button></div>
+    </div>
+    <div class="qhint">カスタム種目は自重チェックが使えます（既定はオフ）。上の「種目プリセット」で分類を指定して登録し直すこともできます。</div>
+  </div>
+
+  <div id="exList"></div>
+
+  <button class="btn btn-green" onclick="saveSession()">💾 この日の記録を保存</button>
+  <button class="btn btn-danger" onclick="clearDraft()">🗑 入力をクリア（保存せず）</button>
+  <div class="btn-half">
+    <button class="btn btn-primary" onclick="exportCSV()">CSV 出力</button>
+    <button class="btn btn-primary" onclick="exportJSON()">JSON 出力</button>
+  </div>
+</div>
+
+<div id="tab-history" class="hidden">
+  <div class="card">
+    <div class="exhead"><span class="name">保存済みセッション</span>
+      <button class="rm" onclick="clearAll()">全削除</button></div>
+    <div id="historyList" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <button id="tb1" class="on" onclick="showTab(0)">📝 記録</button>
+  <button id="tb2" onclick="showTab(1)">📋 履歴</button>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   トレーニング記録アプリ v6
+   ・自重（ボディウェイト）種目のチェック対応
+   ・トレーナーメニューの管理（複数メニューの追加・改名・複製・削除・種目編集・既定復帰）
+   ・クイックボタン（②）＝ 記録画面に出すボタン
+   ===================================================================== */
+var LS_DRAFT="tl_draft_v1", LS_HIST="tl_history_v1", LS_CUSTOM="tl_custom_ex_v1",
+    LS_QUICK="tl_quick_v1", LS_QUICK_OLD="tl_quick_old_v1", LS_CONF="tl_config_v1",
+    LS_MASTER="tl_master_v1", LS_MENUS="tl_menus_v1";
+var QUICK_VERSION=2;   // 2 = トレーナーメニュー8種が既定
+
+var BW_LABEL={always:"自重種目", sometimes:"自重でも行う種目", never:"重量種目", custom:"カスタム種目"};
+
+/* ---- 種目マスター（自重区分つき） ---- */
+var DEFAULT_MASTER=[
+  {n:"ベンチプレス",bw:"never"},
+  {n:"インクラインダンベルプレス",bw:"never"},
+  {n:"ダンベルプレス",bw:"never"},
+  {n:"ダンベルフライ",bw:"never"},
+  {n:"インクラインダンベルフライ",bw:"never"},
+  {n:"チェストプレス（マシン）",bw:"never"},
+  {n:"ケーブルクロスオーバー",bw:"never"},
+  {n:"ショルダープレス",bw:"never"},
+  {n:"サイドレイズ",bw:"never"},
+  {n:"インクラインサイドレイズ",bw:"never"},
+  {n:"ケーブルサイドレイズ",bw:"never"},
+  {n:"フロントレイズ",bw:"never"},
+  {n:"リアレイズ",bw:"never"},
+  {n:"アップライトロウ",bw:"never"},
+  {n:"ラットプルダウン",bw:"never"},
+  {n:"ラットプルダウン（Vバー）",bw:"never"},
+  {n:"チンニング",bw:"sometimes"},
+  {n:"懸垂",bw:"sometimes"},
+  {n:"シーテッドロウ",bw:"never"},
+  {n:"ベントオーバーロウ",bw:"never"},
+  {n:"ワンハンドロウ",bw:"never"},
+  {n:"ケーブルプルオーバー",bw:"never"},
+  {n:"デッドリフト",bw:"never"},
+  {n:"ルーマニアンデッドリフト",bw:"never"},
+  {n:"スクワット",bw:"never"},
+  {n:"レッグプレス",bw:"never"},
+  {n:"ブルガリアンスクワット",bw:"sometimes"},
+  {n:"ランジ",bw:"sometimes"},
+  {n:"レッグエクステンション",bw:"never"},
+  {n:"レッグカール",bw:"never"},
+  {n:"カーフレイズ",bw:"never"},
+  {n:"アームカール",bw:"never"},
+  {n:"インクラインダンベルカール",bw:"never"},
+  {n:"ハンマーカール",bw:"never"},
+  {n:"プレスダウン（トライセップロープ）",bw:"never"},
+  {n:"トライセプスプッシュダウン",bw:"never"},
+  {n:"ディップス",bw:"sometimes"},
+  {n:"プッシュアップ",bw:"sometimes"},
+  {n:"ケーブルクランチ",bw:"never"},
+  {n:"アブローラー",bw:"sometimes"},
+  {n:"プランク",bw:"always"},
+  {n:"サイドプランク",bw:"always"}
+];
+
+/* ---- クイックボタンの組み込み既定（トレーナーメニュー） ---- */
+var DEFAULT_QUICK=[
+  "ルーマニアンデッドリフト",
+  "ラットプルダウン（Vバー）",
+  "ケーブルプルオーバー",
+  "ダンベルプレス",
+  "サイドレイズ",
+  "プレスダウン（トライセップロープ）",
+  "インクラインサイドレイズ",
+  "インクラインダンベルカール"
+];
+
+/* ---- 組み込みのトレーナーメニュー定義（コード側は変更しない） ---- */
+var DEFAULT_MENUS=[
+  { id:"default", name:"トレーナーメニュー",
+    items: DEFAULT_QUICK.map(function(n){ return {n:n, sets:"", reps:"", w:"", bw:false}; }) }
+];
+
+var MASTER=[];
+var TRAINER_MENUS=[];      // 利用者が管理するメニュー一覧
+var activeMenuId=null;     // 選択中のメニューID
+var TRAINER_QUICK=[];      // 選択中メニューの種目名（＝既定として復帰する内容）
+var customEx=[];
+var quickEx=[];
+var session={date:todayStr(), exercises:[], menuName:""};
+
+function todayStr(){
+  var d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function genId(){ return "m"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+/* ---------- 基本ユーティリティ ---------- */
+function isBwSet(s, exName){
+  if(s&&s.bw===true) return true;
+  if(s&&s.bw===false) return false;
+  var w=(s&&s.w!=null)?String(s.w).trim():"";
+  var wn=parseFloat(w);
+  if(w===""||isNaN(wn)||wn===0) return bwAllowed(exName);
+  return false;
+}
+function normSet(s, exName){
+  s=s||{};
+  var out={ w:(s.w!=null?String(s.w):""), r:(s.r!=null?String(s.r):"") };
+  out.bw=isBwSet(s, exName);
+  return out;
+}
+function normExercise(e){
+  e=e||{};
+  var name=String(e.name==null?"":e.name);
+  var sets=(e.sets||[]).map(function(s){ return normSet(s, name); });
+  var bw=(e.bw===true)||(sets.length>0&&sets.every(function(s){ return s.bw===true; }));
+  if(bw) sets.forEach(function(s){ s.bw=true; });
+  return {name:name, sets:sets, done:!!e.done, bw:!!bw};
+}
+function isValidSet(s){
+  if(!s) return false;
+  if(s.r===""||s.r==null) return false;
+  if(s.bw===true) return true;
+  return s.w!==""&&s.w!=null;
+}
+function setLabel(s){ return s.bw?("自重×"+s.r+"回"):(s.w+"kg×"+s.r); }
+function esc(s){
+  return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+/* ---------- 自重分類 ---------- */
+function masterEntry(name){
+  for(var i=0;i<MASTER.length;i++){ if(MASTER[i].n===name) return MASTER[i]; }
+  return null;
+}
+function bwClass(name){
+  var m=masterEntry(name);
+  if(m&&(m.bw==="always"||m.bw==="sometimes"||m.bw==="never")) return m.bw;
+  return "custom";
+}
+function bwAllowed(name){ var c=bwClass(name); return c==="always"||c==="sometimes"||c==="custom"; }
+function bwDefaultOn(name){ return bwClass(name)==="always"; }
+function bwLabel(cls){ return BW_LABEL[cls]||BW_LABEL.custom; }
+
+/* ---------- マスター / カスタム種目 ---------- */
+function loadMaster(){
+  var base=DEFAULT_MASTER.map(function(o){ return {n:o.n, bw:o.bw}; });
+  var a=null;
+  try{ a=JSON.parse(localStorage.getItem(LS_MASTER)||"null"); }catch(e){ a=null; }
+  if(!Array.isArray(a)){ MASTER=base; return; }
+  var seen={};
+  a=a.filter(function(x){ return x&&typeof x.n==="string"&&x.n.trim()!==""; })
+     .map(function(x){ return {n:x.n.trim(), bw:(x.bw==="always"||x.bw==="sometimes"||x.bw==="never")?x.bw:"custom"}; })
+     .filter(function(x){ if(seen[x.n]) return false; seen[x.n]=1; return true; });
+  base.forEach(function(b){ if(!a.some(function(x){ return x.n===b.n; })) a.push(b); });
+  MASTER=a;
+}
+function saveMaster(){ try{ localStorage.setItem(LS_MASTER, JSON.stringify(MASTER)); }catch(e){} }
+function loadCustom(){
+  try{
+    var a=JSON.parse(localStorage.getItem(LS_CUSTOM)||"[]");
+    customEx=Array.isArray(a)?a.filter(function(x){ return typeof x==="string"&&x.trim()!==""; }) : [];
+  }catch(e){ customEx=[]; }
+}
+function saveCustom(){ try{ localStorage.setItem(LS_CUSTOM, JSON.stringify(customEx)); }catch(e){} }
+function registerName(name){
+  if(!name) return;
+  if(!masterEntry(name) && customEx.indexOf(name)<0){ customEx.push(name); saveCustom(); buildExSelect(); }
+}
+
+/* ---------- 集計 ---------- */
+function exStats(ex){
+  var out={sets:0, wSets:0, bwSets:0, vol:0, best:0, reps:0, totalReps:0};
+  (ex.sets||[]).forEach(function(s){
+    var n=normSet(s, ex.name);
+    if(!isValidSet(n)) return;
+    out.sets++;
+    var r=parseFloat(n.r);
+    if(!isNaN(r)) out.totalReps+=r;
+    if(n.bw){ out.bwSets++; if(!isNaN(r)) out.reps+=r; }
+    else{
+      out.wSets++;
+      var w=parseFloat(n.w);
+      if(!isNaN(w)){ if(w>out.best) out.best=w; if(!isNaN(r)) out.vol+=w*r; }
+    }
+  });
+  out.vol=Math.round(out.vol*100)/100;
+  return out;
+}
+function exVolume(ex){ return exStats(ex).vol; }
+
+/* ================= トレーナーメニュー（v6） ================= */
+function sanInt(v, max){
+  if(v===""||v==null) return "";
+  var n=parseInt(v,10);
+  if(isNaN(n)||n<=0) return "";
+  if(n>max) n=max;
+  return String(n);
+}
+function sanWeight(v){
+  if(v===""||v==null) return "";
+  var n=parseFloat(v);
+  if(isNaN(n)||n<=0) return "";
+  if(n>999) n=999;
+  return String(Math.round(n*100)/100);
+}
+function sanMenuItems(items){
+  if(!Array.isArray(items)) return [];
+  var seen={}, out=[];
+  items.forEach(function(it){
+    if(!it||typeof it!=="object") return;
+    if(typeof it.n!=="string") return;
+    var n=it.n.trim();
+    if(!n||seen[n]) return;
+    seen[n]=1;
+    out.push({n:n, sets:sanInt(it.sets,30), reps:sanInt(it.reps,30), w:sanWeight(it.w), bw:it.bw===true});
+  });
+  return out;
+}
+function normMenus(list){
+  if(!Array.isArray(list)) return null;
+  var seen={}, out=[];
+  list.forEach(function(m){
+    if(!m||typeof m!=="object") return;
+    var name=String(m.name==null?"":m.name).trim();
+    if(!name) return;
+    var id=(typeof m.id==="string"&&m.id.trim())?m.id.trim():genId();
+    if(seen[id]) id=genId();
+    seen[id]=1;
+    out.push({id:id, name:name, items:sanMenuItems(m.items)});
+  });
+  return out.length?out:null;
+}
+function activeMenu(){
+  for(var i=0;i<TRAINER_MENUS.length;i++){ if(TRAINER_MENUS[i].id===activeMenuId) return TRAINER_MENUS[i]; }
+  return TRAINER_MENUS.length?TRAINER_MENUS[0]:null;
+}
+function syncTrainerQuick(){
+  var m=activeMenu();
+  TRAINER_QUICK=m?m.items.map(function(i){ return i.n; }):[];
+}
+function saveMenus(){
+  try{ localStorage.setItem(LS_MENUS, JSON.stringify({activeId:activeMenuId, menus:TRAINER_MENUS})); }catch(e){}
+}
+function readConfig(){
+  try{ var c=JSON.parse(localStorage.getItem(LS_CONF)||"null"); return (c&&typeof c==="object")?c:{}; }catch(e){ return {}; }
+}
+function saveConfig(patch){
+  var c=readConfig(); var k;
+  for(k in patch){ if(Object.prototype.hasOwnProperty.call(patch,k)) c[k]=patch[k]; }
+  try{ localStorage.setItem(LS_CONF, JSON.stringify(c)); }catch(e){}
+}
+// 戻り値: "loaded" | "default" | "migrated"（旧trainerMenu設定を引き継いだ）
+function loadMenus(){
+  var data=null;
+  try{ data=JSON.parse(localStorage.getItem(LS_MENUS)||"null"); }catch(e){ data=null; }
+  var menus=null, active=null;
+  if(data&&typeof data==="object"&&Array.isArray(data.menus)){
+    menus=normMenus(data.menus);
+    if(menus) active=(typeof data.activeId==="string")?data.activeId:null;
+  }
+  if(!menus){
+    var c=readConfig();
+    if(Array.isArray(c.trainerMenu)){
+      var v=c.trainerMenu.filter(function(x){ return typeof x==="string"&&x.trim()!==""; });
+      if(v.length){
+        TRAINER_MENUS=[{ id:"default", name:"トレーナーメニュー",
+          items:v.map(function(n){ return {n:n, sets:"", reps:"", w:"", bw:false}; }) }];
+        activeMenuId="default";
+        syncTrainerQuick(); saveMenus(); refreshSettingsUI();
+        return "migrated";
+      }
+    }
+    TRAINER_MENUS=clone(DEFAULT_MENUS);
+    activeMenuId=TRAINER_MENUS[0].id;
+    syncTrainerQuick(); saveMenus(); refreshSettingsUI();
+    return "default";
+  }
+  TRAINER_MENUS=menus;
+  activeMenuId=(active&&menus.some(function(m){ return m.id===active; }))?active:menus[0].id;
+  syncTrainerQuick(); refreshSettingsUI();
+  return "loaded";
+}
+function menuSelect(id){
+  if(!TRAINER_MENUS.some(function(m){ return m.id===id; })) return;
+  activeMenuId=id; saveMenus(); syncTrainerQuick(); refreshSettingsUI();
+}
+function menuAdd(){
+  var name="";
+  try{ name=(prompt("新しいトレーナーメニューの名前を入力してください","メニュー"+(TRAINER_MENUS.length+1))||"").trim(); }catch(e){ name=""; }
+  if(!name) return;
+  TRAINER_MENUS.push({id:genId(), name:name, items:[]});
+  activeMenuId=TRAINER_MENUS[TRAINER_MENUS.length-1].id;
+  saveMenus(); syncTrainerQuick(); refreshSettingsUI();
+  toast("メニュー「"+name+"」を追加しました");
+}
+function menuRename(){
+  var m=activeMenu(); if(!m) return;
+  var name="";
+  try{ name=(prompt("メニュー名を変更してください",m.name)||"").trim(); }catch(e){ name=""; }
+  if(!name||name===m.name) return;
+  m.name=name; saveMenus(); refreshSettingsUI(); toast("メニュー名を変更しました");
+}
+function menuDuplicate(){
+  var m=activeMenu(); if(!m) return;
+  var copy={id:genId(), name:m.name+" のコピー", items:clone(m.items)};
+  TRAINER_MENUS.push(copy);
+  activeMenuId=copy.id;
+  saveMenus(); syncTrainerQuick(); refreshSettingsUI();
+  toast("メニューを複製しました");
+}
+function menuDelete(){
+  var m=activeMenu(); if(!m) return;
+  if(TRAINER_MENUS.length<=1){ toast("最後のメニューは削除できません"); return; }
+  if(!confirm("メニュー「"+m.name+"」を削除しますか？\n保存済みの記録は削除されず、記録に残したメニュー名もそのまま表示されます。")) return;
+  TRAINER_MENUS=TRAINER_MENUS.filter(function(x){ return x.id!==m.id; });
+  activeMenuId=TRAINER_MENUS[0].id;
+  saveMenus(); syncTrainerQuick(); refreshSettingsUI();
+  toast("メニューを削除しました");
+}
+function menuResetAll(){
+  if(!confirm("登録したメニューをすべて消し、組み込みの既定メニュー（8種目）に戻しますか？\n保存済みの記録とクイックボタンは変更されません。")) return;
+  TRAINER_MENUS=clone(DEFAULT_MENUS);
+  activeMenuId=TRAINER_MENUS[0].id;
+  saveMenus(); syncTrainerQuick(); refreshSettingsUI();
+  toast("組み込みの既定メニューに戻しました");
+}
+function menuSaveFromQuick(){
+  var m=activeMenu(); if(!m) return;
+  if(!quickEx.length){ toast("②に種目がありません"); return; }
+  if(!confirm("②の"+quickEx.length+"種目をメニュー「"+m.name+"」の内容として保存しますか？")) return;
+  var old={};
+  m.items.forEach(function(it){ old[it.n]={sets:it.sets, reps:it.reps, w:it.w, bw:it.bw}; });
+  m.items=quickEx.map(function(n){
+    var o=old[n];
+    return {n:n, sets:o?o.sets:"", reps:o?o.reps:"", w:o?o.w:"", bw:o?o.bw:false};
+  });
+  saveMenus(); syncTrainerQuick(); refreshSettingsUI();
+  toast("メニューを更新しました");
+}
+function applyMenuToQuick(){
+  var m=activeMenu(); if(!m) return;
+  if(!m.items.length){ toast("メニューに種目がありません"); return; }
+  quickEx=m.items.map(function(i){ return i.n; });
+  quickEx.forEach(registerName);
+  saveQuick(); buildChips(); toast("②のクイックボタンに反映しました");
+}
+function toggleMenuEdit(){
+  var p=document.getElementById("menuEdit"), tg=document.getElementById("menuEditToggle");
+  if(!p) return;
+  var opened=!p.classList.toggle("hidden");
+  if(tg) tg.textContent=opened?"✕ 種目の編集を閉じる":"✎ このメニューの種目を編集";
+  if(opened) renderMiList();
+}
+function miAdd(name){
+  name=String(name||"").trim(); if(!name) return;
+  var m=activeMenu(); if(!m) return;
+  if(m.items.some(function(it){ return it.n===name; })){ toast("すでにメニューにあります"); return; }
+  registerName(name);
+  m.items.push({n:name, sets:"", reps:"", w:"", bw:false});
+  saveMenus(); syncTrainerQuick(); renderMenuEditor(); toast("メニューに追加しました");
+}
+function miAddNew(){
+  var el=document.getElementById("menuNewEx"); if(!el) return;
+  var v=el.value.trim(); if(!v) return;
+  el.value=""; miAdd(v);
+}
+function miRemove(i){
+  var m=activeMenu(); if(!m||!m.items[i]) return;
+  m.items.splice(i,1); saveMenus(); syncTrainerQuick(); renderMenuEditor();
+}
+function miMove(i,dir){
+  var m=activeMenu(); if(!m) return;
+  var j=i+dir; if(j<0||j>=m.items.length) return;
+  var t=m.items[i]; m.items[i]=m.items[j]; m.items[j]=t;
+  saveMenus(); syncTrainerQuick(); renderMenuEditor();
+}
+function miUpd(i,field,v){
+  var m=activeMenu(); if(!m||!m.items[i]) return;
+  var it=m.items[i];
+  if(field==="sets") it.sets=sanInt(v,30);
+  else if(field==="reps") it.reps=sanInt(v,30);
+  else if(field==="w") it.w=sanWeight(v);
+  else if(field==="bw") it.bw=(v===true||v==="true");
+  saveMenus(); renderTrainerList();
+}
+function menuItemFor(name){
+  var m=activeMenu(); if(!m) return null;
+  for(var i=0;i<m.items.length;i++){ if(m.items[i].n===name) return m.items[i]; }
+  return null;
+}
+function planText(it){
+  if(!it) return "";
+  var p=[];
+  if(it.sets) p.push(it.sets+"セット");
+  if(it.reps) p.push(it.reps+"回");
+  var t=p.length?p.join(" × "):"";
+  if(it.bw) t=(t?t+"　":"")+"自重";
+  else if(it.w) t=(t?t+"　":"")+"@"+it.w+"kg";
+  return t||"種目のみ";
+}
+function applyMenuToSession(){
+  var m=activeMenu(); if(!m) return;
+  if(!m.items.length){ toast("メニューに種目がありません"); return; }
+  commitActive();
+  var added=0;
+  m.items.forEach(function(it){
+    registerName(it.n);
+    var ex=null;
+    for(var i=0;i<session.exercises.length;i++){ if(session.exercises[i].name===it.n) ex=session.exercises[i]; }
+    if(!ex){
+      var bw=(it.bw===true&&bwAllowed(it.n))||(it.bw!==true&&bwDefaultOn(it.n));
+      ex={name:it.n, sets:[], done:false, bw:bw};
+      session.exercises.push(ex); added++;
+    }
+    var nSets=parseInt(it.sets,10); if(isNaN(nSets)||nSets<1) nSets=1; if(nSets>12) nSets=12;
+    var useBw=ex.bw===true;
+    while(ex.sets.length<nSets){
+      ex.sets.push({ w: useBw?"":(it.w==null?"":String(it.w)),
+                     r: (it.reps==null?"":String(it.reps)),
+                     bw: useBw });
+    }
+  });
+  session.menuName=m.name;
+  saveDraft(); render(); toast("「"+m.name+"」を記録に展開しました（"+added+"種目を追加）");
+}
+
+/* ---------- クイックボタン（②） ---------- */
+function loadQuick(){
+  var raw=null;
+  try{ raw=localStorage.getItem(LS_QUICK); }catch(e){ raw=null; }
+  if(raw===null){ quickEx=TRAINER_QUICK.slice(); return "new"; }
+  var a=null;
+  try{ a=JSON.parse(raw); }catch(e){ quickEx=TRAINER_QUICK.slice(); return "corrupt"; }
+  if(!Array.isArray(a)){ quickEx=TRAINER_QUICK.slice(); return "corrupt"; }
+  var seen={};
+  quickEx=a.filter(function(x){ return typeof x==="string"&&x.trim()!==""; })
+    .map(function(x){ return x.trim(); })
+    .filter(function(x){ if(seen[x]) return false; seen[x]=1; return true; });
+  var ver=0, c=readConfig();
+  if(typeof c.quickVersion==="number") ver=c.quickVersion;
+  if(ver<QUICK_VERSION) return "migrate";
+  return "loaded";
+}
+function saveQuick(){
+  try{ localStorage.setItem(LS_QUICK, JSON.stringify(quickEx)); }catch(e){}
+  saveConfig({quickVersion:QUICK_VERSION});
+}
+function initQuick(){
+  loadMaster();
+  loadCustom();
+  loadMenus();
+  var st=loadQuick();
+  if(st==="migrate"){
+    var msg="クイックボタンの既定をトレーナーメニュー（8種目）に更新しました。\n\n"
+      +"現在の登録："+(quickEx.length?quickEx.join("／"):"（なし）")+"\n\n"
+      +"新しい8種目に置き換えますか？\n（現在の登録は退避し、「↩ 切替前の登録を復元」で戻せます。保存済みの記録には影響しません）";
+    var ok=false;
+    try{ ok=confirm(msg); }catch(e){ ok=false; }
+    if(ok){
+      try{ localStorage.setItem(LS_QUICK_OLD, JSON.stringify(quickEx)); }catch(e){}
+      quickEx=TRAINER_QUICK.slice();
+      saveQuick();
+    } else {
+      saveConfig({quickVersion:QUICK_VERSION});
+    }
+  } else if(st==="corrupt"){
+    saveQuick();
+  }
+  quickEx.forEach(registerName);
+  buildChips(); renderRestoreBtn();
+  return st;
+}
+function toggleQuickEdit(){
+  var p=document.getElementById("quickEdit"), tg=document.getElementById("qToggle");
+  if(!p) return;
+  var opened=!p.classList.toggle("hidden");
+  if(tg) tg.textContent=opened?"✕ 編集を閉じる":"⚙ クイックボタンを編集";
+  if(opened) renderQuickEditor();
+}
+function addQuick(name){
+  name=String(name||"").trim(); if(!name) return;
+  if(quickEx.indexOf(name)>=0){ toast("すでにクイックボタンにあります"); return; }
+  registerName(name);
+  quickEx.push(name); saveQuick(); buildChips(); toast("クイックボタンに追加しました");
+}
+function addQuickNew(){
+  var el=document.getElementById("quickNew"); if(!el) return;
+  var v=el.value.trim(); if(!v) return;
+  el.value=""; addQuick(v);
+}
+function moveQuick(i,dir){
+  var j=i+dir; if(j<0||j>=quickEx.length) return;
+  var tmp=quickEx[i]; quickEx[i]=quickEx[j]; quickEx[j]=tmp;
+  saveQuick(); buildChips();
+}
+function removeQuick(i){
+  if(i<0||i>=quickEx.length) return;
+  quickEx.splice(i,1); saveQuick(); buildChips(); toast("クイックボタンを削除しました");
+}
+function resetQuick(){
+  if(!TRAINER_QUICK.length){ toast("メニューに種目がありません"); return; }
+  if(!confirm("クイックボタンを選択中のメニュー「"+((activeMenu()||{}).name||"")+"」の内容（"+TRAINER_QUICK.length+"種目）に戻しますか？")) return;
+  try{ localStorage.setItem(LS_QUICK_OLD, JSON.stringify(quickEx)); }catch(e){}
+  quickEx=TRAINER_QUICK.slice(); saveQuick(); buildChips(); renderRestoreBtn();
+  toast("メニューの内容に戻しました");
+}
+function renderRestoreBtn(){
+  var btn=document.getElementById("restoreBtn"); if(!btn) return;
+  var has=false;
+  try{ var a=JSON.parse(localStorage.getItem(LS_QUICK_OLD)||"null"); has=Array.isArray(a)&&a.length>0; }catch(e){ has=false; }
+  btn.classList.toggle("hidden",!has);
+}
+function restoreOldQuick(){
+  try{
+    var a=JSON.parse(localStorage.getItem(LS_QUICK_OLD)||"null");
+    if(!Array.isArray(a)||!a.length){ toast("退避された登録はありません"); return; }
+    quickEx=a.filter(function(x){ return typeof x==="string"&&x.trim()!==""; });
+    quickEx.forEach(registerName);
+    saveQuick(); buildChips(); toast("切替前の登録に戻しました");
+  }catch(e){ toast("復元できませんでした"); }
+}
+function toggleImport(){
+  var b=document.getElementById("importBox"); if(b) b.classList.toggle("hidden");
+}
+function applyImport(){
+  var el=document.getElementById("importText"); if(!el) return;
+  var seen={}, list=[];
+  el.value.split(/\r?\n/).forEach(function(line){
+    var v=line.trim(); if(!v) return;
+    if(seen[v]) return; seen[v]=1; list.push(v);
+  });
+  if(!list.length){ toast("入力がありません"); return; }
+  list.forEach(registerName);
+  try{ localStorage.setItem(LS_QUICK_OLD, JSON.stringify(quickEx)); }catch(e){}
+  quickEx=list; saveQuick(); buildChips(); renderRestoreBtn();
+  toast(list.length+"種目に置き換えました");
+}
+
+/* ---------- 設定UIの描画 ---------- */
+function renderTrainerList(){
+  var box=document.getElementById("trainerList"); if(!box) return;
+  box.className="chips";
+  box.innerHTML="";
+  var m=activeMenu();
+  if(!m||!m.items.length){
+    var h=document.createElement("div"); h.className="qhint";
+    h.textContent="このメニューには種目がありません（下の「種目の編集」から追加してください）";
+    box.appendChild(h);
+    return;
+  }
+  m.items.forEach(function(it){
+    var c=document.createElement("span"); c.className="chip";
+    if(bwDefaultOn(it.n)) c.className="chip bwdone";
+    if(quickEx.indexOf(it.n)>=0) c.style.opacity=".45";
+    c.textContent=it.n+(it.sets||it.reps||it.w||it.bw?("（"+planText(it)+"）"):"");
+    c.onclick=function(){ addQuick(it.n); };
+    box.appendChild(c);
+  });
+}
+function renderMiList(){
+  var list=document.getElementById("miList"); if(!list) return;
+  var m=activeMenu();
+  list.innerHTML="";
+  if(!m||!m.items.length){
+    var h=document.createElement("div"); h.className="qhint";
+    h.textContent="種目がありません"; list.appendChild(h);
+  } else {
+    m.items.forEach(function(it,i){
+      var row=document.createElement("div"); row.className="mirow";
+      var bwDis=bwAllowed(it.n)?"":" disabled";
+      row.innerHTML='<div class="mihead">'
+        +'<div class="qname">'+(i+1)+'. '+esc(it.n)+'</div>'
+        +'<button type="button" class="qbtn" onclick="miMove('+i+',-1)"'+(i===0?' disabled':'')+'>↑</button>'
+        +'<button type="button" class="qbtn" onclick="miMove('+i+',1)"'+(i===m.items.length-1?' disabled':'')+'>↓</button>'
+        +'<button type="button" class="qbtn rm" onclick="miRemove('+i+')">✕</button></div>'
+        +'<div class="minp">'
+        +'<label>セット</label><input type="number" min="0" max="30" step="1" value="'+esc(it.sets)+'" onchange="miUpd('+i+',\'sets\',this.value)">'
+        +'<label>回数</label><input type="number" min="0" max="30" step="1" value="'+esc(it.reps)+'" onchange="miUpd('+i+',\'reps\',this.value)">'
+        +'<label>重量kg</label><input type="number" min="0" max="999" step="2.5" value="'+esc(it.w)+'" onchange="miUpd('+i+',\'w\',this.value)">'
+        +'<label class="bwmini"><input type="checkbox"'+(it.bw?' checked':'')+bwDis+' onchange="miUpd('+i+',\'bw\',this.checked)">自重</label>'
+        +'</div>';
+      list.appendChild(row);
+    });
+  }
+  var sel=document.getElementById("menuExPick");
+  if(sel){
+    var cur=sel.value;
+    sel.innerHTML='<option value="">種目を選択…</option>';
+    MASTER.map(function(x){ return x.n; }).concat(customEx).forEach(function(n){
+      if(!n) return;
+      var o=document.createElement("option"); o.value=n; o.textContent=n; sel.appendChild(o);
+    });
+    sel.value=cur||"";
+    sel.onchange=function(){ if(sel.value){ miAdd(sel.value); sel.value=""; } };
+  }
+}
+function buildMenuPick(){
+  var sel=document.getElementById("menuPick"); if(!sel) return;
+  sel.innerHTML="";
+  TRAINER_MENUS.forEach(function(m){
+    var o=document.createElement("option"); o.value=m.id;
+    o.textContent=m.name+"（"+m.items.length+"種目）";
+    sel.appendChild(o);
+  });
+  sel.value=activeMenuId||"";
+  sel.onchange=function(){ menuSelect(sel.value); };
+}
+function renderMenuEditor(){ renderTrainerList(); renderMiList(); buildMenuPick(); }
+function renderQuickEditor(){
+  var list=document.getElementById("quickList");
+  if(!list) return;
+  list.innerHTML="";
+  if(!quickEx.length){
+    var h=document.createElement("div"); h.className="qhint";
+    h.textContent="登録なし（下から追加してください）"; list.appendChild(h);
+  }
+  quickEx.forEach(function(n,i){
+    var row=document.createElement("div"); row.className="qrow";
+    var nm=document.createElement("div"); nm.className="qname"; nm.textContent=n;
+    var up=document.createElement("button"); up.type="button"; up.className="qbtn"; up.textContent="↑";
+    up.disabled=(i===0); up.onclick=function(){ moveQuick(i,-1); };
+    var dn=document.createElement("button"); dn.type="button"; dn.className="qbtn"; dn.textContent="↓";
+    dn.disabled=(i===quickEx.length-1); dn.onclick=function(){ moveQuick(i,1); };
+    var rm=document.createElement("button"); rm.type="button"; rm.className="qbtn rm"; rm.textContent="✕";
+    rm.onclick=function(){ removeQuick(i); };
+    row.appendChild(nm); row.appendChild(up); row.appendChild(dn); row.appendChild(rm);
+    list.appendChild(row);
+  });
+  var sel=document.getElementById("quickPick");
+  if(sel){
+    var cur=sel.value;
+    sel.innerHTML='<option value="">種目を選択…</option>';
+    MASTER.map(function(x){ return x.n; }).concat(customEx).forEach(function(n){
+      if(!n) return;
+      var o=document.createElement("option"); o.value=n; o.textContent=n; sel.appendChild(o);
+    });
+    sel.value=cur||"";
+    sel.onchange=function(){ if(sel.value){ addQuick(sel.value); sel.value=""; } };
+  }
+}
+function refreshSettingsUI(){ renderMenuEditor(); renderQuickEditor(); }
+
+/* ---------- 初期化 ---------- */
+function init(){
+  var dEl=document.getElementById("date");
+  loadDraft();
+  dEl.value=session.date;
+  dEl.addEventListener("change",function(e){
+    if(!e.target.value) return;
+    session.date=e.target.value; saveDraft(); render();
+  });
+  buildExSelect(); buildPresetSelect(); buildChips(); render();
+}
+function buildExSelect(){
+  var sel=document.getElementById("exSelect"); if(!sel) return;
+  sel.innerHTML='<option value="">種目を選択…</option>';
+  MASTER.map(function(m){ return m.n; }).concat(customEx).forEach(function(n){
+    if(!n) return;
+    var o=document.createElement("option"); o.value=n; o.textContent=n; sel.appendChild(o);
+  });
+  sel.onchange=function(){ if(sel.value){ addExercise(sel.value); sel.value=""; } };
+}
+function buildPresetSelect(){
+  var sel=document.getElementById("presetEx"); if(!sel) return;
+  sel.innerHTML='<option value="">種目を選択…</option>';
+  MASTER.forEach(function(m){
+    var o=document.createElement("option"); o.value=m.n; o.textContent=m.n+"（"+bwLabel(m.bw)+"）"; sel.appendChild(o);
+  });
+}
+function buildChips(){
+  var box=document.getElementById("chipBox"); if(!box) return;
+  box.innerHTML="";
+  if(!quickEx.length){
+    var h=document.createElement("div"); h.className="qhint";
+    h.textContent="クイックボタンは未設定です（⚙ から追加できます）";
+    box.appendChild(h);
+  } else {
+    quickEx.forEach(function(n){
+      var c=document.createElement("span"); c.className="chip";
+      if(bwDefaultOn(n)) c.className="chip bwdone";
+      c.textContent=n;
+      c.onclick=function(){ addExercise(n); };
+      box.appendChild(c);
+    });
+  }
+  refreshSettingsUI();
+}
+
+/* ---------- 種目の追加 ---------- */
+function addCustomEx(){
+  var el=document.getElementById("customEx"); if(!el) return;
+  var v=el.value.trim(); if(!v) return;
+  el.value="";
+  if(!masterEntry(v)&&customEx.indexOf(v)<0){ customEx.push(v); saveCustom(); buildExSelect(); }
+  addExercise(v);
+}
+function addPreset(){
+  var sel=document.getElementById("presetEx"), bwSel=document.getElementById("presetBw");
+  if(!sel||!bwSel) return;
+  var name=sel.value, cls=bwSel.value;
+  if(!name){ toast("種目を選択してください"); return; }
+  if(cls!=="always"&&cls!=="sometimes"&&cls!=="never") cls="custom";
+  var hit=masterEntry(name);
+  if(hit) hit.bw=cls; else MASTER.push({n:name, bw:cls});
+  var ci=customEx.indexOf(name);
+  if(ci>=0){ customEx.splice(ci,1); saveCustom(); }
+  saveMaster(); buildExSelect(); buildPresetSelect();
+  toast("「"+name+"」を"+bwLabel(cls)+"として登録しました");
+}
+
+/* ---------- 種目・セット操作 ---------- */
+function addExercise(name){
+  if(session.exercises.some(function(e){ return e.name===name; })){ toast("すでに追加済みです"); return; }
+  var bw=bwDefaultOn(name);
+  session.exercises.push({name:name, sets:[{w:"",r:"",bw:bw}], done:false, bw:bw});
+  saveDraft(); render();
+}
+function removeExercise(i){ session.exercises.splice(i,1); saveDraft(); render(); }
+function addSet(i){
+  var ex=session.exercises[i]; if(!ex) return;
+  ex.sets.push({w:"",r:"",bw:!!ex.bw}); saveDraft(); render();
+}
+function removeSet(i,j){
+  session.exercises[i].sets.splice(j,1);
+  if(!session.exercises[i].sets.length) removeExercise(i); else { saveDraft(); render(); }
+}
+function upd(i,j,k,v){
+  var ex=session.exercises[i]; if(!ex||!ex.sets[j]) return;
+  ex.sets[j][k]=v; saveDraft(); render();
+}
+function commitActive(){
+  var el=document.activeElement;
+  if(el&&el.tagName==="INPUT"&&el.dataset&&el.dataset.cell){
+    var p=el.dataset.cell.split(",");
+    var i=+p[0], j=+p[1], k=p[2];
+    if(session.exercises[i]&&session.exercises[i].sets[j]) session.exercises[i].sets[j][k]=el.value;
+  }
+}
+function step(i,j,k,delta,stepV,min){
+  commitActive();
+  var ex=session.exercises[i]; if(!ex||!ex.sets[j]) return;
+  if(k==="w"&&ex.bw) return;
+  var cur=parseFloat(ex.sets[j][k]); if(isNaN(cur)) cur=0;
+  cur=Math.round((cur+delta*stepV)*100)/100; if(cur<min) cur=min;
+  ex.sets[j][k]=(cur===0&&k==="w")?"0":String(cur);
+  saveDraft(); render();
+}
+function toggleBw(i){
+  var ex=session.exercises[i]; if(!ex) return;
+  if(!bwAllowed(ex.name)){ toast("この種目は自重チェックを使えません"); return; }
+  commitActive();
+  ex.bw=!ex.bw;
+  ex.sets.forEach(function(s){ s.bw=ex.bw; });
+  saveDraft(); render();
+  toast(ex.bw?"自重モードにしました（重量欄を無効化）":"重量モードに戻しました");
+}
+function toggleDone(i){ session.exercises[i].done=!session.exercises[i].done; saveDraft(); render(); }
+
+/* ---------- 前回記録 ---------- */
+function findPrev(name, currentDate){
+  var hist=getHist(), best=null;
+  hist.forEach(function(h){
+    if(h.date>=currentDate) return;
+    var ex=(h.exercises||[]).filter(function(e){ return e.name===name; })[0];
+    if(!ex) return;
+    var sets=(ex.sets||[]).map(function(s){ return normSet(s, name); }).filter(isValidSet);
+    if(!sets.length) return;
+    if(!best||h.date>best.date) best={date:h.date, sets:sets};
+  });
+  return best;
+}
+function copyPrev(i){
+  var ex=session.exercises[i]; if(!ex) return;
+  var prev=findPrev(ex.name, session.date); if(!prev) return;
+  var prevAllBw=prev.sets.every(function(s){ return s.bw===true; });
+  var useBw=bwAllowed(ex.name)&&(ex.bw||prevAllBw);
+  ex.bw=useBw;
+  ex.sets=prev.sets.map(function(s){ return {w:String(s.w), r:String(s.r), bw:useBw}; });
+  saveDraft(); render(); toast("前回記録をコピーしました");
+}
+
+/* ---------- 描画 ---------- */
+function stepHTML(i,j,k,isW){
+  var stepV=isW?2.5:1;
+  var val=isW?session.exercises[i].sets[j].w:session.exercises[i].sets[j].r;
+  return '<div class="stepper">'
+    +'<button type="button" onclick="step('+i+','+j+',\''+k+'\',-1,'+stepV+',0)">−</button>'
+    +'<input type="number" inputmode="'+(isW?"decimal":"numeric")+'" step="'+stepV+'" min="0" data-cell="'+i+','+j+','+k+'" value="'+esc(val)+'" onchange="upd('+i+','+j+',\''+k+'\',this.value)">'
+    +'<button type="button" onclick="step('+i+','+j+',\''+k+'\',1,'+stepV+',0)">＋</button>'
+    +'</div>';
+}
+function bwHint(cls){
+  if(cls==="never") return "重量種目（このチェックは使えません）";
+  if(cls==="always") return "自重種目（既定でチェック）";
+  if(cls==="sometimes") return "自重で行う場合はチェック";
+  return "カスタム種目：自重で行う場合はチェック（既定はオフ）";
+}
+function render(){
+  var box=document.getElementById("exList"); box.innerHTML="";
+  session.exercises.forEach(function(ex,i){
+    var card=document.createElement("div");
+    card.className="card"+(ex.done?" exdone":"");
+    var st=exStats(ex);
+    var cls=bwClass(ex.name), allowed=bwAllowed(ex.name);
+    var html='<div class="exhead"><span class="name">'+esc(ex.name)
+      +(ex.bw?'<span class="bwbadge">自重</span>':'')
+      +(ex.done?'<span class="badge">完了</span>':'')+'</span>'
+      +'<span><button class="rm" onclick="toggleDone('+i+')">'+(ex.done?'戻す':'完了')+'</button>'
+      +'<button class="rm" onclick="removeExercise('+i+')">削除</button></span></div>';
+
+    var mi=menuItemFor(ex.name);
+    if(mi) html+='<div class="miplan">📋 メニュー指定: '+esc(planText(mi))+'</div>';
+
+    var prev=findPrev(ex.name, session.date);
+    if(prev){
+      var d=prev.date.slice(5).replace("-","/");
+      var pVol=0, pBest=0, pBwSets=0, pBwReps=0;
+      prev.sets.forEach(function(s){
+        var r=parseFloat(s.r);
+        if(s.bw){ pBwSets++; if(!isNaN(r)) pBwReps+=r; }
+        else{ var w=parseFloat(s.w); if(!isNaN(w)&&!isNaN(r)){ pVol+=w*r; if(w>pBest) pBest=w; } }
+      });
+      html+='<div class="prevbox"><div class="pttl">📈 前回（'+d+'）</div>'
+        +'<div class="psets">'+prev.sets.map(function(s,j){
+            return (j+1)+': '+(s.bw?('自重 × '+esc(s.r)+'回'):(esc(s.w)+'kg × '+esc(s.r)+'回'));
+          }).join('　')+'</div>'
+        +'<div class="pmeta">'+(pVol>0
+            ? ('前回ボリューム '+Math.round(pVol).toLocaleString()+' kg / ベスト '+pBest+' kg')
+            : ('前回 自重 '+pBwSets+' セット / 合計 '+pBwReps+' 回'))+'</div>';
+      if(st.vol>0&&pVol>0){
+        var diff=Math.round(st.vol-pVol);
+        var dcls=diff>=0?"diff-up":"diff-dn";
+        var sign=diff>=0?"+":"";
+        html+='<div class="pmeta">本日現在 <span class="'+dcls+'">'+sign+diff.toLocaleString()+' kg</span> vs 前回</div>';
+      }
+      html+='<button class="pcopy" onclick="copyPrev('+i+')">前回の値をコピー</button></div>';
+    }
+
+    html+='<div class="bwbox"><label class="bwlab'+(allowed?'':' off')+'">'
+      +'<input type="checkbox"'+(allowed?(' onchange="toggleBw('+i+')"'):' disabled')+(ex.bw?' checked':'')+'>'
+      +'<span>自重</span></label>'
+      +'<span class="bwhint">'+esc(bwHint(cls))+'</span></div>';
+
+    ex.sets.forEach(function(s,j){
+      var rowBw=(ex.bw||s.bw===true);
+      html+='<div class="setrow'+(rowBw?' bwm':'')+'"><div class="setnum">'+(j+1)+'</div>';
+      if(rowBw){
+        html+='<div class="fld bwnone">自重</div>'
+          +'<div class="fld"><div class="cap">回数</div>'+stepHTML(i,j,'r',false)+'</div>';
+      } else {
+        html+='<div class="fld"><div class="cap">重量(kg)</div>'+stepHTML(i,j,'w',true)+'</div>'
+          +'<div class="fld"><div class="cap">回数</div>'+stepHTML(i,j,'r',false)+'</div>';
+      }
+      html+='<button type="button" class="del" onclick="removeSet('+i+','+j+')">×</button></div>';
+    });
+    html+='<button type="button" class="btn btn-ghost" onclick="addSet('+i+')">＋ セットを追加</button>';
+    if(ex.bw){
+      html+='<div class="bwsum">自重 '+st.bwSets+' セット・合計 '+st.reps+' 回</div>';
+      if(st.vol>0) html+='<div class="totalvol">（参考）重量換算ボリューム: '+st.vol.toLocaleString()+' kg</div>';
+    } else if(st.vol>0){
+      html+='<div class="totalvol">種目ボリューム: '+st.vol.toLocaleString()+' kg</div>';
+    }
+    card.innerHTML=html; box.appendChild(card);
+  });
+}
+
+/* ---------- 保存 ---------- */
+function saveDraft(){
+  try{
+    var out={date:session.date, menuName:session.menuName||"", exercises:session.exercises.map(normExercise)};
+    localStorage.setItem(LS_DRAFT,JSON.stringify(out));
+  }catch(e){}
+}
+function loadDraft(){
+  try{
+    var d=JSON.parse(localStorage.getItem(LS_DRAFT)||"null");
+    if(d&&typeof d.date==="string"&&Array.isArray(d.exercises)){
+      session={date:d.date, menuName:(typeof d.menuName==="string"?d.menuName:""), exercises:d.exercises.map(normExercise)};
+    }
+  }catch(e){}
+}
+function getHist(){
+  try{ var h=JSON.parse(localStorage.getItem(LS_HIST)||"[]"); return Array.isArray(h)?h:[]; }catch(e){ return []; }
+}
+function saveSession(){
+  commitActive();
+  var validEx=session.exercises.filter(function(e){ return e.sets.some(isValidSet); })
+    .map(function(e){
+      var bw=!!e.bw;
+      return { name:e.name, done:!!e.done, bw:bw,
+        sets:e.sets.filter(isValidSet).map(function(s){
+          var isBw=bw||s.bw===true;
+          return isBw ? {w:"", r:String(s.r), bw:true} : {w:String(s.w), r:String(s.r), bw:false};
+        }) };
+    });
+  if(!validEx.length){ toast("記録がありません"); return; }
+  var hist=getHist();
+  var idx=hist.findIndex(function(h){ return h.date===session.date; });
+  var rec={date:session.date, menuName:session.menuName||"", exercises:validEx, savedAt:new Date().toISOString()};
+  if(idx>=0) hist[idx]=rec; else hist.push(rec);
+  hist.sort(function(a,b){ return a.date<b.date?1:-1; });
+  localStorage.setItem(LS_HIST,JSON.stringify(hist));
+  session.exercises=JSON.parse(JSON.stringify(validEx));
+  saveDraft(); render(); renderHistory();
+  toast("保存しました ✓");
+}
+function clearDraft(){
+  if(!session.exercises.length){ toast("入力は空です"); return; }
+  if(!confirm("入力中の内容をすべてクリアしますか？（保存済み履歴は消えません）")) return;
+  session={date:todayStr(), menuName:"", exercises:[]};
+  document.getElementById("date").value=session.date;
+  saveDraft(); render(); toast("クリアしました");
+}
+function loadSession(date){
+  var h=getHist().filter(function(x){ return x.date===date; })[0]; if(!h) return;
+  session={date:h.date, menuName:(typeof h.menuName==="string"?h.menuName:""), exercises:(h.exercises||[]).map(normExercise)};
+  document.getElementById("date").value=session.date;
+  saveDraft(); render(); showTab(0); toast(date+" を読み込みました");
+}
+function deleteSession(date){
+  if(!confirm(date+" の記録を削除しますか？")) return;
+  localStorage.setItem(LS_HIST,JSON.stringify(getHist().filter(function(h){ return h.date!==date; })));
+  renderHistory(); toast("削除しました");
+}
+function clearAll(){
+  if(confirm("保存済みの全セッションを削除しますか？この操作は元に戻せません。")){
+    localStorage.removeItem(LS_HIST); renderHistory(); toast("全削除しました");
+  }
+}
+
+/* ---------- 履歴 ---------- */
+function renderHistory(){
+  var box=document.getElementById("historyList"); var hist=getHist();
+  if(!hist.length){ box.innerHTML='<div style="color:var(--sub);font-size:13px;">まだ記録がありません</div>'; return; }
+  box.innerHTML="";
+  hist.forEach(function(h){
+    var lines=[], vol=0, bwSets=0, bwReps=0;
+    (h.exercises||[]).forEach(function(e){
+      var ss=(e.sets||[]).map(function(s){ return normSet(s, e.name); }).filter(isValidSet);
+      if(!ss.length) return;
+      lines.push(e.name+": "+ss.map(setLabel).join(", "));
+      ss.forEach(function(s){
+        var r=parseFloat(s.r);
+        if(s.bw){ bwSets++; if(!isNaN(r)) bwReps+=r; }
+        else vol+=parseFloat(s.w)*parseFloat(s.r);
+      });
+    });
+    var sub='総ボリューム '+Math.round(vol).toLocaleString()+' kg';
+    if(bwSets) sub+='　／　自重 '+bwSets+' セット（'+bwReps+' 回）';
+    var mn=(typeof h.menuName==="string"&&h.menuName)?h.menuName:"";
+    var d=document.createElement("div"); d.className="hitem";
+    d.innerHTML='<div class="d">'+esc(h.date)+'　<span style="color:var(--sub);font-weight:400">'+esc(sub)+'</span></div>'
+      +(mn?'<div class="mn">📋 '+esc(mn)+'</div>':'')
+      +'<div class="s">'+lines.map(esc).join("<br>")+'</div>'
+      +'<div style="margin-top:6px;"><button class="chip" onclick="loadSession(\''+h.date+'\')">読み込む</button> '
+      +'<button class="chip" style="color:var(--danger)" onclick="deleteSession(\''+h.date+'\')">削除</button></div>';
+    box.appendChild(d);
+  });
+}
+
+/* ---------- エクスポート ---------- */
+function allRows(){
+  var rows=[];
+  getHist().forEach(function(h){
+    (h.exercises||[]).forEach(function(e){
+      (e.sets||[]).forEach(function(s,j){
+        var n=normSet(s, e.name);
+        if(!isValidSet(n)) return;
+        var reps=parseFloat(n.r);
+        rows.push({
+          date:h.date, exercise:e.name, set:j+1,
+          weight_kg: n.bw?null:parseFloat(n.w),
+          reps: reps,
+          volume_kg: n.bw?null:(Math.round(parseFloat(n.w)*parseFloat(n.r)*100)/100),
+          bodyweight: n.bw
+        });
+      });
+    });
+  });
+  rows.sort(function(a,b){ return a.date<b.date?-1:(a.date>b.date?1:0); });
+  return rows;
+}
+function csvCell(v){
+  var s=String(v);
+  if(/[",\n]/.test(s)) s='"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+function exportCSV(){
+  commitActive();
+  var rows=allRows();
+  if(!rows.length){ toast("出力する記録がありません（先に保存してください）"); return; }
+  var csv="date,exercise,set,weight_kg,reps,volume_kg,bodyweight\n";
+  rows.forEach(function(r){
+    csv+=[r.date, csvCell(r.exercise), r.set,
+          r.bodyweight?"":r.weight_kg,
+          r.reps,
+          r.bodyweight?"":r.volume_kg,
+          r.bodyweight?1:0].join(",")+"\n";
+  });
+  download("﻿"+csv,"training_log.csv","text/csv");
+}
+function exportJSON(){
+  commitActive();
+  var rows=allRows();
+  if(!rows.length){ toast("出力する記録がありません（先に保存してください）"); return; }
+  download(JSON.stringify({exported_at:new Date().toISOString(),records:rows},null,2),"training_log.json","application/json");
+}
+function download(content,fname,mime){
+  var blob=new Blob([content],{type:mime+";charset=utf-8"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=fname;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
+  toast(fname+" を出力しました");
+}
+
+/* ---------- タブ/トースト ---------- */
+function showTab(n){
+  document.getElementById("tab-entry").classList.toggle("hidden",n!==0);
+  document.getElementById("tab-history").classList.toggle("hidden",n!==1);
+  document.getElementById("tb1").classList.toggle("on",n===0);
+  document.getElementById("tb2").classList.toggle("on",n===1);
+  if(n===1) renderHistory();
+}
+var toastTimer=null;
+function toast(msg){
+  var t=document.getElementById("toast"); t.textContent=msg; t.style.display="block";
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.style.display="none"; },1800);
+}
+
+initQuick();
+init();
+
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
