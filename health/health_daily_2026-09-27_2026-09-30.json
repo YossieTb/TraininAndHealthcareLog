@@ -1,0 +1,827 @@
+{
+  "period": {
+    "from": "2026-09-27",
+    "to": "2026-09-30"
+  },
+  "timezone": "Asia/Tokyo (+09:00)",
+  "generated_on": "2026-10-04",
+  "source": "Apple Health -> Health Auto Export (Google Drive 'Health Auto Export')",
+  "notes": [
+    "Energy metrics converted from kJ to kcal (kJ/4.184).",
+    "sleep.asleep_h = 'asleep' stage when present, else core+deep+rem; 'inBed' is excluded because the aggregated export repeats it per session."
+  ],
+  "daily": {
+    "2026-09-27": {
+      "active_energy": {
+        "sum": 952.567,
+        "n": 34781,
+        "unit": "kcal"
+      },
+      "apple_exercise_time": {
+        "sum": 129.0,
+        "n": 7740,
+        "unit": "min"
+      },
+      "apple_sleeping_wrist_temperature": {
+        "sum": 35.02,
+        "n": 1,
+        "unit": "degC"
+      },
+      "apple_stand_hour": {
+        "sum": 8.0,
+        "n": 8,
+        "unit": null
+      },
+      "apple_stand_time": {
+        "sum": 102.0,
+        "n": 13500,
+        "unit": "min"
+      },
+      "basal_energy_burned": {
+        "sum": 1822.991,
+        "n": 85671,
+        "unit": "kcal"
+      },
+      "body_fat_percentage": {
+        "avg": 20.3,
+        "min": 19.9,
+        "max": 20.7,
+        "n": 2,
+        "unit": "%"
+      },
+      "body_mass_index": {
+        "avg": 24.701,
+        "min": 24.65,
+        "max": 24.751,
+        "n": 2,
+        "unit": "index"
+      },
+      "breathing_disturbances": {
+        "sum": 0.321,
+        "n": 1,
+        "unit": null
+      },
+      "carbohydrates": {
+        "sum": 323.7,
+        "n": 1,
+        "unit": "g"
+      },
+      "cycling_distance": {
+        "sum": 0.688,
+        "n": 223,
+        "unit": "km"
+      },
+      "dietary_energy": {
+        "sum": 2362.0,
+        "n": 4,
+        "unit": null
+      },
+      "environmental_audio_exposure": {
+        "sum": 1959.292,
+        "n": 33,
+        "unit": null
+      },
+      "flights_climbed": {
+        "sum": 1.058,
+        "n": 24,
+        "unit": "count"
+      },
+      "handwashing": {
+        "sum": 3.0,
+        "n": 1,
+        "unit": null
+      },
+      "headphone_audio_exposure": {
+        "sum": 2303.755,
+        "n": 35,
+        "unit": null
+      },
+      "heart_rate_variability": {
+        "avg": 119.783,
+        "min": 42.343,
+        "max": 268.643,
+        "n": 4,
+        "unit": "ms"
+      },
+      "height": {
+        "avg": 1.75,
+        "min": 1.75,
+        "max": 1.75,
+        "n": 1,
+        "unit": "cm"
+      },
+      "lean_body_mass": {
+        "avg": 59.9,
+        "min": 59.9,
+        "max": 59.9,
+        "n": 1,
+        "unit": "kg"
+      },
+      "physical_effort": {
+        "avg": 3.049,
+        "min": 1.0,
+        "max": 8.0,
+        "n": 458,
+        "unit": "index"
+      },
+      "protein": {
+        "sum": 169.9,
+        "n": 1,
+        "unit": "g"
+      },
+      "respiratory_rate": {
+        "avg": 13.654,
+        "min": 12.0,
+        "max": 18.0,
+        "n": 39,
+        "unit": "count/min"
+      },
+      "resting_heart_rate": {
+        "avg": 56.0,
+        "min": 56.0,
+        "max": 56.0,
+        "n": 1,
+        "unit": "bpm"
+      },
+      "stair_speed_down": {
+        "sum": 0.339,
+        "n": 1,
+        "unit": null
+      },
+      "stair_speed_up": {
+        "sum": 0.238,
+        "n": 1,
+        "unit": null
+      },
+      "step_count": {
+        "sum": 7483.137,
+        "n": 29298,
+        "unit": "count"
+      },
+      "total_fat": {
+        "sum": 51.8,
+        "n": 1,
+        "unit": "g"
+      },
+      "walking_double_support_percentage": {
+        "sum": 119.5,
+        "n": 4,
+        "unit": null
+      },
+      "walking_heart_rate_average": {
+        "avg": 82.0,
+        "min": 82.0,
+        "max": 82.0,
+        "n": 1,
+        "unit": "bpm"
+      },
+      "walking_running_distance": {
+        "sum": 4.811,
+        "n": 17946,
+        "unit": "km"
+      },
+      "walking_speed": {
+        "avg": 3.897,
+        "min": 3.708,
+        "max": 4.32,
+        "n": 4,
+        "unit": "km/h"
+      },
+      "walking_step_length": {
+        "avg": 65.0,
+        "min": 61.0,
+        "max": 69.0,
+        "n": 4,
+        "unit": "cm"
+      },
+      "weight_body_mass": {
+        "avg": 75.65,
+        "min": 75.5,
+        "max": 75.8,
+        "n": 2,
+        "unit": "kg"
+      },
+      "sleep": {
+        "asleep_h": 0.0,
+        "method": "core+deep+rem",
+        "in_bed_h": 0.0,
+        "awake_h": 0.0,
+        "core_h": 0.0,
+        "deep_h": 0.0,
+        "rem_h": 0.0,
+        "sessions": 75,
+        "stage_keys": [
+          "value",
+          "end",
+          "source",
+          "endDate",
+          "start",
+          "startDate"
+        ]
+      }
+    },
+    "2026-09-28": {
+      "active_energy": {
+        "sum": 688.629,
+        "n": 58074,
+        "unit": "kcal"
+      },
+      "apple_exercise_time": {
+        "sum": 47.0,
+        "n": 2820,
+        "unit": "min"
+      },
+      "apple_sleeping_wrist_temperature": {
+        "sum": 36.075,
+        "n": 1,
+        "unit": "degC"
+      },
+      "apple_stand_hour": {
+        "sum": 13.0,
+        "n": 13,
+        "unit": null
+      },
+      "apple_stand_time": {
+        "sum": 122.0,
+        "n": 14700,
+        "unit": "min"
+      },
+      "basal_energy_burned": {
+        "sum": 1919.008,
+        "n": 85837,
+        "unit": "kcal"
+      },
+      "body_fat_percentage": {
+        "avg": 21.5,
+        "min": 20.6,
+        "max": 22.4,
+        "n": 2,
+        "unit": "%"
+      },
+      "body_mass_index": {
+        "avg": 24.865,
+        "min": 24.604,
+        "max": 25.127,
+        "n": 2,
+        "unit": "index"
+      },
+      "breathing_disturbances": {
+        "sum": 1.09,
+        "n": 1,
+        "unit": null
+      },
+      "carbohydrates": {
+        "sum": 281.2,
+        "n": 1,
+        "unit": "g"
+      },
+      "dietary_energy": {
+        "sum": 2497.0,
+        "n": 4,
+        "unit": null
+      },
+      "environmental_audio_exposure": {
+        "sum": 2753.601,
+        "n": 46,
+        "unit": null
+      },
+      "flights_climbed": {
+        "sum": 32.002,
+        "n": 1058,
+        "unit": "count"
+      },
+      "handwashing": {
+        "sum": 54.0,
+        "n": 6,
+        "unit": null
+      },
+      "headphone_audio_exposure": {
+        "sum": 729.345,
+        "n": 13,
+        "unit": null
+      },
+      "heart_rate_variability": {
+        "avg": 79.661,
+        "min": 25.8,
+        "max": 172.557,
+        "n": 6,
+        "unit": "ms"
+      },
+      "physical_effort": {
+        "avg": 3.916,
+        "min": 1.0,
+        "max": 18.4,
+        "n": 608,
+        "unit": "index"
+      },
+      "protein": {
+        "sum": 162.7,
+        "n": 1,
+        "unit": "g"
+      },
+      "respiratory_rate": {
+        "avg": 13.461,
+        "min": 12.0,
+        "max": 16.5,
+        "n": 35,
+        "unit": "count/min"
+      },
+      "resting_heart_rate": {
+        "avg": 55.0,
+        "min": 55.0,
+        "max": 55.0,
+        "n": 1,
+        "unit": "bpm"
+      },
+      "stair_speed_down": {
+        "sum": 6.845,
+        "n": 17,
+        "unit": null
+      },
+      "stair_speed_up": {
+        "sum": 6.828,
+        "n": 21,
+        "unit": null
+      },
+      "step_count": {
+        "sum": 11788.649,
+        "n": 25794,
+        "unit": "count"
+      },
+      "time_in_daylight": {
+        "sum": 31.0,
+        "n": 2103,
+        "unit": "min"
+      },
+      "total_fat": {
+        "sum": 91.5,
+        "n": 1,
+        "unit": "g"
+      },
+      "walking_asymmetry_percentage": {
+        "sum": 35.0,
+        "n": 26,
+        "unit": null
+      },
+      "walking_double_support_percentage": {
+        "sum": 930.2,
+        "n": 33,
+        "unit": null
+      },
+      "walking_heart_rate_average": {
+        "avg": 83.5,
+        "min": 83.5,
+        "max": 83.5,
+        "n": 1,
+        "unit": "bpm"
+      },
+      "walking_running_distance": {
+        "sum": 8.492,
+        "n": 18299,
+        "unit": "km"
+      },
+      "walking_speed": {
+        "avg": 4.574,
+        "min": 2.7,
+        "max": 6.012,
+        "n": 34,
+        "unit": "km/h"
+      },
+      "walking_step_length": {
+        "avg": 71.0,
+        "min": 52.0,
+        "max": 84.0,
+        "n": 34,
+        "unit": "cm"
+      },
+      "weight_body_mass": {
+        "avg": 76.15,
+        "min": 75.35,
+        "max": 76.95,
+        "n": 2,
+        "unit": "kg"
+      },
+      "sleep": {
+        "asleep_h": 0.0,
+        "method": "core+deep+rem",
+        "in_bed_h": 0.0,
+        "awake_h": 0.0,
+        "core_h": 0.0,
+        "deep_h": 0.0,
+        "rem_h": 0.0,
+        "sessions": 71,
+        "stage_keys": [
+          "endDate",
+          "value",
+          "startDate",
+          "start",
+          "end",
+          "source"
+        ]
+      }
+    },
+    "2026-09-29": {
+      "active_energy": {
+        "sum": 759.537,
+        "n": 56579,
+        "unit": "kcal"
+      },
+      "apple_exercise_time": {
+        "sum": 67.0,
+        "n": 4020,
+        "unit": "min"
+      },
+      "apple_sleeping_wrist_temperature": {
+        "sum": 35.709,
+        "n": 1,
+        "unit": "degC"
+      },
+      "apple_stand_hour": {
+        "sum": 16.0,
+        "n": 16,
+        "unit": null
+      },
+      "apple_stand_time": {
+        "sum": 144.0,
+        "n": 17700,
+        "unit": "min"
+      },
+      "basal_energy_burned": {
+        "sum": 1897.136,
+        "n": 85979,
+        "unit": "kcal"
+      },
+      "body_fat_percentage": {
+        "avg": 22.2,
+        "min": 22.2,
+        "max": 22.2,
+        "n": 1,
+        "unit": "%"
+      },
+      "body_mass_index": {
+        "avg": 24.52,
+        "min": 24.52,
+        "max": 24.52,
+        "n": 1,
+        "unit": "index"
+      },
+      "breathing_disturbances": {
+        "sum": 1.327,
+        "n": 1,
+        "unit": null
+      },
+      "carbohydrates": {
+        "sum": 326.4,
+        "n": 1,
+        "unit": "g"
+      },
+      "cycling_distance": {
+        "sum": 1.744,
+        "n": 606,
+        "unit": "km"
+      },
+      "dietary_energy": {
+        "sum": 2371.0,
+        "n": 4,
+        "unit": null
+      },
+      "environmental_audio_exposure": {
+        "sum": 2552.166,
+        "n": 47,
+        "unit": null
+      },
+      "flights_climbed": {
+        "sum": 16.271,
+        "n": 520,
+        "unit": "count"
+      },
+      "handwashing": {
+        "sum": 21.0,
+        "n": 4,
+        "unit": null
+      },
+      "headphone_audio_exposure": {
+        "sum": 1770.884,
+        "n": 36,
+        "unit": null
+      },
+      "heart_rate_variability": {
+        "avg": 61.673,
+        "min": 42.513,
+        "max": 86.916,
+        "n": 6,
+        "unit": "ms"
+      },
+      "height": {
+        "avg": 1.75,
+        "min": 1.75,
+        "max": 1.75,
+        "n": 1,
+        "unit": "cm"
+      },
+      "lean_body_mass": {
+        "avg": 58.4,
+        "min": 58.4,
+        "max": 58.4,
+        "n": 1,
+        "unit": "kg"
+      },
+      "physical_effort": {
+        "avg": 3.748,
+        "min": 1.0,
+        "max": 12.9,
+        "n": 587,
+        "unit": "index"
+      },
+      "protein": {
+        "sum": 153.1,
+        "n": 1,
+        "unit": "g"
+      },
+      "respiratory_rate": {
+        "avg": 13.633,
+        "min": 11.5,
+        "max": 17.0,
+        "n": 49,
+        "unit": "count/min"
+      },
+      "resting_heart_rate": {
+        "avg": 51.0,
+        "min": 51.0,
+        "max": 51.0,
+        "n": 1,
+        "unit": "bpm"
+      },
+      "stair_speed_down": {
+        "sum": 8.23,
+        "n": 20,
+        "unit": null
+      },
+      "stair_speed_up": {
+        "sum": 3.169,
+        "n": 12,
+        "unit": null
+      },
+      "step_count": {
+        "sum": 11446.857,
+        "n": 27040,
+        "unit": "count"
+      },
+      "time_in_daylight": {
+        "sum": 22.0,
+        "n": 1502,
+        "unit": "min"
+      },
+      "total_fat": {
+        "sum": 55.5,
+        "n": 1,
+        "unit": "g"
+      },
+      "walking_asymmetry_percentage": {
+        "sum": 10.0,
+        "n": 23,
+        "unit": null
+      },
+      "walking_double_support_percentage": {
+        "sum": 1080.4,
+        "n": 39,
+        "unit": null
+      },
+      "walking_heart_rate_average": {
+        "avg": 85.0,
+        "min": 85.0,
+        "max": 85.0,
+        "n": 1,
+        "unit": "bpm"
+      },
+      "walking_running_distance": {
+        "sum": 8.979,
+        "n": 19981,
+        "unit": "km"
+      },
+      "walking_speed": {
+        "avg": 4.895,
+        "min": 3.528,
+        "max": 6.192,
+        "n": 41,
+        "unit": "km/h"
+      },
+      "walking_step_length": {
+        "avg": 73.78,
+        "min": 55.0,
+        "max": 84.0,
+        "n": 41,
+        "unit": "cm"
+      },
+      "weight_body_mass": {
+        "avg": 75.1,
+        "min": 75.1,
+        "max": 75.1,
+        "n": 1,
+        "unit": "kg"
+      },
+      "sleep": {
+        "asleep_h": 0.0,
+        "method": "core+deep+rem",
+        "in_bed_h": 0.0,
+        "awake_h": 0.0,
+        "core_h": 0.0,
+        "deep_h": 0.0,
+        "rem_h": 0.0,
+        "sessions": 191,
+        "stage_keys": [
+          "end",
+          "value",
+          "startDate",
+          "start",
+          "source",
+          "endDate"
+        ]
+      }
+    },
+    "2026-09-30": {
+      "active_energy": {
+        "sum": 1016.396,
+        "n": 46882,
+        "unit": "kcal"
+      },
+      "apple_exercise_time": {
+        "sum": 127.0,
+        "n": 7506,
+        "unit": "min"
+      },
+      "apple_sleeping_wrist_temperature": {
+        "sum": 34.922,
+        "n": 1,
+        "unit": "degC"
+      },
+      "apple_stand_hour": {
+        "sum": 13.0,
+        "n": 13,
+        "unit": null
+      },
+      "apple_stand_time": {
+        "sum": 137.0,
+        "n": 16200,
+        "unit": "min"
+      },
+      "basal_energy_burned": {
+        "sum": 1756.54,
+        "n": 79987,
+        "unit": "kcal"
+      },
+      "breathing_disturbances": {
+        "sum": 0.666,
+        "n": 1,
+        "unit": null
+      },
+      "carbohydrates": {
+        "sum": 342.1,
+        "n": 1,
+        "unit": "g"
+      },
+      "cycling_distance": {
+        "sum": 7.6,
+        "n": 2868,
+        "unit": "km"
+      },
+      "dietary_energy": {
+        "sum": 2393.0,
+        "n": 4,
+        "unit": null
+      },
+      "environmental_audio_exposure": {
+        "sum": 2239.776,
+        "n": 40,
+        "unit": null
+      },
+      "flights_climbed": {
+        "sum": 2.0,
+        "n": 4,
+        "unit": "count"
+      },
+      "handwashing": {
+        "sum": 34.0,
+        "n": 5,
+        "unit": null
+      },
+      "headphone_audio_exposure": {
+        "sum": 1254.226,
+        "n": 21,
+        "unit": null
+      },
+      "heart_rate_variability": {
+        "avg": 78.711,
+        "min": 49.993,
+        "max": 97.913,
+        "n": 6,
+        "unit": "ms"
+      },
+      "physical_effort": {
+        "avg": 3.585,
+        "min": 1.0,
+        "max": 7.7,
+        "n": 516,
+        "unit": "index"
+      },
+      "protein": {
+        "sum": 149.0,
+        "n": 1,
+        "unit": "g"
+      },
+      "respiratory_rate": {
+        "avg": 13.205,
+        "min": 10.5,
+        "max": 16.0,
+        "n": 47,
+        "unit": "count/min"
+      },
+      "resting_heart_rate": {
+        "avg": 54.0,
+        "min": 54.0,
+        "max": 54.0,
+        "n": 1,
+        "unit": "bpm"
+      },
+      "stair_speed_down": {
+        "sum": 2.273,
+        "n": 6,
+        "unit": null
+      },
+      "stair_speed_up": {
+        "sum": 0.325,
+        "n": 1,
+        "unit": null
+      },
+      "step_count": {
+        "sum": 10035.751,
+        "n": 27297,
+        "unit": "count"
+      },
+      "time_in_daylight": {
+        "sum": 8.0,
+        "n": 601,
+        "unit": "min"
+      },
+      "total_fat": {
+        "sum": 55.5,
+        "n": 1,
+        "unit": "g"
+      },
+      "walking_asymmetry_percentage": {
+        "sum": 0.0,
+        "n": 21,
+        "unit": null
+      },
+      "walking_double_support_percentage": {
+        "sum": 888.7,
+        "n": 33,
+        "unit": null
+      },
+      "walking_heart_rate_average": {
+        "avg": 78.0,
+        "min": 78.0,
+        "max": 78.0,
+        "n": 1,
+        "unit": "bpm"
+      },
+      "walking_running_distance": {
+        "sum": 6.878,
+        "n": 16453,
+        "unit": "km"
+      },
+      "walking_speed": {
+        "avg": 5.299,
+        "min": 4.104,
+        "max": 6.048,
+        "n": 33,
+        "unit": "km/h"
+      },
+      "walking_step_length": {
+        "avg": 78.606,
+        "min": 61.0,
+        "max": 87.0,
+        "n": 33,
+        "unit": "cm"
+      },
+      "sleep": {
+        "asleep_h": 0.0,
+        "method": "core+deep+rem",
+        "in_bed_h": 0.0,
+        "awake_h": 0.0,
+        "core_h": 0.0,
+        "deep_h": 0.0,
+        "rem_h": 0.0,
+        "sessions": 121,
+        "stage_keys": [
+          "start",
+          "endDate",
+          "end",
+          "startDate",
+          "value",
+          "source"
+        ]
+      }
+    }
+  }
+}
