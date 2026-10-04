@@ -909,15 +909,41 @@ function renderQuickEditor(){
 }
 function refreshSettingsUI(){ renderMenuEditor(); renderQuickEditor(); }
 
+/* ---------- 履歴の日付修正（v6.6・初回のみ実行） ---------- */
+var LS_MIG="tl_mig_v66";
+function migrateV66(){
+  try{
+    if(localStorage.getItem(LS_MIG)==="1") return;
+    var FROM="2026-10-04", TO="2026-10-01";
+    var hist=getHist(), idx=-1;
+    for(var i=0;i<hist.length;i++){ if(hist[i]&&hist[i].date===FROM){ idx=i; break; } }
+    if(idx>=0){
+      var occupied=hist.some(function(h){ return h&&h.date===TO; });
+      if(!occupied){
+        hist[idx].date=TO;
+        hist.sort(function(a,b){ return a.date<b.date?1:-1; });
+        localStorage.setItem(LS_HIST,JSON.stringify(hist));
+        var dEl=document.getElementById("date");
+        if(dEl&&dEl.value===FROM) dEl.value=TO;
+        if(session.date===FROM){ session.date=TO; saveDraft(); }
+        toast("10/04 の記録を 10/01 に移動しました");
+      } else {
+        toast("10/01 に既存の記録があるため、日付の自動修正は行いませんでした");
+      }
+    }
+    localStorage.setItem(LS_MIG,"1");
+    renderHistory();
+  }catch(e){}
+}
 /* ---------- 初期化 ---------- */
 function init(){
   var dEl=document.getElementById("date");
   loadNotes();
   loadDraft();
   dEl.value=session.date;
-  dEl.addEventListener("change",function(e){
-    if(!e.target.value) return;
-    var nd=e.target.value;
+  var onDatePicked=function(){
+    var nd=dEl.value;
+    if(!nd) return;
     if(nd===session.date) return;
     // v6.4: 日付を変えたら一旦リセットし、その日の保存済み記録があれば読み込む
     var h=getHist().filter(function(x){ return x.date===nd; })[0];
@@ -929,9 +955,12 @@ function init(){
       toast(nd+" は新規の記録です");
     }
         saveDraft(); render();
-  });
+  };
+  dEl.addEventListener("change",onDatePicked);
+  dEl.addEventListener("blur",onDatePicked);
   var exBox=document.getElementById("exList");
   if(exBox) exBox.addEventListener("focusout",function(){ commitActive(); autoSave(); });
+  migrateV66();
   buildExSelect(); buildPresetSelect(); buildChips(); render();
 }
 function buildExSelect(){
@@ -1191,19 +1220,34 @@ function buildValidEx(){
         }) };
     });
 }
-function autoSaveNow(){
+function writeHistory(dateStr){
   var validEx=buildValidEx();
   var hist=getHist();
-  var idx=hist.findIndex(function(h){ return h.date===session.date; });
+  var idx=hist.findIndex(function(h){ return h.date===dateStr; });
   if(!validEx.length){
     // その日の入力が空になったら、自動保存で作られた記録も取り除く
-    if(idx>=0){ hist.splice(idx,1); localStorage.setItem(LS_HIST,JSON.stringify(hist)); renderHistory(); }
-    return;
+    if(idx>=0){ hist.splice(idx,1); localStorage.setItem(LS_HIST,JSON.stringify(hist)); }
+    return false;
   }
-  var rec={date:session.date, menuName:session.menuName||"", exercises:validEx, savedAt:new Date().toISOString()};
+  var rec={date:dateStr, menuName:session.menuName||"", exercises:validEx, savedAt:new Date().toISOString()};
   if(idx>=0) hist[idx]=rec; else hist.push(rec);
   hist.sort(function(a,b){ return a.date<b.date?1:-1; });
   localStorage.setItem(LS_HIST,JSON.stringify(hist));
+  return true;
+}
+/* v6.6: カレンダーで選ばれている日付を保存先の正とする */
+function pickerDate(){
+  var el=document.getElementById("date");
+  return (el&&el.value)?el.value:"";
+}
+function syncDateFromPicker(){
+  var pd=pickerDate();
+  if(!pd||pd===session.date) return;
+  session.date=pd;   // 入力中の内容は「選択中の日付」のものとして扱う
+}
+function autoSaveNow(){
+  syncDateFromPicker();
+  writeHistory(session.date);
   saveDraft();
   renderHistory();
 }
@@ -1233,6 +1277,7 @@ function getHist(){
 }
 function saveSession(){
   commitActive();
+  syncDateFromPicker();
   var validEx=session.exercises.filter(function(e){ return e.sets.some(isValidSet); })
     .map(function(e){
       var bw=!!e.bw;
