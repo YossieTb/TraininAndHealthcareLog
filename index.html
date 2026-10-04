@@ -128,6 +128,25 @@
   .minp .bwmini input[type=checkbox]{width:18px; height:18px; accent-color:var(--accent);}
   .miplan{font-size:11px; color:var(--accent); margin:6px 0 0;}
   .mn{font-size:11px; color:var(--accent); margin-top:2px;}
+
+  /* v6.2: set frame, section headers, quick buttons */
+  .setframe{background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:10px;}
+  .setframe.bwm{background:rgba(77,163,255,.06);}
+  .sethead{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .settag{display:flex; align-items:center; gap:6px;}
+  .settag .cap{font-size:12px; color:var(--sub);}
+  .setflds{display:flex; gap:8px;}
+  .setflds .fld{flex:1; min-width:0;}
+  .setflds .fld .cap{font-size:10px; color:var(--sub); text-align:center; margin-bottom:2px;}
+  .setflds input{width:100%; text-align:center; font-size:18px; font-weight:700; padding:8px 2px;
+    border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text);}
+  .sechead{font-size:13px; font-weight:700; color:var(--accent); margin:14px 0 6px;}
+  .sechead:first-of-type{margin-top:6px;}
+  /* v6.2: make quick chips look clearly tappable (button-like) */
+  .chips .chip{padding:12px 16px; border-radius:12px; background:var(--card2);
+    border:2px solid var(--accent2); font-size:14px; font-weight:700;
+    box-shadow:0 2px 0 rgba(0,0,0,.35); user-select:none;}
+  .chips .chip:active{transform:translateY(1px); box-shadow:none; background:var(--accent2); color:#fff;}
 </style>
 </head>
 <body>
@@ -142,7 +161,8 @@
   </div>
 
   <div class="card">
-    <label>種目を追加</label>
+    <div class="sechead">種目を追加</div>
+    <label>種目を選択</label>
     <select id="exSelect"></select>
     <div class="chips" id="chipBox"></div>
     <button type="button" class="btn btn-ghost" id="qToggle" style="margin-top:10px; padding:10px;" onclick="toggleQuickEdit()">⚙ クイックボタンを編集</button>
@@ -195,7 +215,7 @@
   </div>
 
   <div class="card">
-    <label>＋ 種目プリセット（自重／重量の扱いを決めて登録）</label>
+    <div class="sechead">種目プリセット（自重／重量の扱いを決めて登録）</div>（自重／重量の扱いを決めて登録）</label>
     <select id="presetEx"></select>
     <div class="row" style="margin-top:8px;">
       <div><select id="presetBw">
@@ -209,7 +229,7 @@
   </div>
 
   <div class="card">
-    <label>＋ カスタム種目（マスターに無い種目）</label>
+    <div class="sechead">カスタム種目（マスターに無い種目）</div>（マスターに無い種目）</label>
     <div class="row">
       <div><input type="text" id="customEx" placeholder="種目名を入力"></div>
       <div style="flex:0 0 90px;"><button class="btn btn-ghost" style="margin-top:0;" onclick="addCustomEx()">追加</button></div>
@@ -217,6 +237,7 @@
     <div class="qhint">カスタム種目は自重チェックが使えます（既定はオフ）。上の「種目プリセット」で分類を指定して登録し直すこともできます。</div>
   </div>
 
+  <div class="sechead">今日の記録</div>
   <div id="exList"></div>
 
   <button class="btn btn-green" onclick="saveSession()">💾 この日の記録を保存</button>
@@ -1084,7 +1105,10 @@ function render(){
 
     ex.sets.forEach(function(s,j){
       var rowBw=(ex.bw||s.bw===true);
-      html+='<div class="setrow'+(rowBw?' bwm':'')+'"><div class="setnum">'+(j+1)+'</div>';
+      html+='<div class="setframe'+(rowBw?' bwm':'')+'">'
+        +'<div class="sethead"><div class="settag"><div class="setnum">'+(j+1)+'</div><span class="cap">セット</span></div>'
+        +'<button type="button" class="del" onclick="removeSet('+i+','+j+')">×</button></div>'
+        +'<div class="setflds">';
       if(rowBw){
         html+='<div class="fld bwnone">自重</div>'
           +'<div class="fld"><div class="cap">回数</div>'+stepHTML(i,j,'r',false)+'</div>';
@@ -1092,7 +1116,7 @@ function render(){
         html+='<div class="fld"><div class="cap">重量(kg)</div>'+stepHTML(i,j,'w',true)+'</div>'
           +'<div class="fld"><div class="cap">回数</div>'+stepHTML(i,j,'r',false)+'</div>';
       }
-      html+='<button type="button" class="del" onclick="removeSet('+i+','+j+')">×</button></div>';
+      html+='</div></div>';
     });
     html+='<button type="button" class="btn btn-ghost" onclick="addSet('+i+')">＋ セットを追加</button>';
     if(ex.bw){
