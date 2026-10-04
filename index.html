@@ -248,7 +248,6 @@
   <div id="exList"></div>
 
   <button class="btn btn-green" onclick="saveSession()">💾 この日の記録を保存</button>
-  <button class="btn btn-danger" onclick="clearDraft()">🗑 入力をクリア（保存せず）</button>
   <div class="btn-half">
     <button class="btn btn-primary" onclick="exportCSV()">CSV 出力</button>
     <button class="btn btn-primary" onclick="exportJSON()">JSON 出力</button>
@@ -691,7 +690,7 @@ function applyMenuToSession(){
     }
   });
   session.menuName=m.name;
-  saveDraft(); render(); toast("「"+m.name+"」を記録に展開しました（"+added+"種目を追加）");
+  autoSave(); render(); toast("「"+m.name+"」を記録に展開しました（"+added+"種目を追加）");
 }
 
 /* ---------- クイックボタン（②） ---------- */
@@ -929,8 +928,10 @@ function init(){
       session={date:nd, menuName:"", exercises:[]};
       toast(nd+" は新規の記録です");
     }
-    saveDraft(); render();
+        saveDraft(); render();
   });
+  var exBox=document.getElementById("exList");
+  if(exBox) exBox.addEventListener("focusout",function(){ commitActive(); autoSave(); });
   buildExSelect(); buildPresetSelect(); buildChips(); render();
 }
 function buildExSelect(){
@@ -995,23 +996,23 @@ function addExercise(name){
   if(session.exercises.some(function(e){ return e.name===name; })){ toast("すでに追加済みです"); return; }
   var bw=bwDefaultOn(name);
   session.exercises.push({name:name, sets:[{w:"",r:"",bw:bw}], done:false, bw:bw});
-  saveDraft(); render();
+  autoSave(); render();
 }
-function removeExercise(i){ session.exercises.splice(i,1); saveDraft(); render(); }
+function removeExercise(i){ session.exercises.splice(i,1); autoSave(); render(); }
 function addSet(i){
   var ex=session.exercises[i]; if(!ex) return;
   // 追加するセットの重量は、直前のセットの重量を引き継ぐ（前が空なら空のまま）
   var prev=ex.sets[ex.sets.length-1];
   var carryW=(prev&&prev.w!=null)?prev.w:"";
-  ex.sets.push({w:carryW,r:"",bw:!!ex.bw}); saveDraft(); render();
+  ex.sets.push({w:carryW,r:"",bw:!!ex.bw}); autoSave(); render();
 }
 function removeSet(i,j){
   session.exercises[i].sets.splice(j,1);
-  if(!session.exercises[i].sets.length) removeExercise(i); else { saveDraft(); render(); }
+  if(!session.exercises[i].sets.length) removeExercise(i); else { autoSave(); render(); }
 }
 function upd(i,j,k,v){
   var ex=session.exercises[i]; if(!ex||!ex.sets[j]) return;
-  ex.sets[j][k]=v; saveDraft(); render();
+  ex.sets[j][k]=v; autoSave(); render();
 }
 function commitActive(){
   var el=document.activeElement;
@@ -1032,7 +1033,7 @@ function step(i,j,k,delta,stepV,min){
   var cur=parseFloat(ex.sets[j][k]); if(isNaN(cur)) cur=0;
   cur=Math.round((cur+delta*stepV)*100)/100; if(cur<min) cur=min;
   ex.sets[j][k]=(cur===0&&k==="w")?"0":String(cur);
-  saveDraft(); render();
+  autoSave(); render();
 }
 function toggleBw(i){
   var ex=session.exercises[i]; if(!ex) return;
@@ -1040,10 +1041,10 @@ function toggleBw(i){
   commitActive();
   ex.bw=!ex.bw;
   ex.sets.forEach(function(s){ s.bw=ex.bw; });
-  saveDraft(); render();
+  autoSave(); render();
   toast(ex.bw?"自重モードにしました（重量欄を無効化）":"重量モードに戻しました");
 }
-function toggleDone(i){ session.exercises[i].done=!session.exercises[i].done; saveDraft(); render(); }
+function toggleDone(i){ session.exercises[i].done=!session.exercises[i].done; autoSave(); render(); }
 
 /* ---------- 前回記録 ---------- */
 function findPrev(name, currentDate){
@@ -1065,7 +1066,7 @@ function copyPrev(i){
   var useBw=bwAllowed(ex.name)&&(ex.bw||prevAllBw);
   ex.bw=useBw;
   ex.sets=prev.sets.map(function(s){ return {w:String(s.w), r:String(s.r), bw:useBw}; });
-  saveDraft(); render(); toast("前回記録をコピーしました");
+  autoSave(); render(); toast("前回記録をコピーしました");
 }
 
 /* ---------- 描画 ---------- */
@@ -1177,6 +1178,41 @@ function updNote(i, v){
   saveNotes();
 }
 
+/* ---------- 自動保存（入力が確定した時点で履歴へ逐次保存） ---------- */
+var autoTimer=null;
+function buildValidEx(){
+  return session.exercises.filter(function(e){ return e.sets.some(isValidSet); })
+    .map(function(e){
+      var bw=!!e.bw;
+      return { name:e.name, done:!!e.done, bw:bw,
+        sets:e.sets.filter(isValidSet).map(function(s){
+          var isBw=bw||s.bw===true;
+          return isBw ? {w:"", r:String(s.r), bw:true} : {w:String(s.w), r:String(s.r), bw:false};
+        }) };
+    });
+}
+function autoSaveNow(){
+  var validEx=buildValidEx();
+  var hist=getHist();
+  var idx=hist.findIndex(function(h){ return h.date===session.date; });
+  if(!validEx.length){
+    // その日の入力が空になったら、自動保存で作られた記録も取り除く
+    if(idx>=0){ hist.splice(idx,1); localStorage.setItem(LS_HIST,JSON.stringify(hist)); renderHistory(); }
+    return;
+  }
+  var rec={date:session.date, menuName:session.menuName||"", exercises:validEx, savedAt:new Date().toISOString()};
+  if(idx>=0) hist[idx]=rec; else hist.push(rec);
+  hist.sort(function(a,b){ return a.date<b.date?1:-1; });
+  localStorage.setItem(LS_HIST,JSON.stringify(hist));
+  saveDraft();
+  renderHistory();
+}
+function autoSave(){
+  saveDraft();
+  if(autoTimer) clearTimeout(autoTimer);
+  autoTimer=setTimeout(function(){ autoTimer=null; autoSaveNow(); },300);
+}
+
 /* ---------- 保存 ---------- */
 function saveDraft(){
   try{
@@ -1214,21 +1250,14 @@ function saveSession(){
   hist.sort(function(a,b){ return a.date<b.date?1:-1; });
   localStorage.setItem(LS_HIST,JSON.stringify(hist));
   session.exercises=JSON.parse(JSON.stringify(validEx));
-  saveDraft(); render(); renderHistory();
+    saveDraft(); render(); renderHistory();
   toast("保存しました ✓");
-}
-function clearDraft(){
-  if(!session.exercises.length){ toast("入力は空です"); return; }
-  if(!confirm("入力中の内容をすべてクリアしますか？（保存済み履歴は消えません）")) return;
-  session={date:todayStr(), menuName:"", exercises:[]};
-  document.getElementById("date").value=session.date;
-  saveDraft(); render(); toast("クリアしました");
 }
 function loadSession(date){
   var h=getHist().filter(function(x){ return x.date===date; })[0]; if(!h) return;
   session={date:h.date, menuName:(typeof h.menuName==="string"?h.menuName:""), exercises:(h.exercises||[]).map(normExercise)};
   document.getElementById("date").value=session.date;
-  saveDraft(); render(); showTab(0); toast(date+" を読み込みました");
+    saveDraft(); render(); showTab(0); toast(date+" を読み込みました");
 }
 function deleteSession(date){
   if(!confirm(date+" の記録を削除しますか？")) return;
