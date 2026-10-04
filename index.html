@@ -30,19 +30,20 @@
   .row>div{flex:1;}
   .stepper{display:flex; align-items:stretch; gap:6px;}
   .stepper button{
-    width:52px; min-height:48px; font-size:22px; font-weight:700; border:none; border-radius:10px;
-    background:var(--card2); color:var(--accent); border:1px solid var(--line);}
+    width:46px; min-width:46px; min-height:58px; font-size:26px; font-weight:700; border:none; border-radius:10px;
+    background:var(--card2); color:var(--accent); border:1px solid var(--line);
   .stepper button:active{background:var(--accent2); color:#fff;}
   .stepper input{
-    flex:1; text-align:center; font-size:20px; font-weight:700; padding:10px 4px;
-    border-radius:10px; border:1px solid var(--line); background:var(--card2); color:var(--text);}
-  .setrow{display:flex; align-items:center; gap:8px; background:var(--card2);
+    flex:1; min-width:0; min-height:58px; text-align:center; font-size:24px; font-weight:700; padding:12px 4px;
+    border-radius:10px; border:1px solid var(--line); background:var(--card2); color:var(--text);
+  .setrow{display:flex; flex-direction:column; align-items:stretch; gap:8px; background:var(--card2);
     border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:8px;}
   .setrow.bwm{background:rgba(77,163,255,.06);}
+  .settop{display:flex; align-items:center; justify-content:space-between;}
   .setnum{width:34px; height:34px; border-radius:50%; background:var(--accent2); color:#fff;
     display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;}
-  .setrow .fld{flex:1; min-width:0;}
-  .setrow .fld .cap{font-size:10px; color:var(--sub); text-align:center; margin-bottom:2px;}
+  .setrow .fld{width:100%; min-width:0;}
+  .setrow .fld .cap{font-size:12px; color:var(--sub); text-align:center; margin-bottom:2px;}
   .setrow input{width:100%; text-align:center; font-size:18px; font-weight:700; padding:8px 2px;
     border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text);}
   .fld.bwnone{display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
@@ -128,6 +129,12 @@
   .minp .bwmini input[type=checkbox]{width:18px; height:18px; accent-color:var(--accent);}
   .miplan{font-size:11px; color:var(--accent); margin:6px 0 0;}
   .mn{font-size:11px; color:var(--accent); margin-top:2px;}
+  /* 種目メモ */
+  .memobox{margin:8px 0 6px;}
+  .memolab{display:block; font-size:11px; color:var(--sub); margin:0 0 4px;}
+  .memo{width:100%; min-height:44px; padding:8px 10px; font-size:14px; line-height:1.5;
+    border-radius:10px; border:1px dashed var(--line); background:rgba(255,255,255,.02); color:var(--text); font-family:inherit;}
+  .memoline{font-size:12px; color:var(--warn); margin-top:4px;}
 </style>
 </head>
 <body>
@@ -250,7 +257,7 @@
    ===================================================================== */
 var LS_DRAFT="tl_draft_v1", LS_HIST="tl_history_v1", LS_CUSTOM="tl_custom_ex_v1",
     LS_QUICK="tl_quick_v1", LS_QUICK_OLD="tl_quick_old_v1", LS_CONF="tl_config_v1",
-    LS_MASTER="tl_master_v1", LS_MENUS="tl_menus_v1";
+    LS_MASTER="tl_master_v1", LS_MENUS="tl_menus_v1", LS_NOTE="tl_exnote_v1";
 var QUICK_VERSION=2;   // 2 = トレーナーメニュー8種が既定
 
 var BW_LABEL={always:"自重種目", sometimes:"自重でも行う種目", never:"重量種目", custom:"カスタム種目"};
@@ -325,6 +332,7 @@ var activeMenuId=null;     // 選択中のメニューID
 var TRAINER_QUICK=[];      // 選択中メニューの種目名（＝既定として復帰する内容）
 var customEx=[];
 var quickEx=[];
+var notes={};            // 種目名 → メモ（グローバルに永続化）
 var session={date:todayStr(), exercises:[], menuName:""};
 
 function todayStr(){
@@ -686,10 +694,30 @@ function saveQuick(){
   try{ localStorage.setItem(LS_QUICK, JSON.stringify(quickEx)); }catch(e){}
   saveConfig({quickVersion:QUICK_VERSION});
 }
+/* ---------- 種目メモ ---------- */
+function loadNotes(){
+  try{
+    var o=JSON.parse(localStorage.getItem(LS_NOTE)||"null");
+    notes=(o&&typeof o==="object"&&!Array.isArray(o))?o:{};
+    var k, clean={};
+    for(k in notes){ if(Object.prototype.hasOwnProperty.call(notes,k)&&typeof notes[k]==="string") clean[k]=notes[k]; }
+    notes=clean;
+  }catch(e){ notes={}; }
+}
+function saveNotes(){ try{ localStorage.setItem(LS_NOTE, JSON.stringify(notes)); }catch(e){} }
+function getNote(name){ var v=notes[name]; return (typeof v==="string")?v:""; }
+function updNote(i, v){
+  var ex=session.exercises[i]; if(!ex) return;
+  v=String(v==null?"":v);
+  if(v.trim()==="") delete notes[ex.name]; else notes[ex.name]=v;
+  saveNotes();
+}
+
 function initQuick(){
   loadMaster();
   loadCustom();
   loadMenus();
+  loadNotes();
   var st=loadQuick();
   if(st==="migrate"){
     var msg="クイックボタンの既定をトレーナーメニュー（8種目）に更新しました。\n\n"
@@ -976,6 +1004,10 @@ function commitActive(){
     var i=+p[0], j=+p[1], k=p[2];
     if(session.exercises[i]&&session.exercises[i].sets[j]) session.exercises[i].sets[j][k]=el.value;
   }
+  // 入力中のメモ欄もコミットする（render でテキストエリアが作り直されても内容が消えないように）
+  if(el&&el.classList&&el.classList.contains("memo")&&el.dataset&&el.dataset.memoex!=null){
+    updNote(+el.dataset.memoex, el.value);
+  }
 }
 function step(i,j,k,delta,stepV,min){
   commitActive();
@@ -1077,6 +1109,10 @@ function render(){
       html+='<button class="pcopy" onclick="copyPrev('+i+')">前回の値をコピー</button></div>';
     }
 
+    var memo=getNote(ex.name);
+    html+='<div class="memobox"><label class="memolab">📝 この種目のメモ（マシンの設定・姿勢のコツなど）</label>'
+      +'<textarea class="memo" rows="2" data-memoex="'+i+'" placeholder="例：シートの高さ5番／肩甲骨を寄せる" onchange="updNote('+i+',this.value)">'+esc(memo)+'</textarea></div>';
+
     html+='<div class="bwbox"><label class="bwlab'+(allowed?'':' off')+'">'
       +'<input type="checkbox"'+(allowed?(' onchange="toggleBw('+i+')"'):' disabled')+(ex.bw?' checked':'')+'>'
       +'<span>自重</span></label>'
@@ -1084,7 +1120,9 @@ function render(){
 
     ex.sets.forEach(function(s,j){
       var rowBw=(ex.bw||s.bw===true);
-      html+='<div class="setrow'+(rowBw?' bwm':'')+'"><div class="setnum">'+(j+1)+'</div>';
+      html+='<div class="setrow'+(rowBw?' bwm':'')+'">'
+        +'<div class="settop"><div class="setnum">'+(j+1)+'</div>'
+        +'<button type="button" class="del" onclick="removeSet('+i+','+j+')">×</button></div>';
       if(rowBw){
         html+='<div class="fld bwnone">自重</div>'
           +'<div class="fld"><div class="cap">回数</div>'+stepHTML(i,j,'r',false)+'</div>';
@@ -1092,7 +1130,7 @@ function render(){
         html+='<div class="fld"><div class="cap">重量(kg)</div>'+stepHTML(i,j,'w',true)+'</div>'
           +'<div class="fld"><div class="cap">回数</div>'+stepHTML(i,j,'r',false)+'</div>';
       }
-      html+='<button type="button" class="del" onclick="removeSet('+i+','+j+')">×</button></div>';
+      html+='</div>';
     });
     html+='<button type="button" class="btn btn-ghost" onclick="addSet('+i+')">＋ セットを追加</button>';
     if(ex.bw){
@@ -1179,7 +1217,8 @@ function renderHistory(){
     (h.exercises||[]).forEach(function(e){
       var ss=(e.sets||[]).map(function(s){ return normSet(s, e.name); }).filter(isValidSet);
       if(!ss.length) return;
-      lines.push(e.name+": "+ss.map(setLabel).join(", "));
+      var mn2=getNote(e.name);
+      lines.push(e.name+": "+ss.map(setLabel).join(", ")+(mn2?("　📝"+mn2):""));
       ss.forEach(function(s){
         var r=parseFloat(s.r);
         if(s.bw){ bwSets++; if(!isNaN(r)) bwReps+=r; }
@@ -1244,7 +1283,7 @@ function exportJSON(){
   commitActive();
   var rows=allRows();
   if(!rows.length){ toast("出力する記録がありません（先に保存してください）"); return; }
-  download(JSON.stringify({exported_at:new Date().toISOString(),records:rows},null,2),"training_log.json","application/json");
+  download(JSON.stringify({exported_at:new Date().toISOString(),notes:notes,records:rows},null,2),"training_log.json","application/json");
 }
 function download(content,fname,mime){
   var blob=new Blob([content],{type:mime+";charset=utf-8"});
@@ -1273,6 +1312,5 @@ initQuick();
 init();
 
 </script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
