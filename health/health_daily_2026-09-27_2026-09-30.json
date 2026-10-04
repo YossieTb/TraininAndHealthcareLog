@@ -5,15 +5,16 @@
   },
   "timezone": "Asia/Tokyo (+09:00)",
   "generated_on": "2026-10-04",
-  "source": "Apple Health -> Health Auto Export (Google Drive 'Health Auto Export')",
+  "source": "Apple Health → Health Auto Export（Google Drive「Health Auto Export」）",
   "notes": [
-    "Energy metrics converted from kJ to kcal (kJ/4.184).",
-    "sleep.asleep_h = 'asleep' stage when present, else core+deep+rem; 'inBed' is excluded because the aggregated export repeats it per session."
+    "エネルギー系は kJ ÷ 4.184 で kcal に換算。",
+    "睡眠は 1 セッション=1 レコード（value=ステージ名, qty=時間）。asleep_h は『睡眠中』ラベルがあればそれを採用し、無ければ コア+深い+レム の合算。",
+    "in_bed_h はセッション単位の合計値で重複を含むため参考値。"
   ],
   "daily": {
     "2026-09-27": {
       "active_energy": {
-        "sum": 952.567,
+        "sum": 952.57,
         "n": 34781,
         "unit": "kcal"
       },
@@ -38,7 +39,7 @@
         "unit": "min"
       },
       "basal_energy_burned": {
-        "sum": 1822.991,
+        "sum": 1822.99,
         "n": 85671,
         "unit": "kcal"
       },
@@ -50,16 +51,16 @@
         "unit": "%"
       },
       "body_mass_index": {
-        "avg": 24.701,
+        "avg": 24.7,
         "min": 24.65,
-        "max": 24.751,
+        "max": 24.75,
         "n": 2,
-        "unit": "index"
+        "unit": null
       },
       "breathing_disturbances": {
-        "sum": 0.321,
+        "sum": 0.32,
         "n": 1,
-        "unit": null
+        "unit": "count"
       },
       "carbohydrates": {
         "sum": 323.7,
@@ -67,7 +68,7 @@
         "unit": "g"
       },
       "cycling_distance": {
-        "sum": 0.688,
+        "sum": 0.69,
         "n": 223,
         "unit": "km"
       },
@@ -77,14 +78,14 @@
         "unit": null
       },
       "environmental_audio_exposure": {
-        "sum": 1959.292,
+        "sum": 1959.29,
         "n": 33,
         "unit": null
       },
       "flights_climbed": {
-        "sum": 1.058,
+        "sum": 1.06,
         "n": 24,
-        "unit": "count"
+        "unit": "階"
       },
       "handwashing": {
         "sum": 3.0,
@@ -92,14 +93,14 @@
         "unit": null
       },
       "headphone_audio_exposure": {
-        "sum": 2303.755,
+        "sum": 2303.75,
         "n": 35,
         "unit": null
       },
       "heart_rate_variability": {
-        "avg": 119.783,
-        "min": 42.343,
-        "max": 268.643,
+        "avg": 119.78,
+        "min": 42.34,
+        "max": 268.64,
         "n": 4,
         "unit": "ms"
       },
@@ -118,7 +119,7 @@
         "unit": "kg"
       },
       "physical_effort": {
-        "avg": 3.049,
+        "avg": 3.05,
         "min": 1.0,
         "max": 8.0,
         "n": 458,
@@ -130,11 +131,11 @@
         "unit": "g"
       },
       "respiratory_rate": {
-        "avg": 13.654,
+        "avg": 13.65,
         "min": 12.0,
         "max": 18.0,
         "n": 39,
-        "unit": "count/min"
+        "unit": "回/分"
       },
       "resting_heart_rate": {
         "avg": 56.0,
@@ -144,19 +145,19 @@
         "unit": "bpm"
       },
       "stair_speed_down": {
-        "sum": 0.339,
+        "sum": 0.34,
         "n": 1,
         "unit": null
       },
       "stair_speed_up": {
-        "sum": 0.238,
+        "sum": 0.24,
         "n": 1,
         "unit": null
       },
       "step_count": {
-        "sum": 7483.137,
+        "sum": 7483.14,
         "n": 29298,
-        "unit": "count"
+        "unit": "歩"
       },
       "total_fat": {
         "sum": 51.8,
@@ -176,13 +177,13 @@
         "unit": "bpm"
       },
       "walking_running_distance": {
-        "sum": 4.811,
+        "sum": 4.81,
         "n": 17946,
         "unit": "km"
       },
       "walking_speed": {
-        "avg": 3.897,
-        "min": 3.708,
+        "avg": 3.9,
+        "min": 3.71,
         "max": 4.32,
         "n": 4,
         "unit": "km/h"
@@ -202,27 +203,27 @@
         "unit": "kg"
       },
       "sleep": {
-        "asleep_h": 0.0,
-        "method": "core+deep+rem",
-        "in_bed_h": 0.0,
-        "awake_h": 0.0,
-        "core_h": 0.0,
-        "deep_h": 0.0,
-        "rem_h": 0.0,
+        "asleep_h": 6.22,
+        "method": "asleep(ラベル)",
+        "in_bed_h": 12.61,
+        "awake_h": 0.48,
+        "core_h": 5.97,
+        "deep_h": 3.14,
+        "rem_h": 3.05,
         "sessions": 75,
-        "stage_keys": [
-          "value",
-          "end",
-          "source",
-          "endDate",
-          "start",
-          "startDate"
-        ]
+        "labels_seen": {
+          "起きている": 16,
+          "ベッドに入る": 2,
+          "コア": 29,
+          "深い": 9,
+          "睡眠中": 1,
+          "REM": 18
+        }
       }
     },
     "2026-09-28": {
       "active_energy": {
-        "sum": 688.629,
+        "sum": 688.63,
         "n": 58074,
         "unit": "kcal"
       },
@@ -232,7 +233,7 @@
         "unit": "min"
       },
       "apple_sleeping_wrist_temperature": {
-        "sum": 36.075,
+        "sum": 36.07,
         "n": 1,
         "unit": "degC"
       },
@@ -247,7 +248,7 @@
         "unit": "min"
       },
       "basal_energy_burned": {
-        "sum": 1919.008,
+        "sum": 1919.01,
         "n": 85837,
         "unit": "kcal"
       },
@@ -259,16 +260,16 @@
         "unit": "%"
       },
       "body_mass_index": {
-        "avg": 24.865,
-        "min": 24.604,
-        "max": 25.127,
+        "avg": 24.87,
+        "min": 24.6,
+        "max": 25.13,
         "n": 2,
-        "unit": "index"
+        "unit": null
       },
       "breathing_disturbances": {
         "sum": 1.09,
         "n": 1,
-        "unit": null
+        "unit": "count"
       },
       "carbohydrates": {
         "sum": 281.2,
@@ -281,14 +282,14 @@
         "unit": null
       },
       "environmental_audio_exposure": {
-        "sum": 2753.601,
+        "sum": 2753.6,
         "n": 46,
         "unit": null
       },
       "flights_climbed": {
-        "sum": 32.002,
+        "sum": 32.0,
         "n": 1058,
-        "unit": "count"
+        "unit": "階"
       },
       "handwashing": {
         "sum": 54.0,
@@ -296,19 +297,19 @@
         "unit": null
       },
       "headphone_audio_exposure": {
-        "sum": 729.345,
+        "sum": 729.34,
         "n": 13,
         "unit": null
       },
       "heart_rate_variability": {
-        "avg": 79.661,
+        "avg": 79.66,
         "min": 25.8,
-        "max": 172.557,
+        "max": 172.56,
         "n": 6,
         "unit": "ms"
       },
       "physical_effort": {
-        "avg": 3.916,
+        "avg": 3.92,
         "min": 1.0,
         "max": 18.4,
         "n": 608,
@@ -320,11 +321,11 @@
         "unit": "g"
       },
       "respiratory_rate": {
-        "avg": 13.461,
+        "avg": 13.46,
         "min": 12.0,
         "max": 16.5,
         "n": 35,
-        "unit": "count/min"
+        "unit": "回/分"
       },
       "resting_heart_rate": {
         "avg": 55.0,
@@ -334,19 +335,19 @@
         "unit": "bpm"
       },
       "stair_speed_down": {
-        "sum": 6.845,
+        "sum": 6.84,
         "n": 17,
         "unit": null
       },
       "stair_speed_up": {
-        "sum": 6.828,
+        "sum": 6.83,
         "n": 21,
         "unit": null
       },
       "step_count": {
-        "sum": 11788.649,
+        "sum": 11788.65,
         "n": 25794,
-        "unit": "count"
+        "unit": "歩"
       },
       "time_in_daylight": {
         "sum": 31.0,
@@ -376,14 +377,14 @@
         "unit": "bpm"
       },
       "walking_running_distance": {
-        "sum": 8.492,
+        "sum": 8.49,
         "n": 18299,
         "unit": "km"
       },
       "walking_speed": {
-        "avg": 4.574,
+        "avg": 4.57,
         "min": 2.7,
-        "max": 6.012,
+        "max": 6.01,
         "n": 34,
         "unit": "km/h"
       },
@@ -402,27 +403,26 @@
         "unit": "kg"
       },
       "sleep": {
-        "asleep_h": 0.0,
-        "method": "core+deep+rem",
-        "in_bed_h": 0.0,
-        "awake_h": 0.0,
-        "core_h": 0.0,
-        "deep_h": 0.0,
-        "rem_h": 0.0,
+        "asleep_h": 10.61,
+        "method": "コア+深い+レム合算",
+        "in_bed_h": 5.68,
+        "awake_h": 0.51,
+        "core_h": 6.906,
+        "deep_h": 1.969,
+        "rem_h": 1.736,
         "sessions": 71,
-        "stage_keys": [
-          "endDate",
-          "value",
-          "startDate",
-          "start",
-          "end",
-          "source"
-        ]
+        "labels_seen": {
+          "起きている": 15,
+          "ベッドに入る": 1,
+          "コア": 33,
+          "深い": 13,
+          "REM": 9
+        }
       }
     },
     "2026-09-29": {
       "active_energy": {
-        "sum": 759.537,
+        "sum": 759.54,
         "n": 56579,
         "unit": "kcal"
       },
@@ -432,7 +432,7 @@
         "unit": "min"
       },
       "apple_sleeping_wrist_temperature": {
-        "sum": 35.709,
+        "sum": 35.71,
         "n": 1,
         "unit": "degC"
       },
@@ -447,7 +447,7 @@
         "unit": "min"
       },
       "basal_energy_burned": {
-        "sum": 1897.136,
+        "sum": 1897.14,
         "n": 85979,
         "unit": "kcal"
       },
@@ -463,12 +463,12 @@
         "min": 24.52,
         "max": 24.52,
         "n": 1,
-        "unit": "index"
+        "unit": null
       },
       "breathing_disturbances": {
-        "sum": 1.327,
+        "sum": 1.33,
         "n": 1,
-        "unit": null
+        "unit": "count"
       },
       "carbohydrates": {
         "sum": 326.4,
@@ -476,7 +476,7 @@
         "unit": "g"
       },
       "cycling_distance": {
-        "sum": 1.744,
+        "sum": 1.74,
         "n": 606,
         "unit": "km"
       },
@@ -486,14 +486,14 @@
         "unit": null
       },
       "environmental_audio_exposure": {
-        "sum": 2552.166,
+        "sum": 2552.17,
         "n": 47,
         "unit": null
       },
       "flights_climbed": {
-        "sum": 16.271,
+        "sum": 16.27,
         "n": 520,
-        "unit": "count"
+        "unit": "階"
       },
       "handwashing": {
         "sum": 21.0,
@@ -501,14 +501,14 @@
         "unit": null
       },
       "headphone_audio_exposure": {
-        "sum": 1770.884,
+        "sum": 1770.88,
         "n": 36,
         "unit": null
       },
       "heart_rate_variability": {
-        "avg": 61.673,
-        "min": 42.513,
-        "max": 86.916,
+        "avg": 61.67,
+        "min": 42.51,
+        "max": 86.92,
         "n": 6,
         "unit": "ms"
       },
@@ -527,7 +527,7 @@
         "unit": "kg"
       },
       "physical_effort": {
-        "avg": 3.748,
+        "avg": 3.75,
         "min": 1.0,
         "max": 12.9,
         "n": 587,
@@ -539,11 +539,11 @@
         "unit": "g"
       },
       "respiratory_rate": {
-        "avg": 13.633,
+        "avg": 13.63,
         "min": 11.5,
         "max": 17.0,
         "n": 49,
-        "unit": "count/min"
+        "unit": "回/分"
       },
       "resting_heart_rate": {
         "avg": 51.0,
@@ -558,14 +558,14 @@
         "unit": null
       },
       "stair_speed_up": {
-        "sum": 3.169,
+        "sum": 3.17,
         "n": 12,
         "unit": null
       },
       "step_count": {
-        "sum": 11446.857,
+        "sum": 11446.86,
         "n": 27040,
-        "unit": "count"
+        "unit": "歩"
       },
       "time_in_daylight": {
         "sum": 22.0,
@@ -595,14 +595,14 @@
         "unit": "bpm"
       },
       "walking_running_distance": {
-        "sum": 8.979,
+        "sum": 8.98,
         "n": 19981,
         "unit": "km"
       },
       "walking_speed": {
-        "avg": 4.895,
-        "min": 3.528,
-        "max": 6.192,
+        "avg": 4.9,
+        "min": 3.53,
+        "max": 6.19,
         "n": 41,
         "unit": "km/h"
       },
@@ -621,27 +621,27 @@
         "unit": "kg"
       },
       "sleep": {
-        "asleep_h": 0.0,
-        "method": "core+deep+rem",
-        "in_bed_h": 0.0,
-        "awake_h": 0.0,
-        "core_h": 0.0,
-        "deep_h": 0.0,
-        "rem_h": 0.0,
+        "asleep_h": 8.75,
+        "method": "asleep(ラベル)",
+        "in_bed_h": 17.12,
+        "awake_h": 1.45,
+        "core_h": 15.088,
+        "deep_h": 5.604,
+        "rem_h": 4.54,
         "sessions": 191,
-        "stage_keys": [
-          "end",
-          "value",
-          "startDate",
-          "start",
-          "source",
-          "endDate"
-        ]
+        "labels_seen": {
+          "ベッドに入る": 2,
+          "睡眠中": 1,
+          "起きている": 37,
+          "コア": 85,
+          "深い": 21,
+          "REM": 45
+        }
       }
     },
     "2026-09-30": {
       "active_energy": {
-        "sum": 1016.396,
+        "sum": 1016.4,
         "n": 46882,
         "unit": "kcal"
       },
@@ -651,7 +651,7 @@
         "unit": "min"
       },
       "apple_sleeping_wrist_temperature": {
-        "sum": 34.922,
+        "sum": 34.92,
         "n": 1,
         "unit": "degC"
       },
@@ -671,9 +671,9 @@
         "unit": "kcal"
       },
       "breathing_disturbances": {
-        "sum": 0.666,
+        "sum": 0.67,
         "n": 1,
-        "unit": null
+        "unit": "count"
       },
       "carbohydrates": {
         "sum": 342.1,
@@ -691,14 +691,14 @@
         "unit": null
       },
       "environmental_audio_exposure": {
-        "sum": 2239.776,
+        "sum": 2239.78,
         "n": 40,
         "unit": null
       },
       "flights_climbed": {
         "sum": 2.0,
         "n": 4,
-        "unit": "count"
+        "unit": "階"
       },
       "handwashing": {
         "sum": 34.0,
@@ -706,19 +706,19 @@
         "unit": null
       },
       "headphone_audio_exposure": {
-        "sum": 1254.226,
+        "sum": 1254.23,
         "n": 21,
         "unit": null
       },
       "heart_rate_variability": {
-        "avg": 78.711,
-        "min": 49.993,
-        "max": 97.913,
+        "avg": 78.71,
+        "min": 49.99,
+        "max": 97.91,
         "n": 6,
         "unit": "ms"
       },
       "physical_effort": {
-        "avg": 3.585,
+        "avg": 3.58,
         "min": 1.0,
         "max": 7.7,
         "n": 516,
@@ -730,11 +730,11 @@
         "unit": "g"
       },
       "respiratory_rate": {
-        "avg": 13.205,
+        "avg": 13.2,
         "min": 10.5,
         "max": 16.0,
         "n": 47,
-        "unit": "count/min"
+        "unit": "回/分"
       },
       "resting_heart_rate": {
         "avg": 54.0,
@@ -744,19 +744,19 @@
         "unit": "bpm"
       },
       "stair_speed_down": {
-        "sum": 2.273,
+        "sum": 2.27,
         "n": 6,
         "unit": null
       },
       "stair_speed_up": {
-        "sum": 0.325,
+        "sum": 0.33,
         "n": 1,
         "unit": null
       },
       "step_count": {
-        "sum": 10035.751,
+        "sum": 10035.75,
         "n": 27297,
-        "unit": "count"
+        "unit": "歩"
       },
       "time_in_daylight": {
         "sum": 8.0,
@@ -786,41 +786,41 @@
         "unit": "bpm"
       },
       "walking_running_distance": {
-        "sum": 6.878,
+        "sum": 6.88,
         "n": 16453,
         "unit": "km"
       },
       "walking_speed": {
-        "avg": 5.299,
-        "min": 4.104,
-        "max": 6.048,
+        "avg": 5.3,
+        "min": 4.1,
+        "max": 6.05,
         "n": 33,
         "unit": "km/h"
       },
       "walking_step_length": {
-        "avg": 78.606,
+        "avg": 78.61,
         "min": 61.0,
         "max": 87.0,
         "n": 33,
         "unit": "cm"
       },
       "sleep": {
-        "asleep_h": 0.0,
-        "method": "core+deep+rem",
-        "in_bed_h": 0.0,
-        "awake_h": 0.0,
-        "core_h": 0.0,
-        "deep_h": 0.0,
-        "rem_h": 0.0,
+        "asleep_h": 7.75,
+        "method": "asleep(ラベル)",
+        "in_bed_h": 15.47,
+        "awake_h": 1.02,
+        "core_h": 12.199,
+        "deep_h": 3.365,
+        "rem_h": 3.555,
         "sessions": 121,
-        "stage_keys": [
-          "start",
-          "endDate",
-          "end",
-          "startDate",
-          "value",
-          "source"
-        ]
+        "labels_seen": {
+          "ベッドに入る": 2,
+          "睡眠中": 1,
+          "起きている": 28,
+          "コア": 53,
+          "深い": 15,
+          "REM": 22
+        }
       }
     }
   }
