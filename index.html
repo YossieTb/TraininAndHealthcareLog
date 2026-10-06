@@ -119,6 +119,28 @@
   .diff-up{color:var(--good); font-weight:700;}
   .diff-dn{color:var(--danger); font-weight:700;}
   .hidden{display:none;}
+  /* v7.0: ヘルスケアタブ */
+  .hgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .hstat{background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:10px 8px; text-align:center;}
+  .hstat .hl{font-size:10px; color:var(--sub);}
+  .hstat .hv{font-size:17px; font-weight:700; margin:2px 0;}
+  .hstat .hu{font-size:9px; color:var(--sub);}
+  .hday{margin-bottom:12px;}
+  .hday .hd{font-size:12px; color:var(--accent); font-weight:700; margin-bottom:4px;}
+  .hchart{margin-bottom:14px;}
+  .hchart .hct{font-size:11px; color:var(--sub); margin-bottom:3px; display:flex; justify-content:space-between;}
+  .hchart .hct b{color:var(--text);}
+  .hsvg{width:100%; height:auto; display:block; background:var(--bg); border:1px solid var(--line); border-radius:8px;}
+  .hsvg .hx{font-size:7px; fill:var(--sub);}
+  .hnone{color:var(--sub); font-size:11px; padding:14px 0; text-align:center;}
+  .htablewrap{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .htable{border-collapse:collapse; font-size:11px; white-space:nowrap;}
+  .htable th{color:var(--sub); font-weight:400; padding:4px 6px; text-align:right; border-bottom:1px solid var(--line);}
+  .htable th:first-child,.htable td:first-child{text-align:left;}
+  .htable td{padding:4px 6px; text-align:right; border-bottom:1px solid var(--line);}
+  .htable tr.partial td{color:var(--warn);}
+  .hsrc{font-size:9px; color:var(--sub);}
+  .hbadge{font-size:9px; color:var(--warn); border:1px solid var(--warn); border-radius:4px; padding:0 3px; margin-left:4px;}
   /* トレーナーメニュー編集 */
   .mirow{background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:8px; margin-bottom:8px;}
   .mihead{display:flex; align-items:center; gap:6px;}
@@ -186,7 +208,7 @@
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示</div>
 <div class="toast" id="toast"></div>
 
 <button type="button" class="totop" id="toTop" onclick="scrollTopSmooth()" aria-label="ページ先頭へ戻る">▲</button>
@@ -316,9 +338,49 @@
   </div>
 </div>
 
+<div id="tab-health" class="hidden">
+  <div class="card">
+    <div class="chead" data-chead="area:h7" onclick="toggleArea('area:h7')">
+      <span class="chev">▼</span><span class="ct">直近の状況</span><span class="cs" data-csum="area:h7"></span>
+    </div>
+    <div class="cbody" data-cbody="area:h7">
+      <div id="healthSummary"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chead" data-chead="area:hchart" onclick="toggleArea('area:hchart')">
+      <span class="chev">▼</span><span class="ct">週次推移グラフ</span><span class="cs">14日分</span>
+    </div>
+    <div class="cbody" data-cbody="area:hchart">
+      <div id="healthCharts"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chead" data-chead="area:htable" onclick="toggleArea('area:htable')">
+      <span class="chev">▼</span><span class="ct">日別データ</span><span class="cs" data-csum="area:htable"></span>
+    </div>
+    <div class="cbody" data-cbody="area:htable">
+      <div id="healthTable"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chead" data-chead="area:himp" onclick="toggleArea('area:himp')">
+      <span class="chev">▶</span><span class="ct">手動インポート</span><span class="cs">HealthAutoExport の JSON</span>
+    </div>
+    <div class="cbody collapsed" data-cbody="area:himp">
+      <div class="qhint">iPhoneの「ファイル」から HealthAutoExport-YYYY-MM-DD.json を選ぶと、この端末内で集計して取り込みます（サーバーには送信されません）。同日のデータは上書きされ、GitHub のデータと自動で統合されます。</div>
+      <input type="file" id="healthFile" accept=".json,application/json" onchange="importHealthFile(event)" style="margin-top:8px;">
+      <button type="button" class="btn btn-ghost" onclick="clearHealth()" style="margin-top:8px;">🗑 この端末のヘルスデータを消去</button>
+    </div>
+  </div>
+  <button type="button" class="btn btn-ghost" onclick="fetchHealthDaily(true)">🔄 最新データを取得</button>
+  <div class="qhint" id="healthStatus" style="margin-top:8px;"></div>
+</div>
+
 <div class="tabbar">
   <button id="tb1" class="on" onclick="showTab(0)">📝 記録</button>
   <button id="tb2" onclick="showTab(1)">📋 履歴</button>
+  <button id="tb3" onclick="showTab(2)">📊 ヘルス</button>
 </div>
 
 <script>
@@ -994,6 +1056,7 @@ function init(){
   var dEl=document.getElementById("date");
   loadNotes();
   loadUI();
+  loadHealthLocal();
   loadDraft();
   dEl.value=session.date;
   var onDatePicked=function(){
@@ -1183,6 +1246,7 @@ function saveUI(){ try{ localStorage.setItem(LS_UI, JSON.stringify(UIOPEN)); }ca
 function uiDefault(k){
   if(k==="area:add") return session.exercises.length===0;   // 登録は最初だけ開く
   if(k==="area:date"||k==="area:list"||k==="area:history") return true;
+  if(k==="area:h7"||k==="area:hchart"||k==="area:htable") return true;
   return false;
 }
 function uiGet(k){ var v=UIOPEN[k]; return (typeof v==="boolean")?v:uiDefault(k); }
@@ -1568,13 +1632,313 @@ function download(content,fname,mime){
 }
 
 /* ---------- タブ/トースト ---------- */
+/* ---------- ヘルスケアタブ（v7.0） ---------- */
+var LS_HEALTH="tl_health_v1";
+var healthData={generated_at:null, days:[]};
+var healthFetched=false;
+function loadHealthLocal(){
+  try{ var o=JSON.parse(localStorage.getItem(LS_HEALTH)||"null");
+    if(o&&Array.isArray(o.days)) healthData={generated_at:o.generated_at||null, days:o.days};
+  }catch(e){}
+}
+function saveHealthLocal(){ try{ localStorage.setItem(LS_HEALTH, JSON.stringify(healthData)); }catch(e){} }
+function mergeHealthDays(days){
+  var map={};
+  healthData.days.forEach(function(d){ if(d&&d.date) map[d.date]=d; });
+  (days||[]).forEach(function(d){ if(d&&d.date) map[d.date]=Object.assign({}, map[d.date]||{}, d); });
+  healthData.days=Object.keys(map).map(function(k){ return map[k]; })
+    .sort(function(a,b){ return a.date<b.date?-1:1; });
+}
+function healthStatus(msg){ var el=document.getElementById("healthStatus"); if(el) el.textContent=msg; }
+function fetchHealthDaily(force){
+  if(typeof fetch!=="function"){ healthStatus("このブラウザは通信に対応していません"); return Promise.resolve(); }
+  healthStatus("health_daily.json を取得中…");
+  return fetch("health_daily.json?ts="+Date.now(), {cache:"no-store"}).then(function(r){
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(j){
+    if(j&&Array.isArray(j.days)){
+      mergeHealthDays(j.days);
+      if(j.generated_at) healthData.generated_at=j.generated_at;
+      saveHealthLocal(); renderHealth();
+      healthStatus("最新データを取得しました（"+(j.generated_at||"日時不明")+"）");
+    } else {
+      healthStatus("health_daily.json の形式が不正です");
+    }
+  }).catch(function(e){
+    healthStatus("サーバー取得に失敗しました（端末内の保存データを表示中）");
+    renderHealth();
+  });
+}
+function ensureHealth(){
+  renderHealth();
+  if(!healthFetched){ healthFetched=true; fetchHealthDaily(false); }
+}
+function clearHealth(){
+  if(typeof confirm==="function" && !confirm("この端末に保存されたヘルスデータを消去します。よろしいですか？")) return;
+  healthData={generated_at:null, days:[]};
+  try{ localStorage.removeItem(LS_HEALTH); }catch(e){}
+  renderHealth();
+  healthStatus("消去しました");
+}
+/* ---- HAE JSON の解析（手動インポート用） ---- */
+var HAE_MET={"step_count":"steps","walking_running_distance":"km","active_energy":"act",
+  "basal_energy_burned":"basal","apple_exercise_time":"exmin","resting_heart_rate":"rhr",
+  "heart_rate_variability":"hrv","weight_body_mass":"weight","body_fat_percentage":"bf",
+  "protein":"P","carbohydrates":"C","total_fat":"F","dietary_energy":"diet"};
+function haeNum(v){
+  if(typeof v==="number"&&isFinite(v)) return v;
+  if(typeof v==="string"){ var n=parseFloat(v); return isNaN(n)?null:n; }
+  return null;
+}
+function sleepBucket(src){
+  if(src==="Oura") return "Oura";
+  if(src==="AutoSleep") return "AutoSleep";
+  if(src&&src.indexOf("Apple")>=0) return "AppleWatch";
+  return src||"不明";
+}
+var HAE_STAGES={"コア":1,"深い":1,"REM":1,"レム":1};
+function parseHAE(j){
+  var agg={}, slp={};
+  var metrics=(j&&j.data&&j.data.metrics)||[];
+  metrics.forEach(function(m){
+    var n=m.name, pts=m.data||[];
+    if(n==="sleep_analysis"){
+      pts.forEach(function(p){
+        var dd=(p.date||"").slice(0,10); if(!dd) return;
+        var b=sleepBucket(p.source); var q=haeNum(p.qty); if(q==null) return;
+        if(!slp[dd]) slp[dd]={};
+        if(!slp[dd][b]) slp[dd][b]={};
+        var lab=p.value||"?";
+        slp[dd][b][lab]=(slp[dd][b][lab]||0)+q;
+      });
+      return;
+    }
+    var key=HAE_MET[n]; if(!key) return;
+    pts.forEach(function(p){
+      var dd=(p.date||"").slice(0,10); if(!dd) return;
+      var v=(p.qty!=null)?p.qty:p.value; v=haeNum(v); if(v==null) return;
+      if(!agg[dd]) agg[dd]={};
+      var a=agg[dd];
+      if(key==="weight"||key==="bf"){ a[key]=v; }
+      else if(key==="rhr"||key==="hrv"){
+        var s=a[key+"_a"]||{sum:0,c:0}; s.sum+=v; s.c++; a[key+"_a"]=s;
+      } else { a[key]=(a[key]||0)+v; }
+    });
+  });
+  function pickSleep(dd){
+    var by=slp[dd]||{};
+    var res={};
+    Object.keys(by).forEach(function(src){
+      var c=by[src], bed=0, whole=0, st={};
+      Object.keys(c).forEach(function(lab){
+        if(lab.indexOf("ベッド")>=0) bed=Math.max(bed,c[lab]);
+        else if(lab==="睡眠中") whole=Math.max(whole,c[lab]);
+        else if(HAE_STAGES[lab]) st[lab]=Math.max(st[lab]||0,c[lab]);
+      });
+      var t=0;
+      if(whole>0) t=whole;
+      else { var sk=Object.keys(st); if(sk.length) t=sk.reduce(function(x,k){ return x+st[k]; },0); }
+      res[src]={bed:bed||null, t:t||null};
+    });
+    var order=["Oura","AutoSleep","AppleWatch"].filter(function(s){ return res[s]; });
+    for(var i=0;i<order.length;i++){
+      var o=res[order[i]];
+      if(o.t==null||o.t<1.0) continue;
+      if(o.bed&&o.t>o.bed*1.05) continue;
+      return {v:o.t, bed:o.bed, src:order[i]};
+    }
+    return null;
+  }
+  var out={}, days=[];
+  function day(dd){ if(!out[dd]) out[dd]={date:dd}; return out[dd]; }
+  Object.keys(agg).forEach(function(dd){
+    var a=agg[dd], r=day(dd);
+    if(a.steps!=null) r.steps=Math.round(a.steps);
+    if(a.km!=null) r.km=Math.round(a.km*100)/100;
+    if(a.act!=null) r.act=Math.round(a.act/4.184);
+    if(a.basal!=null) r.basal=Math.round(a.basal/4.184);
+    if(a.exmin!=null) r.exmin=Math.round(a.exmin);
+    if(a.rhr_a&&a.rhr_a.c) r.rhr=Math.round(a.rhr_a.sum/a.rhr_a.c*10)/10;
+    if(a.hrv_a&&a.hrv_a.c) r.hrv=Math.round(a.hrv_a.sum/a.hrv_a.c*10)/10;
+    if(a.weight!=null) r.weight=a.weight;
+    if(a.bf!=null) r.bf=a.bf;
+    if(a.P!=null) r.P=Math.round(a.P*10)/10;
+    if(a.F!=null) r.F=Math.round(a.F*10)/10;
+    if(a.C!=null) r.C=Math.round(a.C*10)/10;
+    if(a.diet!=null) r.diet=Math.round(a.diet/4.184);
+  });
+  Object.keys(slp).forEach(function(dd){
+    var p=pickSleep(dd); if(!p) return;
+    var r=day(dd);
+    r.sleep=Math.round(p.v*100)/100;
+    if(p.bed) r.inbed=Math.round(p.bed*100)/100;
+    r.sleep_src=p.src;
+  });
+  Object.keys(out).forEach(function(dd){ days.push(out[dd]); });
+  days.sort(function(a,b){ return a.date<b.date?-1:1; });
+  return days;
+}
+function importHealthFile(ev){
+  var f=ev.target&&ev.target.files&&ev.target.files[0]; if(!f) return;
+  healthStatus("読み込み中: "+f.name+"（"+Math.round(f.size/1048576)+" MB）");
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var j=JSON.parse(rd.result);
+      var days=parseHAE(j);
+      if(!days.length){ healthStatus("有効なデータが見つかりませんでした"); return; }
+      mergeHealthDays(days); saveHealthLocal(); renderHealth();
+      healthStatus("取り込み完了: "+f.name+"（"+days.length+"日分）");
+    }catch(e){
+      healthStatus("読み込みに失敗しました: "+(e&&e.message?e.message:"形式エラー"));
+    }
+    ev.target.value="";
+  };
+  rd.readAsText(f);
+}
+/* ---- 表示 ---- */
+function hFmt(v,dec){
+  if(v==null||typeof v!=="number") return "—";
+  return dec? v.toFixed(dec) : Math.round(v).toLocaleString();
+}
+function shortSrc(s){ return s==="Oura"?"Oura":(s==="AutoSleep"?"AutoSleep":"Watch"); }
+function hStat(l,v,u){ return '<div class="hstat"><div class="hl">'+l+'</div><div class="hv">'+v+'</div><div class="hu">'+u+'</div></div>'; }
+function hLast14(key){
+  return healthData.days.slice(-14).map(function(d){ return {date:d.date, v:(typeof d[key]==="number"?d[key]:null)}; });
+}
+function hBarSVG(key,color,unit,dec){
+  var vals=hLast14(key), ok=vals.filter(function(d){ return d.v!=null; });
+  if(!ok.length) return '<div class="hnone">データなし</div>';
+  var n=vals.length, w=n*26, H=96, bw=w/n, max=0;
+  ok.forEach(function(d){ if(d.v>max) max=d.v; });
+  var s='<svg viewBox="0 0 '+w+' '+H+'" class="hsvg">';
+  vals.forEach(function(d,i){
+    if(d.v==null) return;
+    var bh=Math.max(2, d.v/max*76);
+    s+='<rect x="'+(i*bw+bw*0.14).toFixed(1)+'" y="'+(H-16-bh).toFixed(1)+'" width="'+(bw*0.72).toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="1.5" fill="'+color+'"><title>'+d.date+': '+hFmt(d.v,dec)+unit+'</title></rect>';
+  });
+  s+='<text x="3" y="'+(H-3)+'" class="hx">'+vals[0].date.slice(5)+'</text>';
+  s+='<text x="'+(w-3)+'" y="'+(H-3)+'" text-anchor="end" class="hx">'+vals[n-1].date.slice(5)+'</text>';
+  return s+'</svg>';
+}
+function hLineSVG(key,color,unit,dec){
+  var vals=hLast14(key), ok=vals.filter(function(d){ return d.v!=null; });
+  if(ok.length<2) return '<div class="hnone">データ不足</div>';
+  var n=vals.length, w=n*26, H=96;
+  var min=null,max=null;
+  ok.forEach(function(d){ if(min==null||d.v<min)min=d.v; if(max==null||d.v>max)max=d.v; });
+  if(max-min<0.001){ max+=1; min-=1; }
+  var pad=(max-min)*0.15; max+=pad; min-=pad;
+  function X(i){ return 13+i*(w-26)/(n-1); }
+  function Y(v){ return 8+(max-v)/(max-min)*(H-28); }
+  var s='<svg viewBox="0 0 '+w+' '+H+'" class="hsvg">';
+  s+='<text x="3" y="10" class="hx">'+hFmt(max-pad,dec)+'</text>';
+  s+='<text x="3" y="'+(H-18)+'" class="hx">'+hFmt(min+pad,dec)+'</text>';
+  var pts=[];
+  vals.forEach(function(d,i){ if(d.v!=null) pts.push(X(i).toFixed(1)+","+Y(d.v).toFixed(1)); });
+  s+='<polyline points="'+pts.join(" ")+'" fill="none" stroke="'+color+'" stroke-width="1.5"/>';
+  vals.forEach(function(d,i){
+    if(d.v==null) return;
+    s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(d.v).toFixed(1)+'" r="2" fill="'+color+'"><title>'+d.date+': '+hFmt(d.v,dec)+unit+'</title></circle>';
+  });
+  s+='<text x="3" y="'+(H-3)+'" class="hx">'+vals[0].date.slice(5)+'</text>';
+  s+='<text x="'+(w-3)+'" y="'+(H-3)+'" text-anchor="end" class="hx">'+vals[n-1].date.slice(5)+'</text>';
+  return s+'</svg>';
+}
+function hAvg(key){
+  var v=healthData.days.slice(-7).map(function(d){ return d[key]; }).filter(function(x){ return typeof x==="number"; });
+  return v.length? v.reduce(function(a,b){ return a+b; },0)/v.length : null;
+}
+function hChart(title,key,color,unit,kind,dec){
+  var last=null;
+  for(var i=healthData.days.length-1;i>=0;i--){ if(typeof healthData.days[i][key]==="number"){ last=healthData.days[i][key]; break; } }
+  var avg=hAvg(key);
+  return '<div class="hchart"><div class="hct"><span>'+title+'</span><span>最新 <b>'+hFmt(last,dec)+unit+'</b> / 7日平均 <b>'+hFmt(avg,dec)+unit+'</b></span></div>'
+    +(kind==="bar"? hBarSVG(key,color,unit,dec) : hLineSVG(key,color,unit,dec))+'</div>';
+}
+function renderHealthSummary(){
+  var box=document.getElementById("healthSummary"); if(!box) return;
+  var days=healthData.days;
+  var cs=document.querySelector('[data-csum="area:h7"]');
+  if(!days.length){
+    box.innerHTML='<div class="hnone">まだデータがありません。「🔄 最新データを取得」を押すか、HAEのJSONを手動インポートしてください。</div>';
+    if(cs) cs.textContent="未取得";
+    return;
+  }
+  var last=days[days.length-1], n7=Math.min(7,days.length);
+  if(cs) cs.textContent=last.date.slice(5);
+  var h='<div class="hday"><div class="hd">'+esc(last.date)+(last.partial?'<span class="hbadge">途中</span>':'')+'</div><div class="hgrid">'
+    +hStat("歩数",hFmt(last.steps),"歩")
+    +hStat("活動",hFmt(last.act),"kcal")
+    +hStat("運動",hFmt(last.exmin),"分")
+    +hStat("睡眠",hFmt(last.sleep,2),"h"+(last.sleep_src?' <span class="hsrc">'+shortSrc(last.sleep_src)+'</span>':''))
+    +hStat("安静時HR",hFmt(last.rhr),"bpm")
+    +hStat("HRV",hFmt(last.hrv,1),"ms")
+    +hStat("体重",hFmt(last.weight,2),"kg")
+    +hStat("体脂肪率",hFmt(last.bf,1),"%")
+    +hStat("摂取",hFmt(last.diet),"kcal")
+    +'</div></div>';
+  h+='<div class="hday"><div class="hd">直近'+n7+'日平均</div><div class="hgrid">'
+    +hStat("歩数",hFmt(hAvg("steps")),"歩/日")
+    +hStat("運動",hFmt(hAvg("exmin")),"分/日")
+    +hStat("睡眠",hFmt(hAvg("sleep"),2),"h/日")
+    +hStat("HRV",hFmt(hAvg("hrv"),1),"ms")
+    +hStat("摂取",hFmt(hAvg("diet")),"kcal/日")
+    +hStat("P/F/C",(hAvg("P")?Math.round(hAvg("P")):"—")+" / "+(hAvg("F")?Math.round(hAvg("F")):"—")+" / "+(hAvg("C")?Math.round(hAvg("C")):"—"),"g/日")
+    +'</div></div>';
+  box.innerHTML=h;
+}
+function renderHealthCharts(){
+  var box=document.getElementById("healthCharts"); if(!box) return;
+  if(!healthData.days.length){ box.innerHTML=""; return; }
+  var h="";
+  h+=hChart("歩数","steps","#4da3ff","歩","bar");
+  h+=hChart("運動時間","exmin","#3ecf8e","分","bar");
+  h+=hChart("睡眠","sleep","#8f7ae0","h","bar",2);
+  h+=hChart("安静時心拍","rhr","#ff6b6b","bpm","line",1);
+  h+=hChart("HRV","hrv","#3ecf8e","ms","line",1);
+  h+=hChart("体重","weight","#ffb454","kg","line",2);
+  h+=hChart("体脂肪率","bf","#e0aaff","%","line",1);
+  h+=hChart("摂取カロリー","diet","#3ecf8e","kcal","bar");
+  h+=hChart("タンパク質","P","#4da3ff","g","bar",1);
+  box.innerHTML=h;
+}
+function renderHealthTable(){
+  var box=document.getElementById("healthTable"); if(!box) return;
+  var days=healthData.days.slice(-14).slice().reverse();
+  var cs=document.querySelector('[data-csum="area:htable"]');
+  if(cs) cs.textContent=healthData.days.length+"日分";
+  if(!days.length){ box.innerHTML=""; return; }
+  var h='<div class="htablewrap"><table class="htable"><thead><tr>'
+    +'<th>日付</th><th>歩数</th><th>活動</th><th>運動</th><th>睡眠</th><th>出典</th><th>rHR</th><th>HRV</th><th>体重</th><th>BF%</th><th>摂取</th><th>P</th><th>F</th><th>C</th>'
+    +'</tr></thead><tbody>';
+  days.forEach(function(d){
+    h+='<tr'+(d.partial?' class="partial"':'')+'>'
+      +'<td>'+esc(d.date.slice(5))+(d.partial?'*':'')+'</td>'
+      +'<td>'+hFmt(d.steps)+'</td><td>'+hFmt(d.act)+'</td><td>'+hFmt(d.exmin)+'</td>'
+      +'<td>'+hFmt(d.sleep,2)+'</td><td>'+(d.sleep_src?shortSrc(d.sleep_src):'—')+'</td>'
+      +'<td>'+hFmt(d.rhr)+'</td><td>'+hFmt(d.hrv,1)+'</td>'
+      +'<td>'+hFmt(d.weight,2)+'</td><td>'+hFmt(d.bf,1)+'</td>'
+      +'<td>'+hFmt(d.diet)+'</td><td>'+hFmt(d.P,1)+'</td><td>'+hFmt(d.F,1)+'</td><td>'+hFmt(d.C,1)+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  box.innerHTML=h;
+}
+function renderHealth(){
+  renderHealthSummary(); renderHealthCharts(); renderHealthTable();
+  applyAreaUI();
+}
 function showTab(n){
   applyAreaUI();
   document.getElementById("tab-entry").classList.toggle("hidden",n!==0);
   document.getElementById("tab-history").classList.toggle("hidden",n!==1);
+  document.getElementById("tab-health").classList.toggle("hidden",n!==2);
   document.getElementById("tb1").classList.toggle("on",n===0);
   document.getElementById("tb2").classList.toggle("on",n===1);
+  document.getElementById("tb3").classList.toggle("on",n===2);
   if(n===1) renderHistory();
+  if(n===2) ensureHealth();
 }
 var toastTimer=null;
 function toast(msg){
