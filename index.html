@@ -189,6 +189,8 @@
 <div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可</div>
 <div class="toast" id="toast"></div>
 
+<button type="button" class="totop" id="toTop" onclick="scrollTopSmooth()" aria-label="ページ先頭へ戻る">▲</button>
+
 <div id="tab-entry">
   <div class="card">
     <div class="chead" data-chead="area:date" onclick="toggleArea('area:date')">
@@ -1250,7 +1252,7 @@ function updateToTop(){
   if(!toTopBtn) toTopBtn=document.getElementById("toTop");
   if(!toTopBtn) return;
   var y=window.pageYOffset||document.documentElement.scrollTop||0;
-  if(y>240) toTopBtn.classList.add("show"); else toTopBtn.classList.remove("show");
+  if(y>60){ toTopBtn.classList.add("show"); } else { toTopBtn.classList.remove("show"); }
 }
 function scrollTopSmooth(){
   try{ window.scrollTo({top:0, behavior:"smooth"}); }
@@ -1260,6 +1262,8 @@ function initToTop(){
   toTopBtn=document.getElementById("toTop");
   if(!toTopBtn) return;
   window.addEventListener("scroll", updateToTop, {passive:true});
+  window.addEventListener("resize", updateToTop, {passive:true});
+  window.addEventListener("orientationchange", function(){ setTimeout(updateToTop,300); }, {passive:true});
   updateToTop();
 }
 function render(){
@@ -1583,6 +1587,5 @@ init();
 
 </script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
-<button type="button" class="totop" id="toTop" onclick="scrollTopSmooth()" aria-label="ページ先頭へ戻る">▲</button>
 </body>
 </html>
