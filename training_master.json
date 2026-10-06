@@ -1,0 +1,924 @@
+{
+ "generated_at": "2026-10-07T00:31:28+0900",
+ "dedupe_key": "date+exercise+set",
+ "source_files": [
+  {
+   "device": "PC",
+   "file": "tl_PC.json",
+   "exported_at": "2026-10-06T13:32:57.758Z",
+   "records": 59,
+   "dates": [
+    "2026-09-27",
+    "2026-09-30",
+    "2026-10-06"
+   ],
+   "duplicate_keys": 0,
+   "notes": 4
+  },
+  {
+   "device": "iPhone",
+   "file": "tl_Phone.json",
+   "exported_at": "2026-10-06T13:28:48.367Z",
+   "records": 18,
+   "dates": [
+    "2026-10-01"
+   ],
+   "duplicate_keys": 0,
+   "notes": 0
+  }
+ ],
+ "exercise_names": [
+  "サイドレイズ",
+  "プレスダウン（トライセップロープ）",
+  "アブローラー",
+  "インクラインダンベルカール",
+  "ルーマニアンデッドリフト",
+  "インクラインサイドレイズ",
+  "ダンベルプレス",
+  "ケーブルプルオーバー",
+  "ラットプルダウン（パラレルナロー）",
+  "インクラインダンベルプレス",
+  "ケーブルクランチ",
+  "ケーブルサイドレイズ",
+  "リアデルト",
+  "レッグエクステンション"
+ ],
+ "exercises": [
+  {
+   "name": "サイドレイズ",
+   "records": 15,
+   "weighted_sets": 15,
+   "days": 3,
+   "first_date": "2026-09-27",
+   "last_date": "2026-10-06",
+   "bodyweight": false,
+   "max_weight_kg": 5,
+   "total_volume_kg": 1460
+  },
+  {
+   "name": "プレスダウン（トライセップロープ）",
+   "records": 10,
+   "weighted_sets": 10,
+   "days": 3,
+   "first_date": "2026-09-27",
+   "last_date": "2026-10-06",
+   "bodyweight": false,
+   "max_weight_kg": 40,
+   "total_volume_kg": 3105
+  },
+  {
+   "name": "アブローラー",
+   "records": 8,
+   "weighted_sets": 0,
+   "days": 2,
+   "first_date": "2026-10-01",
+   "last_date": "2026-10-06",
+   "bodyweight": true,
+   "max_weight_kg": 0,
+   "total_volume_kg": 0
+  },
+  {
+   "name": "インクラインダンベルカール",
+   "records": 7,
+   "weighted_sets": 7,
+   "days": 2,
+   "first_date": "2026-10-01",
+   "last_date": "2026-10-06",
+   "bodyweight": false,
+   "max_weight_kg": 8,
+   "total_volume_kg": 542
+  },
+  {
+   "name": "ルーマニアンデッドリフト",
+   "records": 6,
+   "weighted_sets": 6,
+   "days": 2,
+   "first_date": "2026-09-27",
+   "last_date": "2026-10-06",
+   "bodyweight": false,
+   "max_weight_kg": 95,
+   "total_volume_kg": 5935
+  },
+  {
+   "name": "インクラインサイドレイズ",
+   "records": 6,
+   "weighted_sets": 6,
+   "days": 2,
+   "first_date": "2026-09-30",
+   "last_date": "2026-10-06",
+   "bodyweight": false,
+   "max_weight_kg": 5,
+   "total_volume_kg": 280
+  },
+  {
+   "name": "ダンベルプレス",
+   "records": 4,
+   "weighted_sets": 4,
+   "days": 1,
+   "first_date": "2026-09-30",
+   "last_date": "2026-09-30",
+   "bodyweight": false,
+   "max_weight_kg": 15,
+   "total_volume_kg": 600.0
+  },
+  {
+   "name": "ケーブルプルオーバー",
+   "records": 3,
+   "weighted_sets": 3,
+   "days": 1,
+   "first_date": "2026-09-27",
+   "last_date": "2026-09-27",
+   "bodyweight": false,
+   "max_weight_kg": 50,
+   "total_volume_kg": 1450
+  },
+  {
+   "name": "ラットプルダウン（パラレルナロー）",
+   "records": 3,
+   "weighted_sets": 3,
+   "days": 1,
+   "first_date": "2026-09-27",
+   "last_date": "2026-09-27",
+   "bodyweight": false,
+   "max_weight_kg": 45,
+   "total_volume_kg": 1210
+  },
+  {
+   "name": "インクラインダンベルプレス",
+   "records": 3,
+   "weighted_sets": 3,
+   "days": 1,
+   "first_date": "2026-09-30",
+   "last_date": "2026-09-30",
+   "bodyweight": false,
+   "max_weight_kg": 15,
+   "total_volume_kg": 495
+  },
+  {
+   "name": "ケーブルクランチ",
+   "records": 3,
+   "weighted_sets": 3,
+   "days": 1,
+   "first_date": "2026-09-30",
+   "last_date": "2026-09-30",
+   "bodyweight": false,
+   "max_weight_kg": 40,
+   "total_volume_kg": 1110
+  },
+  {
+   "name": "ケーブルサイドレイズ",
+   "records": 3,
+   "weighted_sets": 3,
+   "days": 1,
+   "first_date": "2026-10-01",
+   "last_date": "2026-10-01",
+   "bodyweight": false,
+   "max_weight_kg": 10,
+   "total_volume_kg": 250
+  },
+  {
+   "name": "リアデルト",
+   "records": 3,
+   "weighted_sets": 3,
+   "days": 1,
+   "first_date": "2026-10-01",
+   "last_date": "2026-10-01",
+   "bodyweight": false,
+   "max_weight_kg": 30,
+   "total_volume_kg": 800
+  },
+  {
+   "name": "レッグエクステンション",
+   "records": 3,
+   "weighted_sets": 3,
+   "days": 1,
+   "first_date": "2026-10-01",
+   "last_date": "2026-10-01",
+   "bodyweight": false,
+   "max_weight_kg": 98,
+   "total_volume_kg": 3330
+  }
+ ],
+ "notes": {
+  "ルーマニアンデッドリフト": [
+   {
+    "device": "PC",
+    "text": "2026/10/06：一旦重量を下げてフォームを正しく取れるかの確認をしばらく続ける。"
+   }
+  ],
+  "プレスダウン（トライセップロープ）": [
+   {
+    "device": "PC",
+    "text": "2026/10/06：伸び悩み中。\n2026/10/06：芳賀セブンのやり方もトライしたい。"
+   }
+  ],
+  "インクラインサイドレイズ": [
+   {
+    "device": "PC",
+    "text": "体は前傾、後ろに反らないように。\n戻す時に負荷を感じるのも大事。\n何故か左の方がやりやすい。\n"
+   }
+  ],
+  "アブローラー": [
+   {
+    "device": "PC",
+    "text": "2026/10/06：基本的に立ちコロ。"
+   }
+  ]
+ },
+ "conflicts": [],
+ "records": [
+  {
+   "date": "2026-09-27",
+   "exercise": "ケーブルプルオーバー",
+   "set": 1,
+   "weight_kg": 45,
+   "reps": 10,
+   "volume_kg": 450,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "ケーブルプルオーバー",
+   "set": 2,
+   "weight_kg": 50,
+   "reps": 10,
+   "volume_kg": 500,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "ケーブルプルオーバー",
+   "set": 3,
+   "weight_kg": 50,
+   "reps": 10,
+   "volume_kg": 500,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "サイドレイズ",
+   "set": 1,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "サイドレイズ",
+   "set": 2,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "サイドレイズ",
+   "set": 3,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "サイドレイズ",
+   "set": 4,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "サイドレイズ",
+   "set": 5,
+   "weight_kg": 4,
+   "reps": 20,
+   "volume_kg": 80,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "プレスダウン（トライセップロープ）",
+   "set": 1,
+   "weight_kg": 40,
+   "reps": 5,
+   "volume_kg": 200,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "プレスダウン（トライセップロープ）",
+   "set": 2,
+   "weight_kg": 35,
+   "reps": 10,
+   "volume_kg": 350,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "プレスダウン（トライセップロープ）",
+   "set": 3,
+   "weight_kg": 35,
+   "reps": 10,
+   "volume_kg": 350,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "プレスダウン（トライセップロープ）",
+   "set": 4,
+   "weight_kg": 35,
+   "reps": 9,
+   "volume_kg": 315,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "ラットプルダウン（パラレルナロー）",
+   "set": 1,
+   "weight_kg": 45,
+   "reps": 10,
+   "volume_kg": 450,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "ラットプルダウン（パラレルナロー）",
+   "set": 2,
+   "weight_kg": 45,
+   "reps": 8,
+   "volume_kg": 360,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "ラットプルダウン（パラレルナロー）",
+   "set": 3,
+   "weight_kg": 40,
+   "reps": 10,
+   "volume_kg": 400,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "ルーマニアンデッドリフト",
+   "set": 1,
+   "weight_kg": 90,
+   "reps": 10,
+   "volume_kg": 900,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "ルーマニアンデッドリフト",
+   "set": 2,
+   "weight_kg": 95,
+   "reps": 10,
+   "volume_kg": 950,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-27",
+   "exercise": "ルーマニアンデッドリフト",
+   "set": 3,
+   "weight_kg": 95,
+   "reps": 10,
+   "volume_kg": 950,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "インクラインサイドレイズ",
+   "set": 1,
+   "weight_kg": 4,
+   "reps": 10,
+   "volume_kg": 40,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "インクラインサイドレイズ",
+   "set": 2,
+   "weight_kg": 4,
+   "reps": 10,
+   "volume_kg": 40,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "インクラインサイドレイズ",
+   "set": 3,
+   "weight_kg": 4,
+   "reps": 10,
+   "volume_kg": 40,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "インクラインダンベルプレス",
+   "set": 1,
+   "weight_kg": 15,
+   "reps": 10,
+   "volume_kg": 150,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "インクラインダンベルプレス",
+   "set": 2,
+   "weight_kg": 15,
+   "reps": 12,
+   "volume_kg": 180,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "インクラインダンベルプレス",
+   "set": 3,
+   "weight_kg": 15,
+   "reps": 11,
+   "volume_kg": 165,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "ケーブルクランチ",
+   "set": 1,
+   "weight_kg": 40,
+   "reps": 10,
+   "volume_kg": 400,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "ケーブルクランチ",
+   "set": 2,
+   "weight_kg": 40,
+   "reps": 9,
+   "volume_kg": 360,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "ケーブルクランチ",
+   "set": 3,
+   "weight_kg": 35,
+   "reps": 10,
+   "volume_kg": 350,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "サイドレイズ",
+   "set": 1,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "サイドレイズ",
+   "set": 2,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "サイドレイズ",
+   "set": 3,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "サイドレイズ",
+   "set": 4,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "サイドレイズ",
+   "set": 5,
+   "weight_kg": 4,
+   "reps": 20,
+   "volume_kg": 80,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "ダンベルプレス",
+   "set": 1,
+   "weight_kg": 12.5,
+   "reps": 13,
+   "volume_kg": 162.5,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "ダンベルプレス",
+   "set": 2,
+   "weight_kg": 12.5,
+   "reps": 13,
+   "volume_kg": 162.5,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "ダンベルプレス",
+   "set": 3,
+   "weight_kg": 12.5,
+   "reps": 10,
+   "volume_kg": 125,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "ダンベルプレス",
+   "set": 4,
+   "weight_kg": 15,
+   "reps": 10,
+   "volume_kg": 150,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "プレスダウン（トライセップロープ）",
+   "set": 1,
+   "weight_kg": 40,
+   "reps": 5,
+   "volume_kg": 200,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "プレスダウン（トライセップロープ）",
+   "set": 2,
+   "weight_kg": 40,
+   "reps": 9,
+   "volume_kg": 360,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-09-30",
+   "exercise": "プレスダウン（トライセップロープ）",
+   "set": 3,
+   "weight_kg": 35,
+   "reps": 9,
+   "volume_kg": 315,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "アブローラー",
+   "set": 1,
+   "weight_kg": null,
+   "reps": 20,
+   "volume_kg": null,
+   "bodyweight": true
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "アブローラー",
+   "set": 2,
+   "weight_kg": null,
+   "reps": 20,
+   "volume_kg": null,
+   "bodyweight": true
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "アブローラー",
+   "set": 3,
+   "weight_kg": null,
+   "reps": 20,
+   "volume_kg": null,
+   "bodyweight": true
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "アブローラー",
+   "set": 4,
+   "weight_kg": null,
+   "reps": 10,
+   "volume_kg": null,
+   "bodyweight": true
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "アブローラー",
+   "set": 5,
+   "weight_kg": null,
+   "reps": 10,
+   "volume_kg": null,
+   "bodyweight": true
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "インクラインダンベルカール",
+   "set": 1,
+   "weight_kg": 8,
+   "reps": 10,
+   "volume_kg": 80,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "インクラインダンベルカール",
+   "set": 2,
+   "weight_kg": 8,
+   "reps": 11,
+   "volume_kg": 88,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "インクラインダンベルカール",
+   "set": 3,
+   "weight_kg": 8,
+   "reps": 10,
+   "volume_kg": 80,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "インクラインダンベルカール",
+   "set": 4,
+   "weight_kg": 8,
+   "reps": 10,
+   "volume_kg": 80,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "ケーブルサイドレイズ",
+   "set": 1,
+   "weight_kg": 5,
+   "reps": 10,
+   "volume_kg": 50,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "ケーブルサイドレイズ",
+   "set": 2,
+   "weight_kg": 10,
+   "reps": 10,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "ケーブルサイドレイズ",
+   "set": 3,
+   "weight_kg": 10,
+   "reps": 10,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "リアデルト",
+   "set": 1,
+   "weight_kg": 25,
+   "reps": 10,
+   "volume_kg": 250,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "リアデルト",
+   "set": 2,
+   "weight_kg": 25,
+   "reps": 10,
+   "volume_kg": 250,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "リアデルト",
+   "set": 3,
+   "weight_kg": 30,
+   "reps": 10,
+   "volume_kg": 300,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "レッグエクステンション",
+   "set": 1,
+   "weight_kg": 88,
+   "reps": 10,
+   "volume_kg": 880,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "レッグエクステンション",
+   "set": 2,
+   "weight_kg": 98,
+   "reps": 13,
+   "volume_kg": 1274,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-01",
+   "exercise": "レッグエクステンション",
+   "set": 3,
+   "weight_kg": 98,
+   "reps": 12,
+   "volume_kg": 1176,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "アブローラー",
+   "set": 1,
+   "weight_kg": null,
+   "reps": 10,
+   "volume_kg": null,
+   "bodyweight": true
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "アブローラー",
+   "set": 2,
+   "weight_kg": null,
+   "reps": 10,
+   "volume_kg": null,
+   "bodyweight": true
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "アブローラー",
+   "set": 3,
+   "weight_kg": null,
+   "reps": 10,
+   "volume_kg": null,
+   "bodyweight": true
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "インクラインサイドレイズ",
+   "set": 1,
+   "weight_kg": 5,
+   "reps": 10,
+   "volume_kg": 50,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "インクラインサイドレイズ",
+   "set": 2,
+   "weight_kg": 5,
+   "reps": 11,
+   "volume_kg": 55,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "インクラインサイドレイズ",
+   "set": 3,
+   "weight_kg": 5,
+   "reps": 11,
+   "volume_kg": 55,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "インクラインダンベルカール",
+   "set": 1,
+   "weight_kg": 8,
+   "reps": 10,
+   "volume_kg": 80,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "インクラインダンベルカール",
+   "set": 2,
+   "weight_kg": 8,
+   "reps": 8,
+   "volume_kg": 64,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "インクラインダンベルカール",
+   "set": 3,
+   "weight_kg": 7,
+   "reps": 10,
+   "volume_kg": 70,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "サイドレイズ",
+   "set": 1,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "サイドレイズ",
+   "set": 2,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "サイドレイズ",
+   "set": 3,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "サイドレイズ",
+   "set": 4,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "サイドレイズ",
+   "set": 5,
+   "weight_kg": 5,
+   "reps": 20,
+   "volume_kg": 100,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "プレスダウン（トライセップロープ）",
+   "set": 1,
+   "weight_kg": 35,
+   "reps": 10,
+   "volume_kg": 350,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "プレスダウン（トライセップロープ）",
+   "set": 2,
+   "weight_kg": 35,
+   "reps": 9,
+   "volume_kg": 315,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "プレスダウン（トライセップロープ）",
+   "set": 3,
+   "weight_kg": 35,
+   "reps": 10,
+   "volume_kg": 350,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "ルーマニアンデッドリフト",
+   "set": 1,
+   "weight_kg": 95,
+   "reps": 10,
+   "volume_kg": 950,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "ルーマニアンデッドリフト",
+   "set": 2,
+   "weight_kg": 95,
+   "reps": 11,
+   "volume_kg": 1045,
+   "bodyweight": false
+  },
+  {
+   "date": "2026-10-06",
+   "exercise": "ルーマニアンデッドリフト",
+   "set": 3,
+   "weight_kg": 95,
+   "reps": 12,
+   "volume_kg": 1140,
+   "bodyweight": false
+  }
+ ]
+}
