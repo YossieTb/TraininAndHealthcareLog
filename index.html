@@ -132,6 +132,34 @@
   .miplan{font-size:11px; color:var(--accent); margin:6px 0 0;}
   .mn{font-size:11px; color:var(--accent); margin-top:2px;}
 
+  /* v6.8: 先頭へ戻るボタン */
+  .totop{position:fixed; right:14px; bottom:calc(84px + env(safe-area-inset-bottom));
+    width:50px; height:50px; border-radius:50%; border:1px solid var(--line);
+    background:var(--card2); color:var(--accent); font-size:19px; line-height:1;
+    display:none; align-items:center; justify-content:center; z-index:60;
+    box-shadow:0 4px 14px rgba(0,0,0,.45);}
+  .totop.show{display:flex;}
+  .totop:active{background:var(--accent2); color:#fff;}
+  .excard{scroll-margin-top:12px;}
+  /* v6.7: 折りたたみ（エリア／種目） */
+  .chead{display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; padding:2px 0; margin:0;}
+  .chead .ct{flex:1; font-size:13px; font-weight:700; color:var(--accent); min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .chead .cs{font-size:11px; color:var(--sub); font-weight:400; flex-shrink:0; padding-left:6px;}
+  .chev{width:22px; height:22px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    font-size:11px; color:var(--sub); background:var(--card2); border:1px solid var(--line); border-radius:6px;}
+  .chead:active .chev, .exl:active .chev{background:var(--accent2); color:#fff;}
+  .cbody.collapsed{display:none;}
+  .cbody{padding-top:2px;}
+  .exl{display:flex; align-items:center; gap:6px; flex:1; min-width:0; cursor:pointer; user-select:none;}
+  .excard .exhead{align-items:flex-start;}
+  .excard .exl{align-items:flex-start; padding:2px 0;}
+  .excard .exl .name{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+  .excard .exl .bwbadge,.excard .exl .badge{flex-shrink:0;}
+  .excard .excl{font-size:10px; color:var(--sub); font-weight:400; align-self:center; white-space:nowrap;}
+  .excard .exbtns{display:flex; gap:2px; flex-shrink:0;}
+  .excard .exbody.collapsed{display:none;}
+  .excard .exl .chev{margin-top:1px;}
   /* v6.2: set frame, section headers, quick buttons */
   .setframe{background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:10px;}
   .setframe.bwm{background:rgba(77,163,255,.06);}
@@ -158,17 +186,24 @@
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可</div>
 <div class="toast" id="toast"></div>
 
 <div id="tab-entry">
   <div class="card">
-    <label>日付</label>
-    <input type="date" id="date">
+    <div class="chead" data-chead="area:date" onclick="toggleArea('area:date')">
+      <span class="chev">▼</span><span class="ct">日付</span><span class="cs" data-csum="area:date"></span>
+    </div>
+    <div class="cbody" data-cbody="area:date">
+      <input type="date" id="date">
+    </div>
   </div>
 
   <div class="card">
-    <div class="sechead">種目を追加</div>
+    <div class="chead" data-chead="area:add" onclick="toggleArea('area:add')">
+      <span class="chev">▼</span><span class="ct">種目を追加</span><span class="cs" data-csum="area:add"></span>
+    </div>
+    <div class="cbody" data-cbody="area:add">
     <label>種目を選択</label>
     <select id="exSelect"></select>
     <div class="chips" id="chipBox"></div>
@@ -219,10 +254,14 @@
         <button type="button" class="btn btn-ghost hidden" id="restoreBtn" onclick="restoreOldQuick()">↩ 切替前の登録を復元</button>
       </div>
     </div>
+    </div>
   </div>
 
   <div class="card">
-    <div class="sechead">種目プリセット（自重／重量の扱いを決めて登録）</div>（自重／重量の扱いを決めて登録）</label>
+    <div class="chead" data-chead="area:preset" onclick="toggleArea('area:preset')">
+      <span class="chev">▼</span><span class="ct">種目プリセット</span><span class="cs">自重／重量の扱いを決めて登録</span>
+    </div>
+    <div class="cbody" data-cbody="area:preset">
     <select id="presetEx"></select>
     <div class="row" style="margin-top:8px;">
       <div><select id="presetBw">
@@ -233,19 +272,28 @@
       <div style="flex:0 0 96px;"><button class="btn btn-ghost" style="margin-top:0;" onclick="addPreset()">登録</button></div>
     </div>
     <div class="qhint">新しい種目は「自重でも行う種目」にすると、記録時に自重チェックを使えます。プランクのような完全な自重種目は「自重種目」を選んでください。</div>
+    </div>
   </div>
 
   <div class="card">
-    <div class="sechead">カスタム種目（マスターに無い種目）</div>（マスターに無い種目）</label>
+    <div class="chead" data-chead="area:custom" onclick="toggleArea('area:custom')">
+      <span class="chev">▼</span><span class="ct">カスタム種目</span><span class="cs">マスターに無い種目</span>
+    </div>
+    <div class="cbody" data-cbody="area:custom">
     <div class="row">
       <div><input type="text" id="customEx" placeholder="種目名を入力"></div>
       <div style="flex:0 0 90px;"><button class="btn btn-ghost" style="margin-top:0;" onclick="addCustomEx()">追加</button></div>
     </div>
     <div class="qhint">カスタム種目は自重チェックが使えます（既定はオフ）。上の「種目プリセット」で分類を指定して登録し直すこともできます。</div>
+    </div>
   </div>
 
-  <div class="sechead">今日の記録</div>
-  <div id="exList"></div>
+  <div class="chead" data-chead="area:list" onclick="toggleArea('area:list')" style="margin:16px 0 6px;">
+    <span class="chev">▼</span><span class="ct">今日の記録</span><span class="cs" data-csum="area:list"></span>
+  </div>
+  <div class="cbody" data-cbody="area:list">
+    <div id="exList"></div>
+  </div>
 
   <button class="btn btn-green" onclick="saveSession()">💾 この日の記録を保存</button>
   <div class="btn-half">
@@ -256,9 +304,13 @@
 
 <div id="tab-history" class="hidden">
   <div class="card">
-    <div class="exhead"><span class="name">保存済みセッション</span>
+    <div class="exhead" data-chead="area:history">
+      <span class="exl" onclick="toggleArea('area:history')">
+        <span class="chev">▼</span><span class="name">保存済みセッション</span></span>
       <button class="rm" onclick="clearAll()">全削除</button></div>
-    <div id="historyList" style="margin-top:10px;"></div>
+    <div class="cbody" data-cbody="area:history">
+      <div id="historyList" style="margin-top:10px;"></div>
+    </div>
   </div>
 </div>
 
@@ -939,6 +991,7 @@ function migrateV66(){
 function init(){
   var dEl=document.getElementById("date");
   loadNotes();
+  loadUI();
   loadDraft();
   dEl.value=session.date;
   var onDatePicked=function(){
@@ -954,6 +1007,7 @@ function init(){
       session={date:nd, menuName:"", exercises:[]};
       toast(nd+" は新規の記録です");
     }
+    resetExUI();
         saveDraft(); render();
   };
   dEl.addEventListener("change",onDatePicked);
@@ -962,6 +1016,8 @@ function init(){
   if(exBox) exBox.addEventListener("focusout",function(){ commitActive(); autoSave(); });
   migrateV66();
   buildExSelect(); buildPresetSelect(); buildChips(); render();
+  applyAreaUI();
+  initToTop();
 }
 function buildExSelect(){
   var sel=document.getElementById("exSelect"); if(!sel) return;
@@ -1025,7 +1081,10 @@ function addExercise(name){
   if(session.exercises.some(function(e){ return e.name===name; })){ toast("すでに追加済みです"); return; }
   var bw=bwDefaultOn(name);
   session.exercises.push({name:name, sets:[{w:"",r:"",bw:bw}], done:false, bw:bw});
+  uiSet("area:add",false);
+  focusExUI(name);
   autoSave(); render();
+  scrollToEx(session.exercises.length-1, true);
 }
 function removeExercise(i){ session.exercises.splice(i,1); autoSave(); render(); }
 function addSet(i){
@@ -1033,7 +1092,7 @@ function addSet(i){
   // 追加するセットの重量は、直前のセットの重量を引き継ぐ（前が空なら空のまま）
   var prev=ex.sets[ex.sets.length-1];
   var carryW=(prev&&prev.w!=null)?prev.w:"";
-  ex.sets.push({w:carryW,r:"",bw:!!ex.bw}); autoSave(); render();
+  ex.sets.push({w:carryW,r:"",bw:!!ex.bw}); focusExUI(ex.name); autoSave(); render();
 }
 function removeSet(i,j){
   session.exercises[i].sets.splice(j,1);
@@ -1114,18 +1173,116 @@ function bwHint(cls){
   if(cls==="sometimes") return "自重で行う場合はチェック";
   return "カスタム種目：自重で行う場合はチェック（既定はオフ）";
 }
+/* ---------- 折りたたみUI（v6.7） ---------- */
+var LS_UI="tl_ui_v67";
+var UIOPEN={};
+function loadUI(){ try{ var o=JSON.parse(localStorage.getItem(LS_UI)||"null"); UIOPEN=(o&&typeof o==="object"&&!Array.isArray(o))?o:{}; }catch(e){ UIOPEN={}; } }
+function saveUI(){ try{ localStorage.setItem(LS_UI, JSON.stringify(UIOPEN)); }catch(e){} }
+function uiDefault(k){
+  if(k==="area:add") return session.exercises.length===0;   // 登録は最初だけ開く
+  if(k==="area:date"||k==="area:list"||k==="area:history") return true;
+  return false;
+}
+function uiGet(k){ var v=UIOPEN[k]; return (typeof v==="boolean")?v:uiDefault(k); }
+function uiSet(k,v){ UIOPEN[k]=!!v; saveUI(); }
+function applyAreaUI(){
+  var nodes=document.querySelectorAll("[data-cbody]");
+  for(var n=0;n<nodes.length;n++){
+    var el=nodes[n], k=el.getAttribute("data-cbody"), open=uiGet(k);
+    if(open) el.classList.remove("collapsed"); else el.classList.add("collapsed");
+    var h=document.querySelector('[data-chead="'+k+'"]');
+    if(h){ var c=h.querySelector(".chev"); if(c) c.textContent=open?"▼":"▶"; }
+  }
+  var cs=document.querySelector('[data-csum="area:list"]');
+  if(cs){
+    var n2=session.exercises.length, dn=session.exercises.filter(function(e){ return e.done; }).length;
+    cs.textContent=n2?(n2+"種目"+(dn?"（完了"+dn+"）":"")):"未登録";
+  }
+  var ds=document.querySelector('[data-csum="area:date"]');
+  if(ds) ds.textContent=session.date;
+}
+function toggleArea(k){ uiSet(k,!uiGet(k)); applyAreaUI(); }
+function exKey(n){ return "ex:"+n; }
+function exIsOpen(name,i,total){
+  var v=UIOPEN[exKey(name)];
+  if(typeof v==="boolean") return v;
+  return total===1 ? true : (i===0);
+}
+function resetExUI(){
+  Object.keys(UIOPEN).forEach(function(k){ if(k.indexOf("ex:")===0) delete UIOPEN[k]; });
+  saveUI();
+}
+function focusExUI(name){
+  session.exercises.forEach(function(e){ UIOPEN[exKey(e.name)]=false; });
+  UIOPEN[exKey(name)]=true;
+  saveUI();
+}
+function toggleEx(i){
+  var ex=session.exercises[i]; if(!ex) return;
+  commitActive();
+  var open=!exIsOpen(ex.name,i,session.exercises.length);
+  session.exercises.forEach(function(e){ UIOPEN[exKey(e.name)]=false; });
+  if(open) UIOPEN[exKey(ex.name)]=true;
+  saveUI();
+  render();
+}
+/* v6.8: 種目追加後に対象の記録エリアまで移動＋先頭へ戻るボタン */
+function scrollToEx(i, focusInput){
+  uiSet("area:list", true);       // 親エリア（今日の記録）を折りたたみ状態から開く
+  applyAreaUI();                  // 同期で展開（この後にフォーカスできるようにする）
+  var cards=document.querySelectorAll("#exList .excard");
+  var card=cards[i];
+  if(card && focusInput!==false){
+    // 重量欄（自重種目は回数欄）へフォーカス。タップ直後の同期実行なのでiOSでもキーボードが出やすい
+    var inp=card.querySelector('.exbody input[data-cell$=",w"]')||card.querySelector(".exbody input[data-cell]");
+    if(inp){ try{ inp.focus({preventScroll:true}); }catch(e){ try{ inp.focus(); }catch(e2){} } }
+  }
+  if(!card) return;
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      try{ card.scrollIntoView({behavior:"smooth", block:"start"}); }
+      catch(e){ try{ card.scrollIntoView(); }catch(e2){} }
+    });
+  });
+}
+var toTopBtn=null;
+function updateToTop(){
+  if(!toTopBtn) toTopBtn=document.getElementById("toTop");
+  if(!toTopBtn) return;
+  var y=window.pageYOffset||document.documentElement.scrollTop||0;
+  if(y>240) toTopBtn.classList.add("show"); else toTopBtn.classList.remove("show");
+}
+function scrollTopSmooth(){
+  try{ window.scrollTo({top:0, behavior:"smooth"}); }
+  catch(e){ try{ window.scrollTo(0,0); }catch(e2){} }
+}
+function initToTop(){
+  toTopBtn=document.getElementById("toTop");
+  if(!toTopBtn) return;
+  window.addEventListener("scroll", updateToTop, {passive:true});
+  updateToTop();
+}
 function render(){
   var box=document.getElementById("exList"); box.innerHTML="";
   session.exercises.forEach(function(ex,i){
     var card=document.createElement("div");
-    card.className="card"+(ex.done?" exdone":"");
+    card.className="card excard"+(ex.done?" exdone":"");
     var st=exStats(ex);
     var cls=bwClass(ex.name), allowed=bwAllowed(ex.name);
-    var html='<div class="exhead"><span class="name">'+esc(ex.name)
+    var open=exIsOpen(ex.name,i,session.exercises.length);
+    var esum=(st.sets? st.sets+"セット":"未入力");
+    if(!ex.bw&&st.vol>0) esum+=" / "+Math.round(st.vol).toLocaleString()+"kg";
+    else if(ex.bw&&st.reps>0) esum+=" / "+st.reps+"回";
+    var html='<div class="exhead">'
+      +'<span class="exl" onclick="toggleEx('+i+')">'
+      +'<span class="chev">'+(open?"▼":"▶")+'</span>'
+      +'<span class="name">'+esc(ex.name)+'</span>'
       +(ex.bw?'<span class="bwbadge">自重</span>':'')
-      +(ex.done?'<span class="badge">完了</span>':'')+'</span>'
-      +'<span><button class="rm" onclick="toggleDone('+i+')">'+(ex.done?'戻す':'完了')+'</button>'
-      +'<button class="rm" onclick="removeExercise('+i+')">削除</button></span></div>';
+      +(ex.done?'<span class="badge">完了</span>':'')
+      +'<span class="excl">'+esc(esum)+'</span></span>'
+      +'<span class="exbtns"><button class="rm" onclick="toggleDone('+i+')">'+(ex.done?'戻す':'完了')+'</button>'
+      +'<button class="rm" onclick="removeExercise('+i+')">削除</button></span></div>'
+      +'<div class="exbody'+(open?'':' collapsed')+'">';
 
     var mi=menuItemFor(ex.name);
     if(mi) html+='<div class="miplan">📋 メニュー指定: '+esc(planText(mi))+'</div>';
@@ -1184,8 +1341,10 @@ function render(){
     } else if(st.vol>0){
       html+='<div class="totalvol">種目ボリューム: '+st.vol.toLocaleString()+' kg</div>';
     }
+    html+='</div>';
     card.innerHTML=html; box.appendChild(card);
   });
+  applyAreaUI();
 }
 
 /* ---------- 種目メモ（種目名ごとに端末へ保存） ---------- */
@@ -1299,6 +1458,7 @@ function saveSession(){
   toast("保存しました ✓");
 }
 function loadSession(date){
+  resetExUI();
   var h=getHist().filter(function(x){ return x.date===date; })[0]; if(!h) return;
   session={date:h.date, menuName:(typeof h.menuName==="string"?h.menuName:""), exercises:(h.exercises||[]).map(normExercise)};
   document.getElementById("date").value=session.date;
@@ -1316,6 +1476,7 @@ function clearAll(){
 }
 
 /* ---------- 履歴 ---------- */
+/* v6.7: エリア・種目の折りたたみ対応 */
 function renderHistory(){
   var box=document.getElementById("historyList"); var hist=getHist();
   if(!hist.length){ box.innerHTML='<div style="color:var(--sub);font-size:13px;">まだ記録がありません</div>'; return; }
@@ -1404,6 +1565,7 @@ function download(content,fname,mime){
 
 /* ---------- タブ/トースト ---------- */
 function showTab(n){
+  applyAreaUI();
   document.getElementById("tab-entry").classList.toggle("hidden",n!==0);
   document.getElementById("tab-history").classList.toggle("hidden",n!==1);
   document.getElementById("tb1").classList.toggle("on",n===0);
@@ -1421,5 +1583,6 @@ init();
 
 </script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+<button type="button" class="totop" id="toTop" onclick="scrollTopSmooth()" aria-label="ページ先頭へ戻る">▲</button>
 </body>
 </html>
