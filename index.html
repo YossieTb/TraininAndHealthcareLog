@@ -141,6 +141,40 @@
   .htable tr.partial td{color:var(--warn);}
   .hsrc{font-size:9px; color:var(--sub);}
   .hbadge{font-size:9px; color:var(--warn); border:1px solid var(--warn); border-radius:4px; padding:0 3px; margin-left:4px;}
+
+  /* ===== v7.1: 保存前の日付確認モーダル / カレンダー ===== */
+  .mwrap{position:fixed; inset:0; background:rgba(0,0,0,.62); display:none;
+    align-items:center; justify-content:center; padding:16px; z-index:120;}
+  .mwrap.on{display:flex;}
+  .mbox{background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:16px; max-width:420px; width:100%; box-shadow:0 12px 34px rgba(0,0,0,.55);
+    max-height:88vh; overflow-y:auto;}
+  .mbox .mtitle{font-size:15px; font-weight:700; margin-bottom:8px;}
+  .mbox .mmsg{font-size:14px; line-height:1.6; margin-bottom:12px;}
+  .mbox .mmsg b{color:var(--accent); font-size:15px;}
+  .mbox .mrow{display:flex; gap:8px; margin-top:10px;}
+  .mbox .mrow .btn{margin-top:0;}
+  .cal .chead2{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .cal .chead2 .cm{background:var(--card2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; width:38px; height:34px; font-size:17px; line-height:1;}
+  .cal .chead2 .clab{font-size:14px; font-weight:700;}
+  .cal table{width:100%; border-collapse:collapse; table-layout:fixed;}
+  .cal th{font-size:10px; color:var(--sub); font-weight:400; padding:4px 0;}
+  .cal td{text-align:center; padding:1px 0;}
+  .cal .cd{position:relative; height:40px; display:flex; align-items:center; justify-content:center;
+    border-radius:9px; font-size:14px; cursor:pointer; border:1px solid transparent;}
+  .cal .cd.out{color:var(--sub); opacity:.3;}
+  .cal .cd.has{background:var(--card2); border-color:var(--line);}
+  .cal .cd.has:after{content:""; position:absolute; bottom:5px; left:50%; transform:translateX(-50%);
+    width:5px; height:5px; border-radius:50%; background:var(--good);}
+  .cal .cd.today{border-color:var(--accent);}
+  .cal .cd.sel{background:var(--accent); color:#05131f; font-weight:700; border-color:var(--accent);}
+  .cal .cd.sel:after{background:#05131f;}
+  .cal .clegend{font-size:10px; color:var(--sub); margin-top:8px;}
+  .cal .clegend i{display:inline-block; width:6px; height:6px; border-radius:50%;
+    background:var(--good); margin-right:4px; vertical-align:middle;}
+  .chint{font-size:11px; color:var(--sub); margin-top:8px; line-height:1.5;}
+  .chint b{color:var(--accent);}
   /* トレーナーメニュー編集 */
   .mirow{background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:8px; margin-bottom:8px;}
   .mihead{display:flex; align-items:center; gap:6px;}
@@ -210,6 +244,27 @@
 <h1>🏋️ トレーニング記録</h1>
 <div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示</div>
 <div class="toast" id="toast"></div>
+<!-- v7.1: 保存前の日付確認 -->
+<div class="mwrap" id="saveConfirm">
+  <div class="mbox">
+    <div class="mtitle">保存の確認</div>
+    <div class="mmsg" id="scMsg"></div>
+    <div class="mrow">
+      <button type="button" class="btn btn-green" onclick="scConfirm()">OK</button>
+      <button type="button" class="btn btn-ghost" onclick="scChangeDate()">日付を変える</button>
+    </div>
+  </div>
+</div>
+<div class="mwrap" id="calWrap">
+  <div class="mbox">
+    <div class="mtitle" id="calTitle">日付を変える</div>
+    <div id="calBody"></div>
+    <div class="mrow">
+      <button type="button" class="btn btn-ghost" onclick="calClose()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 
 <button type="button" class="totop" id="toTop" onclick="scrollTopSmooth()" aria-label="ページ先頭へ戻る">▲</button>
 
@@ -386,7 +441,7 @@
 <script>
 "use strict";
 /* =====================================================================
-   トレーニング記録アプリ v6
+   トレーニング記録アプリ v7.1
    ・自重（ボディウェイト）種目のチェック対応
    ・トレーナーメニューの管理（複数メニューの追加・改名・複製・削除・種目編集・既定復帰）
    ・クイックボタン（②）＝ 記録画面に出すボタン
@@ -1059,22 +1114,7 @@ function init(){
   loadHealthLocal();
   loadDraft();
   dEl.value=session.date;
-  var onDatePicked=function(){
-    var nd=dEl.value;
-    if(!nd) return;
-    if(nd===session.date) return;
-    // v6.4: 日付を変えたら一旦リセットし、その日の保存済み記録があれば読み込む
-    var h=getHist().filter(function(x){ return x.date===nd; })[0];
-    if(h){
-      session={date:h.date, menuName:(typeof h.menuName==="string"?h.menuName:""), exercises:(h.exercises||[]).map(normExercise)};
-      toast(nd+" の記録を読み込みました");
-    } else {
-      session={date:nd, menuName:"", exercises:[]};
-      toast(nd+" は新規の記録です");
-    }
-    resetExUI();
-        saveDraft(); render();
-  };
+  var onDatePicked=function(){ setSessionDate(dEl.value); };
   dEl.addEventListener("change",onDatePicked);
   dEl.addEventListener("blur",onDatePicked);
   var exBox=document.getElementById("exList");
@@ -1505,6 +1545,22 @@ function getHist(){
 function saveSession(){
   commitActive();
   syncDateFromPicker();
+  var validEx=session.exercises.filter(function(e){ return e.sets.some(isValidSet); });
+  if(!validEx.length){ toast("記録がありません"); return; }
+  var d=session.date||jstDateStr();
+  var has=!!histDates()[d];
+  document.getElementById("scMsg").innerHTML=
+    '<b>'+dateLabelJa(d)+'</b>分の記録して保存します。'
+    +(has? '<div class="chint">この日付にはすでに記録があります。OKすると<b>マージ</b>して保存します（既存の記録は残ります）。</div>'
+         : '<div class="chint">OKで保存します。日付が違う場合は「日付を変える」から選び直せます。</div>');
+  document.getElementById("saveConfirm").classList.add("on");
+}
+function scClose(){ document.getElementById("saveConfirm").classList.remove("on"); }
+function scConfirm(){ scClose(); doSaveSession(); }
+function scChangeDate(){ scClose(); calReturnToSave=true; openDatePicker(); }
+function doSaveSession(){
+  commitActive();
+  syncDateFromPicker();
   var validEx=session.exercises.filter(function(e){ return e.sets.some(isValidSet); })
     .map(function(e){
       var bw=!!e.bw;
@@ -1517,13 +1573,119 @@ function saveSession(){
   if(!validEx.length){ toast("記録がありません"); return; }
   var hist=getHist();
   var idx=hist.findIndex(function(h){ return h.date===session.date; });
-  var rec={date:session.date, menuName:session.menuName||"", exercises:validEx, savedAt:new Date().toISOString()};
-  if(idx>=0) hist[idx]=rec; else hist.push(rec);
+  var merged=false, added=0;
+  if(idx>=0){
+    var before=countSetsOf(hist[idx].exercises);
+    var ex2=mergeExerciseLists(hist[idx].exercises, validEx);
+    added=countSetsOf(ex2)-before;
+    hist[idx]={ date:session.date,
+      menuName:(typeof hist[idx].menuName==="string"&&hist[idx].menuName)?hist[idx].menuName:(session.menuName||""),
+      exercises:ex2, savedAt:new Date().toISOString() };
+    session.exercises=JSON.parse(JSON.stringify(ex2));
+    merged=true;
+  } else {
+    hist.push({date:session.date, menuName:session.menuName||"", exercises:validEx, savedAt:new Date().toISOString()});
+    session.exercises=JSON.parse(JSON.stringify(validEx));
+  }
   hist.sort(function(a,b){ return a.date<b.date?1:-1; });
   localStorage.setItem(LS_HIST,JSON.stringify(hist));
-  session.exercises=JSON.parse(JSON.stringify(validEx));
-    saveDraft(); render(); renderHistory();
-  toast("保存しました ✓");
+  saveDraft(); render(); renderHistory();
+  toast(merged? ("マージして保存しました ✓（+"+added+"セット）") : "保存しました ✓");
+}
+/* ===== v7.1: 日付まわり（マージ保存・カレンダー選択） ===== */
+function v71pad(n){ n=String(n); return n.length<2? ("0"+n) : n; }
+/* JST/端末ローカルの暦日で作る。toISOString() はUTCに寄るので使わない */
+function jstDateStr(dt){
+  dt=dt||new Date();
+  return dt.getFullYear()+"-"+v71pad(dt.getMonth()+1)+"-"+v71pad(dt.getDate());
+}
+function dateLabelJa(s){ return String(s==null?"":s).replace(/-/g,"/"); }
+function histDates(){ var o={}; getHist().forEach(function(h){ if(h&&h.date) o[h.date]=true; }); return o; }
+function countSetsOf(exs){ var n=0; (exs||[]).forEach(function(e){ n+=(e.sets||[]).filter(isValidSet).length; }); return n; }
+function setKeyOf(s){
+  if(s&&s.bw) return "bw:"+String(s.r==null?"":s.r);
+  return String(s&&s.w!=null?s.w:"")+"x"+String(s&&s.r!=null?s.r:"");
+}
+function mergeExerciseLists(base, add){
+  var out=JSON.parse(JSON.stringify(base||[]));
+  (add||[]).forEach(function(ne){
+    var tgt=null,i;
+    for(i=0;i<out.length;i++){ if(out[i]&&out[i].name===ne.name){ tgt=out[i]; break; } }
+    if(!tgt){ out.push(JSON.parse(JSON.stringify(ne))); return; }
+    tgt.bw=!!(tgt.bw||ne.bw);
+    tgt.done=!!(tgt.done||ne.done);
+    var seen={};
+    (tgt.sets||[]).forEach(function(s){ seen[setKeyOf(s)]=true; });
+    (ne.sets||[]).forEach(function(s){
+      var k=setKeyOf(s);
+      if(!seen[k]){ tgt.sets.push(JSON.parse(JSON.stringify(s))); seen[k]=true; }
+    });
+  });
+  return out;
+}
+function setSessionDate(nd){
+  if(!nd||nd===session.date) return;
+  var h=getHist().filter(function(x){ return x.date===nd; })[0];
+  if(h){
+    session={date:h.date, menuName:(typeof h.menuName==="string"?h.menuName:""), exercises:(h.exercises||[]).map(normExercise)};
+    toast(nd+" の記録を読み込みました");
+  } else {
+    session={date:nd, menuName:"", exercises:[]};
+    toast(nd+" は新規の記録です");
+  }
+  var dEl=document.getElementById("date"); if(dEl) dEl.value=nd;
+  resetExUI(); saveDraft(); render();
+}
+/* 入力中の内容を保ったまま日付だけ移す（保存確定前の「日付を変える」用） */
+function moveSessionDate(nd){
+  if(!nd||nd===session.date) return;
+  session.date=nd;
+  var dEl=document.getElementById("date"); if(dEl) dEl.value=nd;
+  saveDraft(); render();
+}
+/* ---- カレンダー ---- */
+var calState={y:null,m:null,sel:null}, calReturnToSave=false;
+function openDatePicker(){
+  var base=String(session.date||jstDateStr()).split("-");
+  calState.y=parseInt(base[0],10); calState.m=parseInt(base[1],10)-1; calState.sel=session.date||jstDateStr();
+  renderCal();
+  document.getElementById("calWrap").classList.add("on");
+}
+function calClose(){ document.getElementById("calWrap").classList.remove("on"); }
+function calShift(n){
+  calState.m+=n;
+  if(calState.m<0){ calState.m=11; calState.y--; }
+  if(calState.m>11){ calState.m=0; calState.y++; }
+  renderCal();
+}
+function calPick(ds){
+  calClose();
+  if(calReturnToSave){ calReturnToSave=false; moveSessionDate(ds); saveSession(); return; }
+  setSessionDate(ds);
+}
+function renderCal(){
+  var y=calState.y, m=calState.m, has=histDates(), today=jstDateStr();
+  var first=new Date(y,m,1), start=first.getDay();
+  var h='<div class="cal"><div class="chead2"><button type="button" class="cm" onclick="calShift(-1)">‹</button>'
+    +'<div class="clab">'+y+'年'+(m+1)+'月</div>'
+    +'<button type="button" class="cm" onclick="calShift(1)">›</button></div>'
+    +'<table><thead><tr><th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th></tr></thead><tbody>';
+  var d=1-start;
+  for(var r=0;r<6;r++){
+    h+='<tr>';
+    for(var c=0;c<7;c++,d++){
+      var cd=new Date(y,m,d), ds=jstDateStr(cd), inM=(cd.getMonth()===m);
+      var cls="cd"+(inM?"":" out")+((inM&&has[ds])?" has":"")+((inM&&ds===today)?" today":"")+((inM&&ds===calState.sel)?" sel":"");
+      h+='<td><div class="'+cls+'"'+(inM?(' onclick="calPick(\''+ds+'\')"'):'')+'>'+cd.getDate()+'</div></td>';
+    }
+    h+='</tr>';
+  }
+  h+='</tbody></table><div class="clegend"><i></i>記録データが既にある日</div>'
+    +'<div class="chint">'+(calReturnToSave
+        ? '入力中の内容をこの日付に移して保存します。記録がある日を選らむとマージされます。'
+        : '選んだ日付の記録を読み込みます。')
+    +'<br>現在の選択日: <b>'+dateLabelJa(calState.sel)+'</b></div></div>';
+  document.getElementById("calBody").innerHTML=h;
 }
 function loadSession(date){
   resetExUI();
@@ -1807,55 +1969,94 @@ function hStat(l,v,u){ return '<div class="hstat"><div class="hl">'+l+'</div><di
 function hLast14(key){
   return healthData.days.slice(-14).map(function(d){ return {date:d.date, v:(typeof d[key]==="number"?d[key]:null)}; });
 }
-function hBarSVG(key,color,unit,dec){
-  var vals=hLast14(key), ok=vals.filter(function(d){ return d.v!=null; });
-  if(!ok.length) return '<div class="hnone">データなし</div>';
-  var n=vals.length, w=n*26, H=96, bw=w/n, max=0;
-  ok.forEach(function(d){ if(d.v>max) max=d.v; });
-  var s='<svg viewBox="0 0 '+w+' '+H+'" class="hsvg">';
-  vals.forEach(function(d,i){
-    if(d.v==null) return;
-    var bh=Math.max(2, d.v/max*76);
-    s+='<rect x="'+(i*bw+bw*0.14).toFixed(1)+'" y="'+(H-16-bh).toFixed(1)+'" width="'+(bw*0.72).toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="1.5" fill="'+color+'"><title>'+d.date+': '+hFmt(d.v,dec)+unit+'</title></rect>';
-  });
-  s+='<text x="3" y="'+(H-3)+'" class="hx">'+vals[0].date.slice(5)+'</text>';
-  s+='<text x="'+(w-3)+'" y="'+(H-3)+'" text-anchor="end" class="hx">'+vals[n-1].date.slice(5)+'</text>';
-  return s+'</svg>';
-}
-function hLineSVG(key,color,unit,dec){
-  var vals=hLast14(key), ok=vals.filter(function(d){ return d.v!=null; });
-  if(ok.length<2) return '<div class="hnone">データ不足</div>';
-  var n=vals.length, w=n*26, H=96;
-  var min=null,max=null;
-  ok.forEach(function(d){ if(min==null||d.v<min)min=d.v; if(max==null||d.v>max)max=d.v; });
-  if(max-min<0.001){ max+=1; min-=1; }
-  var pad=(max-min)*0.15; max+=pad; min-=pad;
-  function X(i){ return 13+i*(w-26)/(n-1); }
-  function Y(v){ return 8+(max-v)/(max-min)*(H-28); }
-  var s='<svg viewBox="0 0 '+w+' '+H+'" class="hsvg">';
-  s+='<text x="3" y="10" class="hx">'+hFmt(max-pad,dec)+'</text>';
-  s+='<text x="3" y="'+(H-18)+'" class="hx">'+hFmt(min+pad,dec)+'</text>';
-  var pts=[];
-  vals.forEach(function(d,i){ if(d.v!=null) pts.push(X(i).toFixed(1)+","+Y(d.v).toFixed(1)); });
-  s+='<polyline points="'+pts.join(" ")+'" fill="none" stroke="'+color+'" stroke-width="1.5"/>';
-  vals.forEach(function(d,i){
-    if(d.v==null) return;
-    s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(d.v).toFixed(1)+'" r="2" fill="'+color+'"><title>'+d.date+': '+hFmt(d.v,dec)+unit+'</title></circle>';
-  });
-  s+='<text x="3" y="'+(H-3)+'" class="hx">'+vals[0].date.slice(5)+'</text>';
-  s+='<text x="'+(w-3)+'" y="'+(H-3)+'" text-anchor="end" class="hx">'+vals[n-1].date.slice(5)+'</text>';
-  return s+'</svg>';
-}
 function hAvg(key){
   var v=healthData.days.slice(-7).map(function(d){ return d[key]; }).filter(function(x){ return typeof x==="number"; });
   return v.length? v.reduce(function(a,b){ return a+b; },0)/v.length : null;
 }
-function hChart(title,key,color,unit,kind,dec){
+/* ---- v7.1: 回復しきい値（暫定。この3行を変えれば基準が変わる） ---- */
+var HRV_OK=75, HRV_NG=60;   /* HRV(ms)。OK=75ms以上 / NG=60ms未満。回復率100%=75ms, 80%=60ms */
+var RHR_OK=55, RHR_NG=58;   /* 安静時心拍(bpm)。低いほど良い。OK=55以下 / NG=58超 */
+function ensureRecovery(){
+  (healthData.days||[]).forEach(function(d){
+    if(typeof d.hrv==="number" && HRV_OK>0){ d.hrv_pct=Math.max(0, Math.round(d.hrv/HRV_OK*1000)/10); }
+    else d.hrv_pct=null;
+  });
+}
+function hGridLines(min,max,Y,w,L,R,dec){
+  var s='',N=4,i,v,y;
+  for(i=0;i<=N;i++){
+    v=min+(max-min)*i/N; y=Y(v);
+    s+='<line x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(w-R)+'" y2="'+y.toFixed(1)+'" stroke="#303845" stroke-width="1"/>';
+    s+='<text x="'+(L-4)+'" y="'+(y+2.5).toFixed(1)+'" class="hx" text-anchor="end">'+hFmt(v,dec)+'</text>';
+  }
+  return s;
+}
+function hThreshLine(y,w,L,R,label,good){
+  var col=good? "#3ecf8e" : "#ff6b6b";
+  return '<line x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(w-R)+'" y2="'+y.toFixed(1)+'" stroke="'+col
+    +'" stroke-width="1" stroke-dasharray="4 3" opacity="0.95"/>'
+    +'<text x="'+(w-R-2)+'" y="'+(y-3).toFixed(1)+'" class="hx" text-anchor="end" fill="'+col+'">'+label+'</text>';
+}
+function hBarSVG(key,color,unit,dec,opts){
+  opts=opts||{};
+  var vals=hLast14(key), ok=vals.filter(function(d){ return d.v!=null; });
+  if(!ok.length) return '<div class="hnone">データなし</div>';
+  var n=vals.length, w=n*26, H=104, L=30, R=8, T=10, B=22;
+  var max=0; ok.forEach(function(d){ if(d.v>max) max=d.v; });
+  if(typeof opts.ok==="number") max=Math.max(max,opts.ok);
+  if(typeof opts.ng==="number") max=Math.max(max,opts.ng);
+  if(max<=0) max=1;
+  max=max*1.06;
+  var bw=(w-L-R)/n;
+  function Y(v){ return T+(max-v)/max*(H-T-B); }
+  var s='<svg viewBox="0 0 '+w+' '+H+'" class="hsvg">';
+  s+=hGridLines(0,max,Y,w,L,R,dec);
+  if(typeof opts.ng==="number") s+=hThreshLine(Y(opts.ng),w,L,R,opts.ngLabel||"NG",0);
+  if(typeof opts.ok==="number") s+=hThreshLine(Y(opts.ok),w,L,R,opts.okLabel||"OK",1);
+  vals.forEach(function(d,i){
+    if(d.v==null) return;
+    var bh=Math.max(2, Y(0)-Y(d.v));
+    s+='<rect x="'+(L+i*bw+bw*0.14).toFixed(1)+'" y="'+Y(d.v).toFixed(1)+'" width="'+(bw*0.72).toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="1.5" fill="'+color+'"><title>'+d.date+': '+hFmt(d.v,dec)+unit+'</title></rect>';
+  });
+  s+='<text x="'+L+'" y="'+(H-6)+'" class="hx">'+vals[0].date.slice(5).replace("-","/")+'</text>';
+  s+='<text x="'+(w-R)+'" y="'+(H-6)+'" class="hx" text-anchor="end">'+vals[n-1].date.slice(5).replace("-","/")+'</text>';
+  return s+'</svg>';
+}
+function hLineSVG(key,color,unit,dec,opts){
+  opts=opts||{};
+  var vals=hLast14(key), ok=vals.filter(function(d){ return d.v!=null; });
+  if(ok.length<2) return '<div class="hnone">データ不足</div>';
+  var n=vals.length, w=n*26, H=104, L=30, R=8, T=10, B=22;
+  var min=null,max=null;
+  ok.forEach(function(d){ if(min==null||d.v<min)min=d.v; if(max==null||d.v>max)max=d.v; });
+  if(typeof opts.ok==="number"){ min=Math.min(min,opts.ok); max=Math.max(max,opts.ok); }
+  if(typeof opts.ng==="number"){ min=Math.min(min,opts.ng); max=Math.max(max,opts.ng); }
+  if(max-min<0.001){ max+=1; min-=1; }
+  var pad=(max-min)*0.15; max+=pad; min-=pad;
+  function X(i){ return L+i*(w-L-R)/Math.max(1,(n-1)); }
+  function Y(v){ return T+(max-v)/(max-min)*(H-T-B); }
+  var s='<svg viewBox="0 0 '+w+' '+H+'" class="hsvg">';
+  s+=hGridLines(min,max,Y,w,L,R,dec);
+  if(typeof opts.ng==="number") s+=hThreshLine(Y(opts.ng),w,L,R,opts.ngLabel||"NG",0);
+  if(typeof opts.ok==="number") s+=hThreshLine(Y(opts.ok),w,L,R,opts.okLabel||"OK",1);
+  var pts=[];
+  vals.forEach(function(d,i){ if(d.v!=null) pts.push(X(i).toFixed(1)+","+Y(d.v).toFixed(1)); });
+  s+='<polyline points="'+pts.join(" ")+'" fill="none" stroke="'+color+'" stroke-width="1.6"/>';
+  vals.forEach(function(d,i){
+    if(d.v==null) return;
+    s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(d.v).toFixed(1)+'" r="2" fill="'+color+'"><title>'+d.date+': '+hFmt(d.v,dec)+unit+'</title></circle>';
+  });
+  s+='<text x="'+L+'" y="'+(H-6)+'" class="hx">'+vals[0].date.slice(5).replace("-","/")+'</text>';
+  s+='<text x="'+(w-R)+'" y="'+(H-6)+'" class="hx" text-anchor="end">'+vals[n-1].date.slice(5).replace("-","/")+'</text>';
+  return s+'</svg>';
+}
+function hChart(title,key,color,unit,kind,dec,opts){
+  opts=opts||{};
   var last=null;
   for(var i=healthData.days.length-1;i>=0;i--){ if(typeof healthData.days[i][key]==="number"){ last=healthData.days[i][key]; break; } }
   var avg=hAvg(key);
   return '<div class="hchart"><div class="hct"><span>'+title+'</span><span>最新 <b>'+hFmt(last,dec)+unit+'</b> / 7日平均 <b>'+hFmt(avg,dec)+unit+'</b></span></div>'
-    +(kind==="bar"? hBarSVG(key,color,unit,dec) : hLineSVG(key,color,unit,dec))+'</div>';
+    +(kind==="bar"? hBarSVG(key,color,unit,dec,opts) : hLineSVG(key,color,unit,dec,opts))+'</div>';
 }
 function renderHealthSummary(){
   var box=document.getElementById("healthSummary"); if(!box) return;
@@ -1892,12 +2093,19 @@ function renderHealthSummary(){
 function renderHealthCharts(){
   var box=document.getElementById("healthCharts"); if(!box) return;
   if(!healthData.days.length){ box.innerHTML=""; return; }
-  var h="";
+  ensureRecovery();
+  var ngPct=Math.round(HRV_NG/HRV_OK*100);
+  var h='<div class="qhint">OK/NGラインは暫定値です（HRV '+HRV_OK+'/'+HRV_NG+'ms、安静時心拍 '+RHR_OK+'/'+RHR_NG+'bpm、回復率はHRV '+HRV_OK+'ms=100%として換算）。基準を変えるにはソース冒頭の HRV_OK / HRV_NG / RHR_OK / RHR_NG を書き換えてください。</div>';
+
   h+=hChart("歩数","steps","#4da3ff","歩","bar");
   h+=hChart("運動時間","exmin","#3ecf8e","分","bar");
   h+=hChart("睡眠","sleep","#8f7ae0","h","bar",2);
-  h+=hChart("安静時心拍","rhr","#ff6b6b","bpm","line",1);
-  h+=hChart("HRV","hrv","#3ecf8e","ms","line",1);
+  h+=hChart("回復率（HRV基準・暂定）","hrv_pct","#3ecf8e","%","line",0,
+        {ok:100, okLabel:"OK 100%", ng:ngPct, ngLabel:"NG "+ngPct+"%"});
+  h+=hChart("安静時心拍（低いほど良い）","rhr","#ff6b6b","bpm","line",1,
+        {ok:RHR_OK, okLabel:"OK "+RHR_OK, ng:RHR_NG, ngLabel:"NG "+RHR_NG});
+  h+=hChart("HRV","hrv","#3ecf8e","ms","line",1,
+        {ok:HRV_OK, okLabel:"OK "+HRV_OK, ng:HRV_NG, ngLabel:"NG "+HRV_NG});
   h+=hChart("体重","weight","#ffb454","kg","line",2);
   h+=hChart("体脂肪率","bf","#e0aaff","%","line",1);
   h+=hChart("摂取カロリー","diet","#3ecf8e","kcal","bar");
