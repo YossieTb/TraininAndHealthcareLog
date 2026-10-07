@@ -235,18 +235,34 @@
   .linkbox{margin:2px 0 6px;}
   .linknone{font-size:11px; color:var(--sub); margin:0 0 6px;}
   .linkrow{display:flex; align-items:center; gap:6px; margin:0 0 6px;}
-  .exlink{flex:1; min-width:0; display:block; padding:11px 12px; border-radius:10px;
+  .exlink{flex:1; min-width:0; display:block; padding:12px 14px; min-height:46px; border-radius:10px;
     background:var(--card2); border:2px solid var(--accent2); color:var(--accent);
-    font-size:14px; font-weight:700; text-decoration:none; line-height:1.4;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-size:14px; font-weight:700; text-decoration:none; line-height:1.5;
+    white-space:normal; word-break:break-word; overflow-wrap:anywhere;
     box-shadow:0 2px 0 rgba(0,0,0,.35);}
   .exlink::before{content:"🔗 ";}
   .exlink:active{transform:translateY(1px); box-shadow:none; background:var(--accent2); color:#fff;}
   .linkrow .rm{flex:0 0 auto;}
-  .linkadd{display:flex; gap:6px; margin-top:2px;}
-  .linkadd input{flex:1; min-width:0; padding:10px; font-size:13px; border-radius:10px;
+  .linkadd{display:block; margin-top:6px;}
+  .linkadd input{display:block; width:100%; box-sizing:border-box; margin:0 0 6px;
+    padding:12px; font-size:15px; border-radius:10px;
     border:1px solid var(--line); background:var(--bg); color:var(--text);}
-  .linkadd .ladd{flex:0 0 auto; padding:10px 14px; white-space:nowrap;}
+  .lnrow{display:flex; gap:8px; align-items:stretch;}
+  .lnrow input{flex:1; min-width:0; margin:0;}
+  .linkadd .ladd{flex:0 0 auto; padding:12px 16px; font-size:15px; white-space:nowrap;}
+  /* v7.4: 次回までに要復習・確認 */
+  .revbadge{display:inline-block; margin-left:6px; padding:1px 7px; border-radius:99px;
+    font-size:10px; font-weight:700; background:#f5a623; color:#111; vertical-align:middle;}
+  label.revchk{display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--sub);
+    padding:6px 8px; border-radius:8px; border:1px solid var(--line); background:var(--card2); white-space:nowrap;}
+  label.revchk input{width:16px; height:16px; margin:0; flex:0 0 auto;}
+  .revcard{border-color:#f5a623;}
+  .revitem{border-top:1px solid var(--line); padding:10px 0 8px;}
+  .revitem:first-of-type{border-top:none; padding-top:2px;}
+  .revname{font-size:14px; font-weight:700; margin:0 0 6px;}
+  .revsince{font-size:11px; color:var(--sub); font-weight:400; margin-left:6px;}
+  .revlinks .exlink{display:block; width:auto; margin:0 0 6px;}
+  .revbtns{display:flex; gap:8px; margin-top:4px; flex-wrap:wrap;}
   .sechead{font-size:13px; font-weight:700; color:var(--accent); margin:14px 0 6px;}
   .sechead:first-of-type{margin-top:6px;}
   /* v6.2: make quick chips look clearly tappable (button-like) */
@@ -260,7 +276,7 @@
 <h1>🏋️ トレーニング記録</h1>
 <div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示</div>
 <div class="toast" id="toast"></div>
-<div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div>
+<div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div><div id="reviewBox"></div>
 <!-- v7.1: 保存前の日付確認 -->
 <div class="mwrap" id="saveConfirm">
   <div class="mbox">
@@ -466,7 +482,7 @@
 var LS_DRAFT="tl_draft_v1", LS_HIST="tl_history_v1", LS_CUSTOM="tl_custom_ex_v1",
     LS_QUICK="tl_quick_v1", LS_QUICK_OLD="tl_quick_old_v1", LS_CONF="tl_config_v1",
     LS_MASTER="tl_master_v1", LS_MENUS="tl_menus_v1", LS_NOTE="tl_exnote_v1",
-    LS_LINK="tl_exlink_v1";
+    LS_LINK="tl_exlink_v1", LS_REVIEW="tl_review_v1";
 var QUICK_VERSION=2;   // 2 = トレーナーメニュー8種が既定
 
 var BW_LABEL={always:"自重種目", sometimes:"自重でも行う種目", never:"重量種目", custom:"カスタム種目"};
@@ -544,6 +560,7 @@ var quickEx=[];
 var session={date:todayStr(), exercises:[], menuName:""};
 var notes={};            // 種目名 → メモ（端末に永続保存）
 var links={};            // 種目名 → 参考リンク [{l:ラベル, u:URL}]（端末に永続保存）
+var reviewFlags={};      // 種目名 → {on:true, since:日付}（次回までに要復習・確認）
 
 function todayStr(){
   var d=new Date();
@@ -573,7 +590,7 @@ function normExercise(e){
   var sets=(e.sets||[]).map(function(s){ return normSet(s, name); });
   var bw=(e.bw===true)||(sets.length>0&&sets.every(function(s){ return s.bw===true; }));
   if(bw) sets.forEach(function(s){ s.bw=true; });
-  return {name:name, sets:sets, done:!!e.done, bw:!!bw};
+  return {name:name, sets:sets, done:!!e.done, bw:!!bw, review:!!e.review};
 }
 function isValidSet(s){
   if(!s) return false;
@@ -1235,6 +1252,40 @@ function mstRegisterNames(names){
   return n;
 }
 
+/* マスタ側のメモ・参考リンク・要復習を取り込む（端末側の値が優先。空欄のみ補完） */
+function mstMergeMaps(j){
+  var out={notes:0, links:0, review:0}, k;
+  if(j&&j.notes&&typeof j.notes==="object"){
+    for(k in j.notes){
+      if(!Object.prototype.hasOwnProperty.call(j.notes,k)) continue;
+      if(typeof j.notes[k]!=="string"||!j.notes[k].trim()) continue;
+      if(!getNote(k)){ notes[k]=j.notes[k]; out.notes++; }
+    }
+    if(out.notes) saveNotes();
+  }
+  if(j&&j.links&&typeof j.links==="object"){
+    for(k in j.links){
+      if(!Object.prototype.hasOwnProperty.call(j.links,k)) continue;
+      var a=j.links[k]; if(!Array.isArray(a)||!a.length) continue;
+      if(getLinks(k).length) continue;
+      var arr=[];
+      a.forEach(function(x){ if(x&&typeof x.u==="string"&&/^https?:\/\//i.test(x.u)) arr.push({l:(typeof x.l==="string"?x.l:""), u:x.u}); });
+      if(arr.length){ links[k]=arr; out.links++; }
+    }
+    if(out.links) saveLinks();
+  }
+  if(j&&j.review_flags&&typeof j.review_flags==="object"){
+    for(k in j.review_flags){
+      if(!Object.prototype.hasOwnProperty.call(j.review_flags,k)) continue;
+      var v=j.review_flags[k];
+      if(!v) continue;
+      if(v===true){ if(!reviewFlags[k]){ reviewFlags[k]={on:true,since:""}; out.review++; } }
+      else if(v.on && !reviewFlags[k]){ reviewFlags[k]={on:true,since:(typeof v.since==="string"?v.since:"")}; out.review++; }
+    }
+    if(out.review) saveReview();
+  }
+  return out;
+}
 function fetchTrainingMaster(manual, force){
   if(typeof fetch!=="function"){
     mstStatus("このブラウザは通信に対応していません（端末内の記録を表示中）","err");
@@ -1255,13 +1306,14 @@ function fetchTrainingMaster(manual, force){
     var st=mstState()||{};
     var applied=(st.applied&&typeof st.applied==="object")?st.applied:{};
     var unchanged=!!(st.generated_at&&j.generated_at&&st.generated_at===j.generated_at);
-    var res={added:0, updated:0, same:0};
+    var res={added:0, updated:0, same:0}, mm={notes:0, links:0, review:0};
     var qadd=[], days=(st.days||0);
     if(force||!unchanged){
       /* force でも applied 台帳は維持: 端末側で削除したセットを復活させない */
       var mHist=mstRecordsToHist(j.records);
       res=mstMergeHist(getHist(), mHist, !!force, applied);
       try{ localStorage.setItem(LS_HIST, JSON.stringify(res.hist)); }catch(e){}
+      mm=mstMergeMaps(j);
       qadd=mstSeedQuick(j.exercise_names);
       mstRegisterNames(j.exercise_names);
       days=mHist.length;
@@ -1283,7 +1335,7 @@ function fetchTrainingMaster(manual, force){
     mstStatus("マスタ読込: "+st.records+"件（"+st.days+"日・"+st.exercises+"種目）／ 最終更新 "+mstG(st.generated_at)
       +(force ? (" ｜ マスタ優先で上書き: 更新 "+res.updated+"セット")
               : (unchanged ? " ｜ 変更なし（端末内の記録を表示）"
-                           : " ｜ 今回の追加 "+res.added+"セット"+(qadd.length?("・クイック+ "+qadd.length):""))),
+                           : " ｜ 今回の追加 "+res.added+"セット"+(qadd.length?("・クイック+ "+qadd.length):"")+(mm.links?("・リンク+ "+mm.links):"")+(mm.notes?("・メモ+ "+mm.notes):""))),
       "ok");
     if(manual) toast(force ? ("マスタの値で上書きしました（"+res.updated+"セット）")
                            : ("マスタを読み込みました（"+st.records+"件）"));
@@ -1308,6 +1360,7 @@ function init(){
   var dEl=document.getElementById("date");
   loadNotes();
   loadLinks();
+  loadReview();
   loadUI();
   loadHealthLocal();
   loadDraft();
@@ -1571,6 +1624,7 @@ function initToTop(){
 }
 function render(){
   var box=document.getElementById("exList"); box.innerHTML="";
+  renderReviewList();
   session.exercises.forEach(function(ex,i){
     var card=document.createElement("div");
     card.className="card excard"+(ex.done?" exdone":"");
@@ -1585,9 +1639,9 @@ function render(){
       +'<span class="chev">'+(open?"▼":"▶")+'</span>'
       +'<span class="name">'+esc(ex.name)+'</span>'
       +(ex.bw?'<span class="bwbadge">自重</span>':'')
-      +(ex.done?'<span class="badge">完了</span>':'')
+      +(ex.done?'<span class="badge">完了</span>':'')+(isReview(ex.name)?'<span class="revbadge">要復習</span>':'')
       +'<span class="excl">'+esc(esum)+'</span></span>'
-      +'<span class="exbtns"><button class="rm" onclick="toggleDone('+i+')">'+(ex.done?'戻す':'完了')+'</button>'
+      +'<span class="exbtns"><label class="revchk"><input type="checkbox" onclick="toggleReview('+i+')"'+(isReview(ex.name)?' checked':'')+'><span>要復習</span></label><button class="rm" onclick="toggleDone('+i+')">'+(ex.done?'戻す':'完了')+'</button>'
       +'<button class="rm" onclick="removeExercise('+i+')">削除</button></span></div>'
       +'<div class="exbody'+(open?'':' collapsed')+'">';
 
@@ -1735,10 +1789,77 @@ function linksBoxHTML(name,i){
     h+='<div class="linknone">登録されたリンクはありません（下の欄から追加できます）</div>';
   }
   h+='<div class="linkadd">'
-    +'<input data-lnlab="'+i+'" placeholder="ラベル（例：フォーム解説動画）">'
-    +'<input data-lnurl="'+i+'" placeholder="https://…" inputmode="url">'
-    +'<button type="button" class="btn btn-ghost ladd" onclick="addLink('+i+')">追加</button></div></div>';
+    +'<input data-lnlab="'+i+'" placeholder="ラベル（例：フォーム解説動画／陥りやすいミス）">'
+    +'<div class="lnrow"><input data-lnurl="'+i+'" placeholder="https://…（URLを貼り付け）" inputmode="url">'
+    +'<button type="button" class="btn btn-ghost ladd" onclick="addLink('+i+')">追加</button></div></div></div>';
   return h;
+}
+
+/* ---------- v7.4: 次回までに要復習・確認（種目名ごとに端末へ保存） ---------- */
+function loadReview(){
+  try{
+    var o=JSON.parse(localStorage.getItem(LS_REVIEW)||"null");
+    var clean={}, k;
+    if(o&&typeof o==="object"&&!Array.isArray(o)){
+      for(k in o){
+        if(!Object.prototype.hasOwnProperty.call(o,k)) continue;
+        var v=o[k];
+        if(v===true) clean[k]={on:true, since:""};
+        else if(v&&typeof v==="object"&&v.on) clean[k]={on:true, since:(typeof v.since==="string"?v.since:"")};
+      }
+    }
+    reviewFlags=clean;
+  }catch(e){ reviewFlags={}; }
+}
+function saveReview(){ try{ localStorage.setItem(LS_REVIEW, JSON.stringify(reviewFlags)); }catch(e){} }
+function isReview(name){
+  if(reviewFlags[name]&&reviewFlags[name].on) return true;
+  var hit=null;
+  session.exercises.forEach(function(e){ if(e&&e.name===name) hit=e; });
+  return !!(hit&&hit.review);
+}
+function setReview(name,on){
+  if(!name) return;
+  if(on) reviewFlags[name]={on:true, since:(reviewFlags[name]&&reviewFlags[name].since)||session.date||""};
+  else delete reviewFlags[name];
+  session.exercises.forEach(function(e){ if(e&&e.name===name) e.review=!!on; });
+  saveReview();
+}
+function toggleReview(i){
+  var ex=session.exercises[i]; if(!ex) return;
+  setReview(ex.name, !isReview(ex.name));
+  autoSave(); render();
+}
+function jsq(x){ return String(x==null?"":x).replace(/\\/g,"\\\\").replace(/'/g,"\\'"); }
+function renderReviewList(){
+  var box=document.getElementById("reviewBox"); if(!box) return;
+  var names=[];
+  Object.keys(reviewFlags).forEach(function(k){ if(reviewFlags[k]&&reviewFlags[k].on) names.push(k); });
+  session.exercises.forEach(function(e){ if(e&&e.review&&names.indexOf(e.name)<0) names.push(e.name); });
+  if(!names.length){ box.innerHTML=""; return; }
+  var h='<div class="card revcard"><div class="sechead">🔁 次回までに要復習・確認（'+names.length+'種目）</div>';
+  names.forEach(function(nm){
+    var a=getLinks(nm);
+    var since=(reviewFlags[nm]&&reviewFlags[nm].since)||"";
+    h+='<div class="revitem"><div class="revname">'+esc(nm)+(since?'<span class="revsince">'+esc(since)+' に登録</span>':'')+'</div>';
+    if(a.length){
+      h+='<div class="revlinks">';
+      a.forEach(function(x){ h+='<a class="exlink" href="'+esc(x.u)+'" target="_blank" rel="noopener noreferrer">'+esc(x.l||x.u)+'</a>'; });
+      h+='</div>';
+    } else {
+      h+='<div class="linknone">参考リンク未登録（種目カードの「🔗 参考リンク」から追加できます）</div>';
+    }
+    h+='<div class="revbtns"><button class="rm" onclick="reviewAddToday(\''+jsq(nm)+'\')">今日の記録に追加</button>'
+      +'<button class="rm" onclick="reviewClear(\''+jsq(nm)+'\')">解除</button></div></div>';
+  });
+  box.innerHTML=h+'</div>';
+}
+function reviewAddToday(name){ addExercise(name); toast("「"+name+"」を今日の記録に追加しました"); }
+function reviewClear(name){ setReview(name,false); render(); }
+function csvQuote(v){
+  v=String(v==null?"":v);
+  if(/[",\n\r]/.test(v)) return '"'+v.replace(/"/g,'""')+'"';
+  return v;
 }
 
 /* ---------- 自動保存（入力が確定した時点で履歴へ逐次保存） ---------- */
@@ -1747,7 +1868,7 @@ function buildValidEx(){
   return session.exercises.filter(function(e){ return e.sets.some(isValidSet); })
     .map(function(e){
       var bw=!!e.bw;
-      return { name:e.name, done:!!e.done, bw:bw,
+      return { name:e.name, done:!!e.done, bw:bw, review:!!(e.review||isReview(e.name)),
         sets:e.sets.filter(isValidSet).map(function(s){
           var isBw=bw||s.bw===true;
           return isBw ? {w:"", r:String(s.r), bw:true} : {w:String(s.w), r:String(s.r), bw:false};
@@ -1814,7 +1935,7 @@ function saveSession(){
   syncDateFromPicker();
   var validEx=session.exercises.filter(function(e){ return e.sets.some(isValidSet); });
   if(!validEx.length){ toast("記録がありません"); return; }
-  var d=session.date||jstDateStr();
+  var d=session.date||"";
   var has=!!histDates()[d];
   document.getElementById("scMsg").innerHTML=
     '<b>'+dateLabelJa(d)+'</b>分の記録して保存します。'
@@ -1913,8 +2034,8 @@ function moveSessionDate(nd){
 /* ---- カレンダー ---- */
 var calState={y:null,m:null,sel:null}, calReturnToSave=false;
 function openDatePicker(){
-  var base=String(session.date||jstDateStr()).split("-");
-  calState.y=parseInt(base[0],10); calState.m=parseInt(base[1],10)-1; calState.sel=session.date||jstDateStr();
+  var base=String(session.date||"").split("-");
+  calState.y=parseInt(base[0],10); calState.m=parseInt(base[1],10)-1; calState.sel=session.date||"";
   renderCal();
   document.getElementById("calWrap").classList.add("on");
 }
@@ -2018,7 +2139,8 @@ function allRows(){
           weight_kg: n.bw?null:parseFloat(n.w),
           reps: reps,
           volume_kg: n.bw?null:(Math.round(parseFloat(n.w)*parseFloat(n.r)*100)/100),
-          bodyweight: n.bw
+          bodyweight: n.bw,
+          review: !!(e.review||isReview(e.name))
         });
       });
     });
@@ -2035,13 +2157,18 @@ function exportCSV(){
   commitActive();
   var rows=allRows();
   if(!rows.length){ toast("出力する記録がありません（先に保存してください）"); return; }
-  var csv="date,exercise,set,weight_kg,reps,volume_kg,bodyweight\n";
+  var csv="date,exercise,set,weight_kg,reps,volume_kg,bodyweight,review,notes,links\n";
   rows.forEach(function(r){
+    var nk=notes[r.exercise], lk=links[r.exercise];
     csv+=[r.date, csvCell(r.exercise), r.set,
           r.bodyweight?"":r.weight_kg,
           r.reps,
           r.bodyweight?"":r.volume_kg,
-          r.bodyweight?1:0].join(",")+"\n";
+          r.bodyweight?1:0,
+          (r.review||isReview(r.exercise))?1:0,
+          csvQuote(typeof nk==="string"?nk:""),
+          csvQuote((lk&&lk.length)?lk.map(function(x){ return x.u; }).join(" | "):"")
+        ].join(",")+"\n";
   });
   download("﻿"+csv,"training_log.csv","text/csv");
 }
@@ -2049,7 +2176,7 @@ function exportJSON(){
   commitActive();
   var rows=allRows();
   if(!rows.length){ toast("出力する記録がありません（先に保存してください）"); return; }
-  download(JSON.stringify({exported_at:new Date().toISOString(),notes:notes,links:links,records:rows},null,2),"training_log.json","application/json");
+  download(JSON.stringify({exported_at:new Date().toISOString(),notes:notes,links:links,review:reviewFlags,records:rows},null,2),"training_log.json","application/json");
 }
 function download(content,fname,mime){
   var blob=new Blob([content],{type:mime+";charset=utf-8"});
