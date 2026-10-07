@@ -231,6 +231,22 @@
   .memolab{display:block; font-size:11px; color:var(--sub); margin:0 0 4px;}
   textarea.memo{width:100%; min-height:44px; padding:8px 10px; font-size:14px; line-height:1.5;
     border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--text); font-family:inherit;}
+  /* v7.3: 種目の参考リンク */
+  .linkbox{margin:2px 0 6px;}
+  .linknone{font-size:11px; color:var(--sub); margin:0 0 6px;}
+  .linkrow{display:flex; align-items:center; gap:6px; margin:0 0 6px;}
+  .exlink{flex:1; min-width:0; display:block; padding:11px 12px; border-radius:10px;
+    background:var(--card2); border:2px solid var(--accent2); color:var(--accent);
+    font-size:14px; font-weight:700; text-decoration:none; line-height:1.4;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    box-shadow:0 2px 0 rgba(0,0,0,.35);}
+  .exlink::before{content:"🔗 ";}
+  .exlink:active{transform:translateY(1px); box-shadow:none; background:var(--accent2); color:#fff;}
+  .linkrow .rm{flex:0 0 auto;}
+  .linkadd{display:flex; gap:6px; margin-top:2px;}
+  .linkadd input{flex:1; min-width:0; padding:10px; font-size:13px; border-radius:10px;
+    border:1px solid var(--line); background:var(--bg); color:var(--text);}
+  .linkadd .ladd{flex:0 0 auto; padding:10px 14px; white-space:nowrap;}
   .sechead{font-size:13px; font-weight:700; color:var(--accent); margin:14px 0 6px;}
   .sechead:first-of-type{margin-top:6px;}
   /* v6.2: make quick chips look clearly tappable (button-like) */
@@ -449,7 +465,8 @@
    ===================================================================== */
 var LS_DRAFT="tl_draft_v1", LS_HIST="tl_history_v1", LS_CUSTOM="tl_custom_ex_v1",
     LS_QUICK="tl_quick_v1", LS_QUICK_OLD="tl_quick_old_v1", LS_CONF="tl_config_v1",
-    LS_MASTER="tl_master_v1", LS_MENUS="tl_menus_v1", LS_NOTE="tl_exnote_v1";
+    LS_MASTER="tl_master_v1", LS_MENUS="tl_menus_v1", LS_NOTE="tl_exnote_v1",
+    LS_LINK="tl_exlink_v1";
 var QUICK_VERSION=2;   // 2 = トレーナーメニュー8種が既定
 
 var BW_LABEL={always:"自重種目", sometimes:"自重でも行う種目", never:"重量種目", custom:"カスタム種目"};
@@ -526,6 +543,7 @@ var customEx=[];
 var quickEx=[];
 var session={date:todayStr(), exercises:[], menuName:""};
 var notes={};            // 種目名 → メモ（端末に永続保存）
+var links={};            // 種目名 → 参考リンク [{l:ラベル, u:URL}]（端末に永続保存）
 
 function todayStr(){
   var d=new Date();
@@ -1289,6 +1307,7 @@ function fetchTrainingMasterForce(){
 function init(){
   var dEl=document.getElementById("date");
   loadNotes();
+  loadLinks();
   loadUI();
   loadHealthLocal();
   loadDraft();
@@ -1623,6 +1642,7 @@ function render(){
     html+='<button type="button" class="btn btn-ghost" onclick="addSet('+i+')">＋ セットを追加</button>';
     html+='<div class="memobox"><label class="memolab">📝 この種目のメモ（マシンの設定・姿勢のコツなど）</label>'
       +'<textarea class="memo" rows="2" data-memoex="'+i+'" placeholder="例：シートの高さ5番／肩甲骨を寄せる" onchange="updNote('+i+',this.value)">'+esc(getNote(ex.name))+'</textarea></div>';
+    html+=linksBoxHTML(ex.name,i);
     if(ex.bw){
       html+='<div class="bwsum">自重 '+st.bwSets+' セット・合計 '+st.reps+' 回</div>';
       if(st.vol>0) html+='<div class="totalvol">（参考）重量換算ボリューム: '+st.vol.toLocaleString()+' kg</div>';
@@ -1652,6 +1672,73 @@ function updNote(i, v){
   v=String(v==null?"":v);
   if(v.trim()==="") delete notes[ex.name]; else notes[ex.name]=v;
   saveNotes();
+}
+
+/* ---------- 種目の参考リンク（種目名ごとに端末へ保存。タップで別タブ表示） ---------- */
+function loadLinks(){
+  try{
+    var o=JSON.parse(localStorage.getItem(LS_LINK)||"null");
+    var clean={}, k;
+    if(o&&typeof o==="object"&&!Array.isArray(o)){
+      for(k in o){
+        if(!Object.prototype.hasOwnProperty.call(o,k)) continue;
+        var a=o[k]; if(!Array.isArray(a)) continue;
+        var arr=[];
+        a.forEach(function(x){
+          if(x&&typeof x.u==="string"&&/^https?:\/\//i.test(x.u))
+            arr.push({l:(typeof x.l==="string"?x.l:""), u:x.u});
+        });
+        if(arr.length) clean[k]=arr;
+      }
+    }
+    links=clean;
+  }catch(e){ links={}; }
+}
+function saveLinks(){ try{ localStorage.setItem(LS_LINK, JSON.stringify(links)); }catch(e){} }
+function getLinks(name){ var a=links[name]; return Array.isArray(a)?a:[]; }
+function normUrl(u){
+  u=String(u==null?"":u).trim();
+  if(!u) return "";
+  if(!/^https?:\/\//i.test(u)) u="https://"+u;
+  if(!/^https?:\/\/[^\s\/]+\.[^\s]+$/i.test(u)) return "";
+  return u;
+}
+function addLink(i){
+  var ex=session.exercises[i]; if(!ex) return;
+  var lab=document.querySelector('input[data-lnlab="'+i+'"]');
+  var url=document.querySelector('input[data-lnurl="'+i+'"]');
+  var u=normUrl(url?url.value:"");
+  if(!u){ toast("URLが正しくありません（https://… の形式で入力してください）"); return; }
+  var l=(lab?String(lab.value):"").trim();
+  if(!l){ try{ l=new URL(u).hostname.replace(/^www\./,""); }catch(e){ l=u; } }
+  var a=links[ex.name]||(links[ex.name]=[]);
+  a.push({l:l,u:u});
+  saveLinks(); render();
+  toast("参考リンクを追加しました（"+ex.name+": "+a.length+"件）");
+}
+function delLink(i,j){
+  var ex=session.exercises[i]; if(!ex) return;
+  var a=getLinks(ex.name); if(!a[j]) return;
+  a.splice(j,1);
+  if(a.length) links[ex.name]=a; else delete links[ex.name];
+  saveLinks(); render();
+}
+function linksBoxHTML(name,i){
+  var a=getLinks(name);
+  var h='<div class="linkbox"><label class="memolab">🔗 参考リンク（フォーム・コツの解説ページ・動画）</label>';
+  if(a.length){
+    a.forEach(function(x,j){
+      h+='<div class="linkrow"><a class="exlink" href="'+esc(x.u)+'" target="_blank" rel="noopener noreferrer">'+esc(x.l||x.u)+'</a>'
+        +'<button type="button" class="rm" title="このリンクを削除" onclick="delLink('+i+','+j+')">×</button></div>';
+    });
+  } else {
+    h+='<div class="linknone">登録されたリンクはありません（下の欄から追加できます）</div>';
+  }
+  h+='<div class="linkadd">'
+    +'<input data-lnlab="'+i+'" placeholder="ラベル（例：フォーム解説動画）">'
+    +'<input data-lnurl="'+i+'" placeholder="https://…" inputmode="url">'
+    +'<button type="button" class="btn btn-ghost ladd" onclick="addLink('+i+')">追加</button></div></div>';
+  return h;
 }
 
 /* ---------- 自動保存（入力が確定した時点で履歴へ逐次保存） ---------- */
@@ -1962,7 +2049,7 @@ function exportJSON(){
   commitActive();
   var rows=allRows();
   if(!rows.length){ toast("出力する記録がありません（先に保存してください）"); return; }
-  download(JSON.stringify({exported_at:new Date().toISOString(),notes:notes,records:rows},null,2),"training_log.json","application/json");
+  download(JSON.stringify({exported_at:new Date().toISOString(),notes:notes,links:links,records:rows},null,2),"training_log.json","application/json");
 }
 function download(content,fname,mime){
   var blob=new Blob([content],{type:mime+";charset=utf-8"});
