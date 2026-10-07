@@ -244,6 +244,7 @@
 <h1>🏋️ トレーニング記録</h1>
 <div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示</div>
 <div class="toast" id="toast"></div>
+<div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div>
 <!-- v7.1: 保存前の日付確認 -->
 <div class="mwrap" id="saveConfirm">
   <div class="mbox">
@@ -1107,6 +1108,184 @@ function migrateV66(){
   }catch(e){}
 }
 /* ---------- 初期化 ---------- */
+/* ===== v7.2: training_master.json 取り込み（クイックボタン・前回値に反映） =====
+   同一生成元の training_master.json（PC/スマホの記録を統合したマスタ）を取得し、
+   端末内の履歴に統合する。これにより端末ごとに別々だった記録が両端末で揃う。
+   ・統合規則: (日付|種目|セット番号) 単位で重複排除
+   ・既定は端末側の値を優先し、マスタにしかない日付／種目／セットだけを追加する
+     （端末で入力・編集した内容を勝手に書き換えない）
+   ・一度取り込んだキーを記録し、端末側で削除したセットを再追加しない
+   ・「マスタ優先で上書き」を実行したときだけマスタ値で上書きする
+   ・取得失敗（オフライン等）は端末内の記録をそのまま表示する
+*/
+var LS_MST="tl_master_sync_v1", MASTER_FILE="training_master.json";
+var masterInfo=null;
+
+function mstState(){
+  try{ var o=JSON.parse(localStorage.getItem(LS_MST)||"null"); return (o&&typeof o==="object")?o:null; }
+  catch(e){ return null; }
+}
+function mstSave(o){ try{ localStorage.setItem(LS_MST, JSON.stringify(o)); }catch(e){} }
+function mstStatus(msg,cls){
+  var el=document.getElementById("mstStatus");
+  if(!el) return;
+  el.textContent=msg;
+  el.style.color=(cls==="err"?"#c0392b":(cls==="ok"?"#1e7a46":"#444"));
+}
+function mstSets(e){ return (e&&e.sets)||[]; }
+function mstG(j){ return String(j||"").replace("T"," ").slice(0,16); }
+
+/* records[] -> 履歴形式（日付 > 種目 > セット順。マスタの記録順をそのままセット番号とする） */
+function mstRecordsToHist(recs){
+  var byDate={}, order=[];
+  (recs||[]).forEach(function(r){
+    if(!r||!r.date||!r.exercise) return;
+    var d=byDate[r.date];
+    if(!d){ d={date:r.date, menuName:"", exercises:[], _ex:{}}; byDate[r.date]=d; order.push(r.date); }
+    var e=d._ex[r.exercise];
+    if(!e){ e={name:r.exercise, sets:[], done:false, bw:false}; d._ex[r.exercise]=e; d.exercises.push(e); }
+    var bw=!!r.bodyweight;
+    e.sets.push(bw ? {w:"", r:String(r.reps==null?"":r.reps), bw:true}
+                   : {w:String(r.weight_kg==null?"":r.weight_kg), r:String(r.reps==null?"":r.reps), bw:false});
+    if(bw) e.bw=true;
+  });
+  return order.map(function(dt){
+    var d=byDate[dt];
+    d.exercises.forEach(function(e){
+      if(e.sets.length&&e.sets.every(function(x){ return x.bw===true; })) e.bw=true;
+    });
+    delete d._ex;
+    return d;
+  });
+}
+
+/* 統合本体。applied は「取り込み済みキー」の台帳（マスタのセットを再追加しないため） */
+function mstMergeHist(local, mHist, preferMaster, applied){
+  var added=0, updated=0, same=0;
+  var byDate={};
+  (local||[]).forEach(function(h){ if(h&&h.date) byDate[h.date]=h; });
+  (mHist||[]).forEach(function(mh){
+    var lh=byDate[mh.date];
+    if(!lh){ lh=byDate[mh.date]={date:mh.date, menuName:"", exercises:[]}; }
+    var ex=lh.exercises||(lh.exercises=[]);
+    (mh.exercises||[]).forEach(function(me){
+      var le=null, i;
+      for(i=0;i<ex.length;i++){ if(ex[i]&&ex[i].name===me.name){ le=ex[i]; break; } }
+      if(!le){ le={name:me.name, sets:[], done:false, bw:!!me.bw}; ex.push(le); }
+      var ls=le.sets||(le.sets=[]);
+      (me.sets||[]).forEach(function(st,k){
+        var key=mh.date+"|"+me.name+"|"+(k+1);
+        var wasApplied=!!(applied&&applied[key]);
+        if(k<ls.length){
+          if(preferMaster){ ls[k]={w:st.w, r:st.r, bw:st.bw}; updated++; }
+          else same++;
+          if(applied) applied[key]=1;
+          return;
+        }
+        if(wasApplied) return;   /* 取り込み済み＝端末側で削除。マスタ優先の上書きでも復活させない */
+        ls.push({w:st.w, r:st.r, bw:st.bw});
+        added++;
+        if(applied) applied[key]=1;
+      });
+      if(me.bw) le.bw=true;
+      if(le.sets.length&&le.sets.every(function(x){ return x.bw===true; })) le.bw=true;
+    });
+    lh.exercises=ex;
+  });
+  var out=Object.keys(byDate).map(function(k){ return byDate[k]; })
+    .sort(function(a,b){ return a.date<b.date?1:-1; });
+  return {hist:out, added:added, updated:updated, same:same};
+}
+
+/* マスタの種目名をクイックボタンへ反映（既存の並びは維持し、不足分を後ろに追加） */
+function mstSeedQuick(names){
+  var add=[];
+  (names||[]).forEach(function(n){
+    if(n && quickEx.indexOf(n)<0){ quickEx.push(n); add.push(n); }
+  });
+  if(add.length){ saveQuick(); buildChips(); }
+  return add;
+}
+/* マスタの種目名を種目マスタ（選択肢）へ登録 */
+function mstRegisterNames(names){
+  var n=0;
+  if(typeof registerName!=="function") return 0;
+  (names||[]).forEach(function(x){
+    if(!x) return;
+    try{ if(!masterEntry(x)){ registerName(x); n++; } }catch(e){}
+  });
+  return n;
+}
+
+function fetchTrainingMaster(manual, force){
+  if(typeof fetch!=="function"){
+    mstStatus("このブラウザは通信に対応していません（端末内の記録を表示中）","err");
+    return Promise.resolve(null);
+  }
+  mstStatus("トレーニング記録（マスタ）を取得中…");
+  var mstDone=false;
+  var mstTmr=setTimeout(function(){
+    if(!mstDone) mstStatus("マスタ取得がタイムアウトしました（端末内の記録を表示中）","err");
+  },12000);
+  var clr=function(){ mstDone=true; clearTimeout(mstTmr); };
+  return fetch(MASTER_FILE+"?ts="+Date.now(), {cache:"no-store"}).then(function(r){
+    clr();
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(j){
+    if(!j||!Array.isArray(j.records)) throw new Error("形式が不正です");
+    var st=mstState()||{};
+    var applied=(st.applied&&typeof st.applied==="object")?st.applied:{};
+    var unchanged=!!(st.generated_at&&j.generated_at&&st.generated_at===j.generated_at);
+    var res={added:0, updated:0, same:0};
+    var qadd=[], days=(st.days||0);
+    if(force||!unchanged){
+      /* force でも applied 台帳は維持: 端末側で削除したセットを復活させない */
+      var mHist=mstRecordsToHist(j.records);
+      res=mstMergeHist(getHist(), mHist, !!force, applied);
+      try{ localStorage.setItem(LS_HIST, JSON.stringify(res.hist)); }catch(e){}
+      qadd=mstSeedQuick(j.exercise_names);
+      mstRegisterNames(j.exercise_names);
+      days=mHist.length;
+    }
+    st.applied=applied;
+    st.generated_at=j.generated_at||st.generated_at||null;
+    st.records=(j.records||[]).length;
+    st.exercises=(j.exercise_names||[]).length;
+    st.days=days;
+    st.added=res.added;
+    st.updated=res.updated;
+    st.same=res.same;
+    st.quick_added=qadd.length;
+    st.fetched_at=new Date().toISOString();
+    st.source=(j.source_files||[]);
+    mstSave(st);
+    masterInfo=st;
+    try{ render(); renderHistory(); }catch(e){}
+    mstStatus("マスタ読込: "+st.records+"件（"+st.days+"日・"+st.exercises+"種目）／ 最終更新 "+mstG(st.generated_at)
+      +(force ? (" ｜ マスタ優先で上書き: 更新 "+res.updated+"セット")
+              : (unchanged ? " ｜ 変更なし（端末内の記録を表示）"
+                           : " ｜ 今回の追加 "+res.added+"セット"+(qadd.length?("・クイック+ "+qadd.length):""))),
+      "ok");
+    if(manual) toast(force ? ("マスタの値で上書きしました（"+res.updated+"セット）")
+                           : ("マスタを読み込みました（"+st.records+"件）"));
+    return st;
+  }).catch(function(e){
+    clr();
+    var st=mstState();
+    mstStatus("マスタ取得に失敗（端末内の記録を表示中）"
+      +(st&&st.records ? (" ｜ 前回取得 "+st.records+"件 "+mstG(st.generated_at)) : ""), "err");
+    if(manual) toast("マスタ取得に失敗しました");
+    return null;
+  });
+}
+function fetchTrainingMasterForce(){
+  if(typeof fetch!=="function"){ mstStatus("このブラウザは通信に対応していません","err"); return; }
+  if(typeof confirm==="function" && !confirm(
+      "マスタ（GitHub）の値で端末内の同一セットを上書きします。\nこの端末で編集した値は失われます。よろしいですか？")) return;
+  fetchTrainingMaster(true,true);
+}
+
 function init(){
   var dEl=document.getElementById("date");
   loadNotes();
@@ -1123,6 +1302,7 @@ function init(){
   buildExSelect(); buildPresetSelect(); buildChips(); render();
   applyAreaUI();
   initToTop();
+  fetchTrainingMaster(false);
 }
 function buildExSelect(){
   var sel=document.getElementById("exSelect"); if(!sel) return;
