@@ -133,9 +133,15 @@
   .hsvg{width:100%; height:auto; display:block; background:var(--bg); border:1px solid var(--line); border-radius:8px;}
   .hsvg .hx{font-size:7px; fill:var(--sub);}
   .hnone{color:var(--sub); font-size:11px; padding:14px 0; text-align:center;}
-  .wform{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; align-items:center;}
-  .wform input[type=date]{flex:1 1 132px; min-width:0;}
-  .wform input[type=number]{flex:0 0 86px; min-width:0;}
+  .wform{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; align-items:end;}
+  .wform .fcell{min-width:0;}
+  .wform .ffull{grid-column:1 / -1;}
+  .wform .flabel{display:block; font-size:10px; color:var(--sub); margin:0 0 4px 2px;}
+  .wform input[type=date],.wform input[type=number]{display:block; width:100%; min-width:0; box-sizing:border-box;
+    padding:14px 12px; font-size:16px; font-weight:600; background:var(--card2); color:var(--text);
+    border:1px solid var(--line); border-radius:10px;}
+  .wform input[type=date]{color-scheme:dark;}
+  .wform .btn{margin-top:0;}
   .hleg{color:var(--sub); font-size:10px; margin-top:5px; line-height:1.55;}
   .h2col{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
   .htablewrap{overflow-x:auto; -webkit-overflow-scrolling:touch;}
@@ -450,14 +456,18 @@
   </div>
   <div class="card">
     <div class="chead" data-chead="area:hwaist" onclick="toggleArea('area:hwaist')">
-      <span class="chev">▼</span><span class="ct">腹囲（メタボ基準 85cm未満）</span><span class="cs" data-csum="area:hwaist"></span>
+      <span class="chev">▼</span><span class="ct">腹囲・胸囲（メタボ基準 85cm未満）</span><span class="cs" data-csum="area:hwaist"></span>
     </div>
     <div class="cbody" data-cbody="area:hwaist">
-      <div class="qhint">朝イチ・空腹時・同じ姿勢で、臍（へそ）の高さを測ります。健診では男性85cm未満が基準です。記録はこの端末に保存され、グラフには85cmの基準線を表示します。</div>
+      <div class="qhint">朝イチ・空腹時・同じ姿勢で測ります。腹囲は臍（へそ）の高さ、胸囲は乳頭の高さで、息を軽く吐いた状態で測ります。健診では腹囲 男性85cm未満が基準です。同じ日付で腹囲・胸囲をまとめて記録でき、記録はこの端末に保存されます（グラフには85cmの基準線を表示）。</div>
       <div class="wform">
-        <input type="date" id="waistDate">
-        <input type="number" id="waistCm" step="0.1" min="40" max="160" inputmode="decimal" placeholder="cm">
-        <button type="button" class="btn" onclick="addWaist()">追加 / 更新</button>
+        <div class="fcell ffull"><span class="flabel">日付</span>
+          <input type="date" id="waistDate"></div>
+        <div class="fcell"><span class="flabel">腹囲（cm）</span>
+          <input type="number" id="waistCm" step="0.1" min="40" max="160" inputmode="decimal" placeholder="cm"></div>
+        <div class="fcell"><span class="flabel">胸囲（cm）</span>
+          <input type="number" id="chestCm" step="0.1" min="40" max="200" inputmode="decimal" placeholder="cm"></div>
+        <div class="ffull"><button type="button" class="btn" onclick="addWaist()">追加 / 更新</button></div>
       </div>
       <div id="waistList"></div>
     </div>
@@ -2416,34 +2426,65 @@ function ensureMA(){
     days[i].weight_ma7=maWin(days,i,"weight",MA_MIN_W);
     days[i].bf_ma7=maWin(days,i,"bf",MA_MIN_W);
     days[i].waist_ma7=maWin(days,i,"waist",MA_MIN_WAIST);
+    days[i].chest_ma7=maWin(days,i,"chest",MA_MIN_WAIST);
   }
 }
 function loadWaist(){
+  /* 保存形式: {"YYYY-MM-DD":{w:腹囲, c:胸囲}}。旧形式の数値は腹囲として読み替える。 */
+  var raw={};
   try{ var o=JSON.parse(localStorage.getItem(LS_WAIST)||"{}");
-    return (o&&typeof o==="object"&&!Array.isArray(o))? o : {};
-  }catch(e){ return {}; }
+    if(o&&typeof o==="object"&&!Array.isArray(o)) raw=o;
+  }catch(e){ raw={}; }
+  var out={};
+  Object.keys(raw).forEach(function(k){
+    var v=raw[k], r={w:null,c:null};
+    if(typeof v==="number"){ r.w=v; }
+    else if(v&&typeof v==="object"){
+      if(typeof v.w==="number") r.w=v.w;
+      if(typeof v.c==="number") r.c=v.c;
+    }
+    if(r.w!=null||r.c!=null) out[k]=r;
+  });
+  return out;
 }
 function saveWaist(o){ try{ localStorage.setItem(LS_WAIST, JSON.stringify(o)); }catch(e){} }
 function applyWaist(){
-  var w=loadWaist(), ds=healthData.days||[], changed=false;
-  Object.keys(w).forEach(function(dt){
-    var v=w[dt]; if(typeof v!=="number") return;
-    var hit=null;
+  var m=loadWaist(), ds=healthData.days||[], changed=false;
+  Object.keys(m).forEach(function(dt){
+    var r=m[dt], hit=null;
     for(var i=0;i<ds.length;i++){ if(ds[i].date===dt){ hit=ds[i]; break; } }
-    if(hit){ if(hit.waist!==v){ hit.waist=v; changed=true; } }
-    else { ds.push({date:dt, waist:v}); changed=true; }
+    if(hit){
+      if(r.w!=null && hit.waist!==r.w){ hit.waist=r.w; changed=true; }
+      if(r.c!=null && hit.chest!==r.c){ hit.chest=r.c; changed=true; }
+    }else{
+      var o={date:dt};
+      if(r.w!=null) o.waist=r.w;
+      if(r.c!=null) o.chest=r.c;
+      ds.push(o); changed=true;
+    }
   });
   if(changed) ds.sort(function(a,b){ return a.date<b.date? -1 : 1; });
 }
 function addWaist(){
-  var dEl=document.getElementById("waistDate"), cEl=document.getElementById("waistCm");
-  var dt=(dEl&&dEl.value)||"", cm=parseFloat((cEl&&cEl.value)||"");
+  var dEl=document.getElementById("waistDate");
+  var wEl=document.getElementById("waistCm"), cEl=document.getElementById("chestCm");
+  var dt=(dEl&&dEl.value)||"";
+  var wRaw=(wEl&&wEl.value!=="")? parseFloat(wEl.value) : NaN;
+  var cRaw=(cEl&&cEl.value!=="")? parseFloat(cEl.value) : NaN;
   if(!/^\d{4}-\d{2}-\d{2}$/.test(dt)){ toast("日付を選んでください"); return; }
-  if(!isFinite(cm)||cm<40||cm>160){ toast("腹囲は40〜160cmの範囲で入力してください"); return; }
-  var w=loadWaist(); w[dt]=Math.round(cm*10)/10; saveWaist(w);
-  if(cEl) cEl.value="";
+  var okW=isFinite(wRaw), okC=isFinite(cRaw);
+  if(!okW && !okC){ toast("腹囲か胸囲のどちらかを入力してください"); return; }
+  if(okW && (wRaw<40||wRaw>160)){ toast("腹囲は40〜160cmの範囲で入力してください"); return; }
+  if(okC && (cRaw<40||cRaw>200)){ toast("胸囲は40〜200cmの範囲で入力してください"); return; }
+  var m=loadWaist(), cur=m[dt]||{w:null,c:null};
+  if(okW) cur.w=Math.round(wRaw*10)/10;
+  if(okC) cur.c=Math.round(cRaw*10)/10;
+  m[dt]=cur; saveWaist(m);
+  if(okW && wEl) wEl.value="";
+  if(okC && cEl) cEl.value="";
   applyWaist(); renderHealth();
-  toast(dt+" の腹囲 "+w[dt]+"cm を保存しました");
+  var out=(cur.w!=null? "腹囲"+cur.w+"cm" : "")+((cur.w!=null&&cur.c!=null)? " / ":"")+(cur.c!=null? "胸囲"+cur.c+"cm" : "");
+  toast(dt+" を保存しました（"+out+"）");
 }
 function delWaist(dt){
   var w=loadWaist(); delete w[dt]; saveWaist(w);
@@ -2453,16 +2494,21 @@ function renderWaistList(){
   var box=document.getElementById("waistList"); if(!box) return;
   var w=loadWaist(), ks=Object.keys(w).sort().reverse();
   var cs=document.querySelector('[data-csum="area:hwaist"]');
-  if(cs) cs.textContent= ks.length? (ks.length+"件 / 最新 "+w[ks[0]]+"cm") : "未入力";
-  if(!ks.length){ box.innerHTML='<div class="hnone">まだ腹囲の記録がありません。日付とcmを入れて「追加 / 更新」を押してください。</div>'; return; }
-  var h='<div class="htablewrap"><table class="htable"><thead><tr><th>日付</th><th>腹囲</th><th>7日平均</th><th>判定</th><th></th></tr></thead><tbody>';
+  if(cs){
+    var lr=ks.length? w[ks[0]] : null;
+    cs.textContent= ks.length
+      ? (ks.length+"件 / 最新 "+(lr.w!=null? "腹囲"+lr.w : "腹囲—")+(lr.c!=null? "・胸囲"+lr.c : "")+"cm")
+      : "未入力";
+  }
+  if(!ks.length){ box.innerHTML='<div class="hnone">まだ腹囲・胸囲の記録がありません。日付とcmを入れて「追加 / 更新」を押してください。</div>'; return; }
+  var h='<div class="htablewrap"><table class="htable"><thead><tr><th>日付</th><th>腹囲</th><th>胸囲</th><th>腹囲7日平均</th><th>判定</th><th></th></tr></thead><tbody>';
   ks.forEach(function(dt){
     var d=null;
     for(var i=0;i<healthData.days.length;i++){ if(healthData.days[i].date===dt){ d=healthData.days[i]; break; } }
-    var v=w[dt];
-    var jud=(v<85)? '<span style="color:#3ecf8e;">基準内</span>' : '<span style="color:#ff6b6b;">85cm以上</span>';
+    var r=w[dt], v=r.w;
+    var jud=(v==null)? '—' : ((v<85)? '<span style="color:#3ecf8e;">基準内</span>' : '<span style="color:#ff6b6b;">85cm以上</span>');
     h+='<tr><td>'+esc(dt.slice(5))+(dt===todayJst()? ' <b>今日</b>':'')+'</td>'
-      +'<td><b>'+hFmt(v,1)+'</b> cm</td><td>'+(d? hFmt(d.waist_ma7,2) : '—')+'</td>'
+      +'<td><b>'+hFmt(v,1)+'</b> cm</td><td><b>'+hFmt(r.c,1)+'</b> cm</td><td>'+(d? hFmt(d.waist_ma7,2) : '—')+'</td>'
       +'<td>'+jud+'</td>'
       +'<td><button class="rm" onclick="delWaist(\''+dt+'\')">×</button></td></tr>';
   });
@@ -2510,8 +2556,10 @@ function renderMaSummary(){
     msg+=' 目安は週 -0.25〜-0.4kg です。';
   }
   var wk=loadWaist(), wks=Object.keys(wk).sort();
-  var lastW=wks.length? wk[wks[wks.length-1]] : null;
-  if(cs) cs.textContent=(w7.length? w7[w7.length-1].v.toFixed(2)+"kg" : "—")+(lastW!=null? " / 腹囲"+lastW+"cm" : "");
+  var lastRec=wks.length? wk[wks[wks.length-1]] : null;
+  var lastW=lastRec? lastRec.w : null, lastC=lastRec? lastRec.c : null;
+  if(cs) cs.textContent=(w7.length? w7[w7.length-1].v.toFixed(2)+"kg" : "—")
+    +(lastW!=null? " / 腹囲"+lastW+"cm" : "")+(lastC!=null? " / 胸囲"+lastC+"cm" : "");
   box.innerHTML='<div class="h2col">'
     +maBlock("体重 7日移動平均", w7, "kg", 2, "down")
     +maBlock("体脂肪率 7日移動平均", b7, "%", 2, "down")
@@ -2675,6 +2723,7 @@ function renderHealthCharts(){
   h+=hChart("体重（実線=実測 / 破線=7日移動平均）","weight","#ffb454","kg","line",2,{},"weight_ma7");
   h+=hChart("体脂肪率（実線=実測 / 破線=7日移動平均）","bf","#e0aaff","%","line",1,{},"bf_ma7");
   h+=hChart("腹囲（破線=85cm基準）","waist","#4da3ff","cm","line",1,{ok:85, okLabel:"85cm"});
+  h+=hChart("胸囲","chest","#c9a7ff","cm","line",1);
   h+=hChart("摂取カロリー","diet","#3ecf8e","kcal","bar");
   h+=hChart("タンパク質","P","#4da3ff","g","bar",1);
   box.innerHTML=h;
@@ -2686,7 +2735,7 @@ function renderHealthTable(){
   if(cs) cs.textContent=healthData.days.length+"日分";
   if(!days.length){ box.innerHTML=""; return; }
   var h='<div class="htablewrap"><table class="htable"><thead><tr>'
-    +'<th>日付</th><th>歩数</th><th>活動</th><th>運動</th><th>睡眠</th><th>出典</th><th>rHR</th><th>HRV</th><th>体重</th><th>BF%</th><th>腹囲</th><th>摂取</th><th>P</th><th>F</th><th>C</th>'
+    +'<th>日付</th><th>歩数</th><th>活動</th><th>運動</th><th>睡眠</th><th>出典</th><th>rHR</th><th>HRV</th><th>体重</th><th>BF%</th><th>腹囲</th><th>胸囲</th><th>摂取</th><th>P</th><th>F</th><th>C</th>'
     +'</tr></thead><tbody>';
   days.forEach(function(d){
     h+='<tr'+(d.partial?' class="partial"':'')+'>'
@@ -2694,7 +2743,7 @@ function renderHealthTable(){
       +'<td>'+hFmt(d.steps)+'</td><td>'+hFmt(d.act)+'</td><td>'+hFmt(d.exmin)+'</td>'
       +'<td>'+hFmt(d.sleep,2)+'</td><td>'+(d.sleep_src?shortSrc(d.sleep_src):'—')+'</td>'
       +'<td>'+hFmt(d.rhr)+'</td><td>'+hFmt(d.hrv,1)+'</td>'
-      +'<td>'+hFmt(d.weight,2)+'</td><td>'+hFmt(d.bf,1)+'</td><td>'+hFmt(d.waist,1)+'</td>'
+      +'<td>'+hFmt(d.weight,2)+'</td><td>'+hFmt(d.bf,1)+'</td><td>'+hFmt(d.waist,1)+'</td><td>'+hFmt(d.chest,1)+'</td>'
       +'<td>'+hFmt(d.diet)+'</td><td>'+hFmt(d.P,1)+'</td><td>'+hFmt(d.F,1)+'</td><td>'+hFmt(d.C,1)+'</td></tr>';
   });
   h+='</tbody></table></div>';
