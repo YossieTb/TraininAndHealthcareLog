@@ -133,6 +133,11 @@
   .hsvg{width:100%; height:auto; display:block; background:var(--bg); border:1px solid var(--line); border-radius:8px;}
   .hsvg .hx{font-size:7px; fill:var(--sub);}
   .hnone{color:var(--sub); font-size:11px; padding:14px 0; text-align:center;}
+  .wform{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; align-items:center;}
+  .wform input[type=date]{flex:1 1 132px; min-width:0;}
+  .wform input[type=number]{flex:0 0 86px; min-width:0;}
+  .hleg{color:var(--sub); font-size:10px; margin-top:5px; line-height:1.55;}
+  .h2col{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
   .htablewrap{overflow-x:auto; -webkit-overflow-scrolling:touch;}
   .htable{border-collapse:collapse; font-size:11px; white-space:nowrap;}
   .htable th{color:var(--sub); font-weight:400; padding:4px 6px; text-align:right; border-bottom:1px solid var(--line);}
@@ -433,6 +438,28 @@
     </div>
     <div class="cbody" data-cbody="area:h7">
       <div id="healthSummary"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chead" data-chead="area:hma" onclick="toggleArea('area:hma')">
+      <span class="chev">▼</span><span class="ct">7日移動平均（体重・体脂肪率）</span><span class="cs" data-csum="area:hma"></span>
+    </div>
+    <div class="cbody" data-cbody="area:hma">
+      <div id="healthMa"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chead" data-chead="area:hwaist" onclick="toggleArea('area:hwaist')">
+      <span class="chev">▼</span><span class="ct">腹囲（メタボ基準 85cm未満）</span><span class="cs" data-csum="area:hwaist"></span>
+    </div>
+    <div class="cbody" data-cbody="area:hwaist">
+      <div class="qhint">朝イチ・空腹時・同じ姿勢で、臍（へそ）の高さを測ります。健診では男性85cm未満が基準です。記録はこの端末に保存され、グラフには85cmの基準線を表示します。</div>
+      <div class="wform">
+        <input type="date" id="waistDate">
+        <input type="number" id="waistCm" step="0.1" min="40" max="160" inputmode="decimal" placeholder="cm">
+        <button type="button" class="btn" onclick="addWaist()">追加 / 更新</button>
+      </div>
+      <div id="waistList"></div>
     </div>
   </div>
   <div class="card">
@@ -1538,7 +1565,7 @@ function saveUI(){ try{ localStorage.setItem(LS_UI, JSON.stringify(UIOPEN)); }ca
 function uiDefault(k){
   if(k==="area:add") return session.exercises.length===0;   // 登録は最初だけ開く
   if(k==="area:date"||k==="area:list"||k==="area:history") return true;
-  if(k==="area:h7"||k==="area:hchart"||k==="area:htable") return true;
+  if(k==="area:h7"||k==="area:hma"||k==="area:hchart"||k==="area:htable"||k==="area:hwaist") return true;
   return false;
 }
 function uiGet(k){ var v=UIOPEN[k]; return (typeof v==="boolean")?v:uiDefault(k); }
@@ -2367,6 +2394,131 @@ function hAvg(key){
   var v=healthData.days.slice(-7).map(function(d){ return d[key]; }).filter(function(x){ return typeof x==="number"; });
   return v.length? v.reduce(function(a,b){ return a+b; },0)/v.length : null;
 }
+/* ---------- v7.5: 7日移動平均 & 腹囲 ---------- */
+var LS_WAIST="tl_waist_v1";
+var MA_MIN_W=4;      /* 体重・体脂肪率: 7日窓に4点以上で平均を出す */
+var MA_MIN_WAIST=2;  /* 腹囲: 7日窓に2点以上 */
+function todayJst(){ try{ var d=new Date(Date.now()+9*3600*1000); return d.toISOString().slice(0,10); }catch(e){ return ""; } }
+function maWin(days,i,key,minN){
+  var toT=function(x){ return new Date(x+"T00:00:00").getTime(); };
+  var end=toT(days[i].date), start=end-6*86400000, win=[];
+  for(var j=i;j>=0;j--){
+    var tj=toT(days[j].date);
+    if(tj<start) break;
+    if(typeof days[j][key]==="number") win.push(days[j][key]);
+  }
+  if(win.length<minN) return null;
+  return Math.round(win.reduce(function(a,b){ return a+b; },0)/win.length*1000)/1000;
+}
+function ensureMA(){
+  var days=healthData.days||[];
+  for(var i=0;i<days.length;i++){
+    days[i].weight_ma7=maWin(days,i,"weight",MA_MIN_W);
+    days[i].bf_ma7=maWin(days,i,"bf",MA_MIN_W);
+    days[i].waist_ma7=maWin(days,i,"waist",MA_MIN_WAIST);
+  }
+}
+function loadWaist(){
+  try{ var o=JSON.parse(localStorage.getItem(LS_WAIST)||"{}");
+    return (o&&typeof o==="object"&&!Array.isArray(o))? o : {};
+  }catch(e){ return {}; }
+}
+function saveWaist(o){ try{ localStorage.setItem(LS_WAIST, JSON.stringify(o)); }catch(e){} }
+function applyWaist(){
+  var w=loadWaist(), ds=healthData.days||[], changed=false;
+  Object.keys(w).forEach(function(dt){
+    var v=w[dt]; if(typeof v!=="number") return;
+    var hit=null;
+    for(var i=0;i<ds.length;i++){ if(ds[i].date===dt){ hit=ds[i]; break; } }
+    if(hit){ if(hit.waist!==v){ hit.waist=v; changed=true; } }
+    else { ds.push({date:dt, waist:v}); changed=true; }
+  });
+  if(changed) ds.sort(function(a,b){ return a.date<b.date? -1 : 1; });
+}
+function addWaist(){
+  var dEl=document.getElementById("waistDate"), cEl=document.getElementById("waistCm");
+  var dt=(dEl&&dEl.value)||"", cm=parseFloat((cEl&&cEl.value)||"");
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dt)){ toast("日付を選んでください"); return; }
+  if(!isFinite(cm)||cm<40||cm>160){ toast("腹囲は40〜160cmの範囲で入力してください"); return; }
+  var w=loadWaist(); w[dt]=Math.round(cm*10)/10; saveWaist(w);
+  if(cEl) cEl.value="";
+  applyWaist(); renderHealth();
+  toast(dt+" の腹囲 "+w[dt]+"cm を保存しました");
+}
+function delWaist(dt){
+  var w=loadWaist(); delete w[dt]; saveWaist(w);
+  applyWaist(); renderHealth(); toast(dt+" の腹囲を削除しました");
+}
+function renderWaistList(){
+  var box=document.getElementById("waistList"); if(!box) return;
+  var w=loadWaist(), ks=Object.keys(w).sort().reverse();
+  var cs=document.querySelector('[data-csum="area:hwaist"]');
+  if(cs) cs.textContent= ks.length? (ks.length+"件 / 最新 "+w[ks[0]]+"cm") : "未入力";
+  if(!ks.length){ box.innerHTML='<div class="hnone">まだ腹囲の記録がありません。日付とcmを入れて「追加 / 更新」を押してください。</div>'; return; }
+  var h='<div class="htablewrap"><table class="htable"><thead><tr><th>日付</th><th>腹囲</th><th>7日平均</th><th>判定</th><th></th></tr></thead><tbody>';
+  ks.forEach(function(dt){
+    var d=null;
+    for(var i=0;i<healthData.days.length;i++){ if(healthData.days[i].date===dt){ d=healthData.days[i]; break; } }
+    var v=w[dt];
+    var jud=(v<85)? '<span style="color:#3ecf8e;">基準内</span>' : '<span style="color:#ff6b6b;">85cm以上</span>';
+    h+='<tr><td>'+esc(dt.slice(5))+(dt===todayJst()? ' <b>今日</b>':'')+'</td>'
+      +'<td><b>'+hFmt(v,1)+'</b> cm</td><td>'+(d? hFmt(d.waist_ma7,2) : '—')+'</td>'
+      +'<td>'+jud+'</td>'
+      +'<td><button class="rm" onclick="delWaist(\''+dt+'\')">×</button></td></tr>';
+  });
+  h+='</tbody></table></div>';
+  box.innerHTML=h;
+}
+function maSeries(key){
+  return (healthData.days||[]).map(function(d){ return {date:d.date, v:(typeof d[key]==="number"? d[key] : null)}; })
+    .filter(function(x){ return x.v!=null; });
+}
+function maBlock(lab, ar, unit, dec, good){
+  if(!ar.length) return hStat(lab,"—",unit);
+  var cur=ar[ar.length-1].v, n=Math.min(7,ar.length-1);
+  var base=(n>0)? ar[ar.length-1-n].v : null;
+  var dlt=(base!=null)? cur-base : null;
+  var arrow=(dlt==null)? "" : (dlt>0.001? " ▲" : (dlt<-0.001? " ▼" : " →"));
+  var col="";
+  if(dlt!=null && Math.abs(dlt)>0.001){
+    if(good==="down") col=(dlt<0)? "color:#3ecf8e;" : "color:#ff6b6b;";
+    else col=(dlt>0)? "color:#3ecf8e;" : "color:#ff6b6b;";
+  }
+  return '<div class="hstat"><div class="hl">'+lab+'</div>'
+    +'<div class="hv">'+hFmt(cur,dec)+'<span class="hu">'+unit+arrow+'</span></div>'
+    +'<div class="hu"'+(col? ' style="'+col+'"':'')+'>7日変化 '+(dlt==null? "—" : ((dlt>0?"+":"")+dlt.toFixed(dec)))+unit+'</div></div>';
+}
+function renderMaSummary(){
+  var box=document.getElementById("healthMa"); if(!box) return;
+  var w7=maSeries("weight_ma7"), b7=maSeries("bf_ma7");
+  var cs=document.querySelector('[data-csum="area:hma"]');
+  if(!w7.length && !b7.length){
+    box.innerHTML='<div class="hnone">移動平均の算出には、体重・体脂肪率が7日窓に'+MA_MIN_W+'点以上必要です。</div>';
+    if(cs) cs.textContent="データ不足";
+    return;
+  }
+  var perW=null;
+  if(w7.length>=2){
+    var k=Math.min(7, w7.length-1);
+    perW=(w7[w7.length-1].v - w7[w7.length-1-k].v)/k*7;
+  }
+  var msg="";
+  if(perW!=null){
+    if(perW<-0.05) msg='現在のペースは <b>週 '+perW.toFixed(2)+' kg</b>（減少）。';
+    else if(perW>0.05) msg='現在のペースは <b>週 +'+perW.toFixed(2)+' kg</b>（増加）。';
+    else msg='現在のペースは <b>ほぼ横ばい</b>（週 '+perW.toFixed(2)+' kg）。';
+    msg+=' 目安は週 -0.25〜-0.4kg です。';
+  }
+  var wk=loadWaist(), wks=Object.keys(wk).sort();
+  var lastW=wks.length? wk[wks[wks.length-1]] : null;
+  if(cs) cs.textContent=(w7.length? w7[w7.length-1].v.toFixed(2)+"kg" : "—")+(lastW!=null? " / 腹囲"+lastW+"cm" : "");
+  box.innerHTML='<div class="h2col">'
+    +maBlock("体重 7日移動平均", w7, "kg", 2, "down")
+    +maBlock("体脂肪率 7日移動平均", b7, "%", 2, "down")
+    +'</div>'
+    +'<div class="hleg">※ 実測値ではなく7日窓の平均です（体重・体脂肪率は7日窓に'+MA_MIN_W+'点以上で算出。▲▼は7日移動平均の7日前との差）。</div>'
+    +(msg? '<div class="qhint">'+msg+'</div>' : '');
+}
 /* ---- v7.1: 回復しきい値（暫定。この3行を変えれば基準が変わる） ---- */
 var HRV_OK=75, HRV_NG=60;   /* HRV(ms)。OK=75ms以上 / NG=60ms未満。回復率100%=75ms, 80%=60ms */
 var RHR_OK=55, RHR_NG=58;   /* 安静時心拍(bpm)。低いほど良い。OK=55以下 / NG=58超 */
@@ -2419,10 +2571,14 @@ function hBarSVG(key,color,unit,dec,opts){
 function hLineSVG(key,color,unit,dec,opts){
   opts=opts||{};
   var vals=hLast14(key), ok=vals.filter(function(d){ return d.v!=null; });
-  if(ok.length<2) return '<div class="hnone">データ不足</div>';
+  var mav=opts.ma? hLast14(opts.ma) : null;
+  var okma=mav? mav.filter(function(d){ return d.v!=null; }) : [];
+  if(ok.length<2 && okma.length<2) return '<div class="hnone">データ不足</div>';
+  if(!vals.length && mav) vals=mav;
   var n=vals.length, w=n*26, H=104, L=30, R=8, T=10, B=22;
   var min=null,max=null;
   ok.forEach(function(d){ if(min==null||d.v<min)min=d.v; if(max==null||d.v>max)max=d.v; });
+  okma.forEach(function(d){ if(min==null||d.v<min)min=d.v; if(max==null||d.v>max)max=d.v; });
   if(typeof opts.ok==="number"){ min=Math.min(min,opts.ok); max=Math.max(max,opts.ok); }
   if(typeof opts.ng==="number"){ min=Math.min(min,opts.ng); max=Math.max(max,opts.ng); }
   if(max-min<0.001){ max+=1; min-=1; }
@@ -2436,6 +2592,15 @@ function hLineSVG(key,color,unit,dec,opts){
   var pts=[];
   vals.forEach(function(d,i){ if(d.v!=null) pts.push(X(i).toFixed(1)+","+Y(d.v).toFixed(1)); });
   s+='<polyline points="'+pts.join(" ")+'" fill="none" stroke="'+color+'" stroke-width="1.6"/>';
+  if(okma.length>=2){
+    var pm=[];
+    mav.forEach(function(d,i){ if(d.v!=null) pm.push(X(i).toFixed(1)+","+Y(d.v).toFixed(1)); });
+    s+='<polyline points="'+pm.join(" ")+'" fill="none" stroke="'+color+'" stroke-width="2.2" stroke-dasharray="5 3" opacity="0.95"/>';
+    mav.forEach(function(d,i){
+      if(d.v==null) return;
+      s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(d.v).toFixed(1)+'" r="2.4" fill="none" stroke="'+color+'" stroke-width="1.4"><title>'+d.date+': 7日移動平均 '+hFmt(d.v,dec)+unit+'</title></circle>';
+    });
+  }
   vals.forEach(function(d,i){
     if(d.v==null) return;
     s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(d.v).toFixed(1)+'" r="2" fill="'+color+'"><title>'+d.date+': '+hFmt(d.v,dec)+unit+'</title></circle>';
@@ -2444,12 +2609,18 @@ function hLineSVG(key,color,unit,dec,opts){
   s+='<text x="'+(w-R)+'" y="'+(H-6)+'" class="hx" text-anchor="end">'+vals[n-1].date.slice(5).replace("-","/")+'</text>';
   return s+'</svg>';
 }
-function hChart(title,key,color,unit,kind,dec,opts){
+function hChart(title,key,color,unit,kind,dec,opts,maKey){
   opts=opts||{};
   var last=null;
   for(var i=healthData.days.length-1;i>=0;i--){ if(typeof healthData.days[i][key]==="number"){ last=healthData.days[i][key]; break; } }
-  var avg=hAvg(key);
-  return '<div class="hchart"><div class="hct"><span>'+title+'</span><span>最新 <b>'+hFmt(last,dec)+unit+'</b> / 7日平均 <b>'+hFmt(avg,dec)+unit+'</b></span></div>'
+  var avg=hAvg(key), maLast=null;
+  if(maKey){
+    for(var j=healthData.days.length-1;j>=0;j--){ if(typeof healthData.days[j][maKey]==="number"){ maLast=healthData.days[j][maKey]; break; } }
+    opts=Object.assign({},opts,{ma:maKey});
+  }
+  var head='最新 <b>'+hFmt(last,dec)+unit+'</b>'
+    +((maLast!=null)? ' / <b>移動平均 '+hFmt(maLast,dec)+unit+'</b>' : ' / 7日平均 <b>'+hFmt(avg,dec)+unit+'</b>');
+  return '<div class="hchart"><div class="hct"><span>'+title+'</span><span>'+head+'</span></div>'
     +(kind==="bar"? hBarSVG(key,color,unit,dec,opts) : hLineSVG(key,color,unit,dec,opts))+'</div>';
 }
 function renderHealthSummary(){
@@ -2488,6 +2659,7 @@ function renderHealthCharts(){
   var box=document.getElementById("healthCharts"); if(!box) return;
   if(!healthData.days.length){ box.innerHTML=""; return; }
   ensureRecovery();
+  ensureMA();
   var ngPct=Math.round(HRV_NG/HRV_OK*100);
   var h='<div class="qhint">OK/NGラインは暫定値です（HRV '+HRV_OK+'/'+HRV_NG+'ms、安静時心拍 '+RHR_OK+'/'+RHR_NG+'bpm、回復率はHRV '+HRV_OK+'ms=100%として換算）。基準を変えるにはソース冒頭の HRV_OK / HRV_NG / RHR_OK / RHR_NG を書き換えてください。</div>';
 
@@ -2500,8 +2672,9 @@ function renderHealthCharts(){
         {ok:RHR_OK, okLabel:"OK "+RHR_OK, ng:RHR_NG, ngLabel:"NG "+RHR_NG});
   h+=hChart("HRV","hrv","#3ecf8e","ms","line",1,
         {ok:HRV_OK, okLabel:"OK "+HRV_OK, ng:HRV_NG, ngLabel:"NG "+HRV_NG});
-  h+=hChart("体重","weight","#ffb454","kg","line",2);
-  h+=hChart("体脂肪率","bf","#e0aaff","%","line",1);
+  h+=hChart("体重（実線=実測 / 破線=7日移動平均）","weight","#ffb454","kg","line",2,{},"weight_ma7");
+  h+=hChart("体脂肪率（実線=実測 / 破線=7日移動平均）","bf","#e0aaff","%","line",1,{},"bf_ma7");
+  h+=hChart("腹囲（破線=85cm基準）","waist","#4da3ff","cm","line",1,{ok:85, okLabel:"85cm"});
   h+=hChart("摂取カロリー","diet","#3ecf8e","kcal","bar");
   h+=hChart("タンパク質","P","#4da3ff","g","bar",1);
   box.innerHTML=h;
@@ -2513,7 +2686,7 @@ function renderHealthTable(){
   if(cs) cs.textContent=healthData.days.length+"日分";
   if(!days.length){ box.innerHTML=""; return; }
   var h='<div class="htablewrap"><table class="htable"><thead><tr>'
-    +'<th>日付</th><th>歩数</th><th>活動</th><th>運動</th><th>睡眠</th><th>出典</th><th>rHR</th><th>HRV</th><th>体重</th><th>BF%</th><th>摂取</th><th>P</th><th>F</th><th>C</th>'
+    +'<th>日付</th><th>歩数</th><th>活動</th><th>運動</th><th>睡眠</th><th>出典</th><th>rHR</th><th>HRV</th><th>体重</th><th>BF%</th><th>腹囲</th><th>摂取</th><th>P</th><th>F</th><th>C</th>'
     +'</tr></thead><tbody>';
   days.forEach(function(d){
     h+='<tr'+(d.partial?' class="partial"':'')+'>'
@@ -2521,14 +2694,15 @@ function renderHealthTable(){
       +'<td>'+hFmt(d.steps)+'</td><td>'+hFmt(d.act)+'</td><td>'+hFmt(d.exmin)+'</td>'
       +'<td>'+hFmt(d.sleep,2)+'</td><td>'+(d.sleep_src?shortSrc(d.sleep_src):'—')+'</td>'
       +'<td>'+hFmt(d.rhr)+'</td><td>'+hFmt(d.hrv,1)+'</td>'
-      +'<td>'+hFmt(d.weight,2)+'</td><td>'+hFmt(d.bf,1)+'</td>'
+      +'<td>'+hFmt(d.weight,2)+'</td><td>'+hFmt(d.bf,1)+'</td><td>'+hFmt(d.waist,1)+'</td>'
       +'<td>'+hFmt(d.diet)+'</td><td>'+hFmt(d.P,1)+'</td><td>'+hFmt(d.F,1)+'</td><td>'+hFmt(d.C,1)+'</td></tr>';
   });
   h+='</tbody></table></div>';
   box.innerHTML=h;
 }
 function renderHealth(){
-  renderHealthSummary(); renderHealthCharts(); renderHealthTable();
+  applyWaist(); ensureRecovery(); ensureMA();
+  renderHealthSummary(); renderMaSummary(); renderHealthCharts(); renderHealthTable(); renderWaistList();
   applyAreaUI();
 }
 function showTab(n){
@@ -2553,5 +2727,9 @@ init();
 
 </script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+
+<script>
+window.addEventListener("load",function(){try{var h=location.hash;if(h==="#health")showTab(2);else if(h==="#history")showTab(1);}catch(e){}});
+</script>
 </body>
 </html>
