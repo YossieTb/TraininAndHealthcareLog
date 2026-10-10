@@ -281,11 +281,27 @@
     border:2px solid var(--accent2); font-size:14px; font-weight:700;
     box-shadow:0 2px 0 rgba(0,0,0,.35); user-select:none;}
   .chips .chip:active{transform:translateY(1px); box-shadow:none; background:var(--accent2); color:#fff;}
+  /* ===== v7.8: 参考リンクのURL入力（全幅・折返し）／種目名の可読性 ===== */
+  .linkadd input{font-size:16px;}
+  .linkadd .lnurl{display:block; width:100%; box-sizing:border-box; margin:0 0 6px;
+    padding:12px; min-height:64px; font-size:16px; line-height:1.5; font-family:inherit;
+    border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--text);
+    white-space:pre-wrap; word-break:break-all; overflow-wrap:anywhere; resize:vertical;}
+  .linkadd .lnurl:not(:placeholder-shown){border-color:var(--good); box-shadow:inset 0 0 0 1px var(--good);}
+  .linkadd .lncnt{font-size:11px; color:var(--sub); margin:0 0 6px;}
+  .linkadd .lnurl.lnok + .lncnt{color:var(--good); font-weight:700;}
+  .linkadd .ladd{display:block; width:100%; flex:0 0 auto; margin-top:0;}
+  /* 種目カードの見出し: 種目名を最優先で表示し、操作ボタンは次行へ送る */
+  .excard .exhead{flex-wrap:wrap; row-gap:2px;}
+  .excard .exl{flex:1 1 100%; flex-wrap:wrap;}
+  .excard .exl .name{white-space:normal; overflow:visible; text-overflow:clip;
+    word-break:break-word; line-height:1.35;}
+  .excard .exbtns{flex:1 1 100%; justify-content:flex-end; gap:8px; margin-top:2px;}
 </style>
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）</div>
 <div class="toast" id="toast"></div>
 <div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div><div id="reviewBox"></div>
 <!-- v7.1: 保存前の日付確認 -->
@@ -1809,7 +1825,7 @@ function normUrl(u){
 function addLink(i){
   var ex=session.exercises[i]; if(!ex) return;
   var lab=document.querySelector('input[data-lnlab="'+i+'"]');
-  var url=document.querySelector('input[data-lnurl="'+i+'"]');
+  var url=document.querySelector('[data-lnurl="'+i+'"]');
   var u=normUrl(url?url.value:"");
   if(!u){ toast("URLが正しくありません（https://… の形式で入力してください）"); return; }
   var l=(lab?String(lab.value):"").trim();
@@ -1818,6 +1834,12 @@ function addLink(i){
   a.push({l:l,u:u});
   saveLinks(); render();
   toast("参考リンクを追加しました（"+ex.name+": "+a.length+"件）");
+}
+function lnTyped(el){
+  var n=String(el.value||"").replace(/\s/g,"").length;
+  var box=el.parentNode?el.parentNode.querySelector(".lncnt"):null;
+  if(el.classList){ if(n>0) el.classList.add("lnok"); else el.classList.remove("lnok"); }
+  if(box) box.textContent=(n>0?("入力済み: "+n+"文字（空白・改行は無視されます）"):"未入力");
 }
 function delLink(i,j){
   var ex=session.exercises[i]; if(!ex) return;
@@ -1839,8 +1861,9 @@ function linksBoxHTML(name,i){
   }
   h+='<div class="linkadd">'
     +'<input data-lnlab="'+i+'" placeholder="ラベル（例：フォーム解説動画／陥りやすいミス）">'
-    +'<div class="lnrow"><input data-lnurl="'+i+'" placeholder="https://…（URLを貼り付け）" inputmode="url">'
-    +'<button type="button" class="btn btn-ghost ladd" onclick="addLink('+i+')">追加</button></div></div></div>';
+    +'<textarea class="lnurl" data-lnurl="'+i+'" rows="2" placeholder="https://…（URLを貼り付け）" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="lnTyped(this)"></textarea>'
+    +'<div class="lncnt">未入力</div>'
+    +'<button type="button" class="btn btn-ghost ladd" onclick="addLink('+i+')">＋ このURLを追加</button></div></div>';
   return h;
 }
 
