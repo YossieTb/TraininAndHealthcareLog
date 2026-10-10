@@ -1,31 +1,11 @@
 {
-  "generated_at": "2026-10-10T16:22:05+0900",
+  "generated_at": "2026-10-10T16:35:40+0900",
   "dedupe_key": "date+exercise+set",
   "source_files": [
-    {
-      "device": "PC",
-      "file": "tl_PC.json",
-      "exported_at": "2026-10-06T13:32:57.758Z",
-      "records": 59,
-      "dates": [
-        "2026-09-27",
-        "2026-09-30",
-        "2026-10-06"
-      ],
-      "duplicate_keys": 0,
-      "notes": 4
-    },
-    {
-      "device": "iPhone",
-      "file": "tl_Phone.json",
-      "exported_at": "2026-10-06T13:28:48.367Z",
-      "records": 18,
-      "dates": [
-        "2026-10-01"
-      ],
-      "duplicate_keys": 0,
-      "notes": 0
-    }
+    "{\"device\": \"PC\", \"file\": \"tl_PC.json\", \"exported_at\": \"2026-10-06T13:32:57.758Z\", \"records\": 59, \"dates\": [\"2026-09-27\", \"2026-09-30\", \"2026-10-06\"], \"duplicate_keys\": 0, \"notes\": 4}",
+    "{\"device\": \"iPhone\", \"file\": \"tl_Phone.json\", \"exported_at\": \"2026-10-06T13:28:48.367Z\", \"records\": 18, \"dates\": [\"2026-10-01\"], \"duplicate_keys\": 0, \"notes\": 0}",
+    "training_log.json (10/10 16:15出力・端末A=10-08入り)",
+    "training_log.json (10/10 16:16出力・端末B=10-07入り)"
   ],
   "exercise_names": [
     "アブローラー",
@@ -212,6 +192,10 @@
       {
         "device": "PC",
         "text": "2026/10/06：伸び悩み中。\n2026/10/06：芳賀セブンのやり方もトライしたい。"
+      },
+      {
+        "device": "端末B(10/10 16:16出力)",
+        "text": "https://x.com/isuperbody/status/2101928517122543687?s=46&t=54Vli0_9jvuDvr6O9NyAjg"
       }
     ],
     "インクラインサイドレイズ": [
@@ -224,12 +208,40 @@
       {
         "device": "PC",
         "text": "2026/10/06：基本的に立ちコロ。"
+      },
+      {
+        "device": "端末B(10/10 16:16出力)",
+        "text": "2026/10/07：膝コロ。\n肘の形が気になる。下手すると痛めそう。"
       }
     ],
     "リアデルト": [
       {
         "device": "端末",
         "text": "戻りも意識した方がいいかも"
+      }
+    ],
+    "レッグエクステンション": [
+      {
+        "device": "端末B(10/10 16:16出力)",
+        "text": "マシンメーカ別重量\n・SHUA：60kg"
+      }
+    ],
+    "ケーブルプルオーバー": [
+      {
+        "device": "端末B(10/10 16:16出力)",
+        "text": "ストレッチ感が薄いのが悩みどころ。フォームとしては，下に押し下げる？それとも後ろに引く？\nhttps://www.spg-eclipse.com/blog-63\n広背筋にストレッチ感\n上半身が上に伸びていく感じ\n背中種目は戻す時が重要"
+      }
+    ],
+    "ラットプルダウン（パラレルナロー）": [
+      {
+        "device": "端末B(10/10 16:16出力)",
+        "text": "https://www.spg-eclipse.com/blog-37\n肘を内向き、肩甲骨をよせて「内旋」状態をつくる\n戻す時の方が重要、ゆっくり戻す。"
+      }
+    ],
+    "ケーブルサイドレイズ": [
+      {
+        "device": "端末B(10/10 16:16出力)",
+        "text": "いいやり方を模索すべき。"
       }
     ]
   },
@@ -929,6 +941,216 @@
       "bodyweight": false
     },
     {
+      "date": "2026-10-07",
+      "exercise": "アブローラー",
+      "set": 1,
+      "weight_kg": null,
+      "reps": 10,
+      "volume_kg": null,
+      "bodyweight": true,
+      "review": true
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "アブローラー",
+      "set": 2,
+      "weight_kg": null,
+      "reps": 15,
+      "volume_kg": null,
+      "bodyweight": true,
+      "review": true
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "アブローラー",
+      "set": 3,
+      "weight_kg": null,
+      "reps": 15,
+      "volume_kg": null,
+      "bodyweight": true,
+      "review": true
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "インクラインダンベルプレス",
+      "set": 1,
+      "weight_kg": 15,
+      "reps": 15,
+      "volume_kg": 225,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "インクラインダンベルプレス",
+      "set": 2,
+      "weight_kg": 15,
+      "reps": 16,
+      "volume_kg": 240,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "インクラインダンベルプレス",
+      "set": 3,
+      "weight_kg": 15,
+      "reps": 10,
+      "volume_kg": 150,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "ケーブルサイドレイズ",
+      "set": 1,
+      "weight_kg": 5,
+      "reps": 15,
+      "volume_kg": 75,
+      "bodyweight": false,
+      "review": true
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "ケーブルサイドレイズ",
+      "set": 2,
+      "weight_kg": 5,
+      "reps": 15,
+      "volume_kg": 75,
+      "bodyweight": false,
+      "review": true
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "ケーブルサイドレイズ",
+      "set": 3,
+      "weight_kg": 10,
+      "reps": 10,
+      "volume_kg": 100,
+      "bodyweight": false,
+      "review": true
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "ケーブルサイドレイズ",
+      "set": 4,
+      "weight_kg": 10,
+      "reps": 10,
+      "volume_kg": 100,
+      "bodyweight": false,
+      "review": true
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "ケーブルプルオーバー",
+      "set": 1,
+      "weight_kg": 45,
+      "reps": 12,
+      "volume_kg": 540,
+      "bodyweight": false,
+      "review": true
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "ケーブルプルオーバー",
+      "set": 2,
+      "weight_kg": 50,
+      "reps": 11,
+      "volume_kg": 550,
+      "bodyweight": false,
+      "review": true
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "ケーブルプルオーバー",
+      "set": 3,
+      "weight_kg": 50,
+      "reps": 10,
+      "volume_kg": 500,
+      "bodyweight": false,
+      "review": true
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "ラットプルダウン（パラレルナロー）",
+      "set": 1,
+      "weight_kg": 45,
+      "reps": 10,
+      "volume_kg": 450,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "ラットプルダウン（パラレルナロー）",
+      "set": 2,
+      "weight_kg": 45,
+      "reps": 9,
+      "volume_kg": 405,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "ラットプルダウン（パラレルナロー）",
+      "set": 3,
+      "weight_kg": 45,
+      "reps": 6,
+      "volume_kg": 270,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "ラットプルダウン（パラレルナロー）",
+      "set": 4,
+      "weight_kg": 40,
+      "reps": 10,
+      "volume_kg": 400,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "レッグエクステンション",
+      "set": 1,
+      "weight_kg": 40,
+      "reps": 10,
+      "volume_kg": 400,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "レッグエクステンション",
+      "set": 2,
+      "weight_kg": 70,
+      "reps": 10,
+      "volume_kg": 700,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "レッグエクステンション",
+      "set": 3,
+      "weight_kg": 60,
+      "reps": 10,
+      "volume_kg": 600,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-07",
+      "exercise": "レッグエクステンション",
+      "set": 4,
+      "weight_kg": 65,
+      "reps": 10,
+      "volume_kg": 650,
+      "bodyweight": false,
+      "review": false
+    },
+    {
       "date": "2026-10-08",
       "exercise": "リアデルト",
       "set": 1,
@@ -1000,6 +1222,23 @@
     }
   ],
   "links": {},
-  "review_flags": {},
+  "review_flags": {
+    "ケーブルプルオーバー": {
+      "on": true,
+      "since": "2026-10-07"
+    },
+    "ケーブルサイドレイズ": {
+      "on": true,
+      "since": "2026-10-07"
+    },
+    "アブローラー": {
+      "on": true,
+      "since": "2026-10-07"
+    },
+    "プレスダウン（トライセップロープ）": {
+      "on": true,
+      "since": "2026-10-06"
+    }
+  },
   "schema": "training_master/1.1"
 }
