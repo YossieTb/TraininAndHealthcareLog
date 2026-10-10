@@ -1788,11 +1788,23 @@ function loadLinks(){
 function saveLinks(){ try{ localStorage.setItem(LS_LINK, JSON.stringify(links)); }catch(e){} }
 function getLinks(name){ var a=links[name]; return Array.isArray(a)?a:[]; }
 function normUrl(u){
-  u=String(u==null?"":u).trim();
+  /* v7.7: 貼り付け由来の不可視文字・全角文字・囲み記号・空白を除去してから URL 検証する */
+  u=String(u==null?"":u);
+  u=u.replace(/[\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/g,"");
+  u=u.replace(/[\uFF01-\uFF5E]/g,function(c){ return String.fromCharCode(c.charCodeAt(0)-0xFEE0); });
+  u=u.replace(/\u3000/g," ");
+  u=u.trim();
+  u=u.replace(/^[<"'\u201C\u201D\u2018\u2019(\uFF08\[\u3010]+/,"").replace(/[>"'\u201C\u201D\u2018\u2019)\]\uFF09\u3011\u3001\u3002.,]+$/,"");
+  u=u.replace(/[\s\u00A0]/g,"");
   if(!u) return "";
-  if(!/^https?:\/\//i.test(u)) u="https://"+u;
-  if(!/^https?:\/\/[^\s\/]+\.[^\s]+$/i.test(u)) return "";
-  return u;
+  if(!/^https?:\/\//i.test(u)){ if(/^[^\s\/@]+(\.[^\s\/@]+)+([\/?#].*)?$/.test(u)) u="https://"+u; }
+  if(!/^https?:\/\//i.test(u)) return "";
+  try{
+    var p=new URL(u);
+    if(p.protocol!=="http:" && p.protocol!=="https:") return "";
+    if(!/^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(p.hostname)) return "";
+    return p.href;
+  }catch(e){ return ""; }
 }
 function addLink(i){
   var ex=session.exercises[i]; if(!ex) return;
