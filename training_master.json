@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-07T00:31:28+0900",
+  "generated_at": "2026-10-10T16:22:05+0900",
   "dedupe_key": "date+exercise+set",
   "source_files": [
     {
@@ -28,20 +28,22 @@
     }
   ],
   "exercise_names": [
-    "サイドレイズ",
-    "プレスダウン（トライセップロープ）",
     "アブローラー",
-    "インクラインダンベルカール",
-    "ルーマニアンデッドリフト",
     "インクラインサイドレイズ",
-    "ダンベルプレス",
-    "ケーブルプルオーバー",
-    "ラットプルダウン（パラレルナロー）",
+    "インクラインダンベルカール",
     "インクラインダンベルプレス",
     "ケーブルクランチ",
     "ケーブルサイドレイズ",
+    "ケーブルプルオーバー",
+    "サイドレイズ",
+    "ダンベルプレス",
+    "プレスダウン（トライセップロープ）",
+    "ラットプルダウン（パラレルナロー）",
     "リアデルト",
-    "レッグエクステンション"
+    "ルーマニアンデッドリフト",
+    "レッグエクステンション",
+    "レッグプレス",
+    "ワンハンドロウ"
   ],
   "exercises": [
     {
@@ -222,6 +224,12 @@
       {
         "device": "PC",
         "text": "2026/10/06：基本的に立ちコロ。"
+      }
+    ],
+    "リアデルト": [
+      {
+        "device": "端末",
+        "text": "戻りも意識した方がいいかも"
       }
     ]
   },
@@ -919,6 +927,76 @@
       "reps": 12,
       "volume_kg": 1140,
       "bodyweight": false
+    },
+    {
+      "date": "2026-10-08",
+      "exercise": "リアデルト",
+      "set": 1,
+      "weight_kg": 30,
+      "reps": 9,
+      "volume_kg": 270,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-08",
+      "exercise": "リアデルト",
+      "set": 2,
+      "weight_kg": 30,
+      "reps": 8,
+      "volume_kg": 240,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-08",
+      "exercise": "リアデルト",
+      "set": 3,
+      "weight_kg": 25,
+      "reps": 12,
+      "volume_kg": 300,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-08",
+      "exercise": "レッグプレス",
+      "set": 1,
+      "weight_kg": 80,
+      "reps": 11,
+      "volume_kg": 880,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-08",
+      "exercise": "レッグプレス",
+      "set": 2,
+      "weight_kg": 80,
+      "reps": 10,
+      "volume_kg": 800,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-08",
+      "exercise": "レッグプレス",
+      "set": 3,
+      "weight_kg": 80,
+      "reps": 13,
+      "volume_kg": 1040,
+      "bodyweight": false,
+      "review": false
+    },
+    {
+      "date": "2026-10-08",
+      "exercise": "ワンハンドロウ",
+      "set": 1,
+      "weight_kg": 20,
+      "reps": 10,
+      "volume_kg": 200,
+      "bodyweight": false,
+      "review": false
     }
   ],
   "links": {},
