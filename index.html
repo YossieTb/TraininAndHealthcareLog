@@ -297,6 +297,14 @@
   .excard .exl .name{white-space:normal; overflow:visible; text-overflow:clip;
     word-break:break-word; line-height:1.35;}
   .excard .exbtns{flex:1 1 100%; justify-content:flex-end; gap:8px; margin-top:2px;}
+
+/* v7.9: 睡眠メモ */
+.sform{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.sform label{display:flex;flex-direction:column;font-size:12px;color:#666;gap:4px;}
+.sform input,.sform select{font-size:16px;padding:8px;border:1px solid #ccc;border-radius:8px;width:100%;box-sizing:border-box;background:#fff;color:#111;}
+.sbtn{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.sbtn .btn{flex:1 1 auto;min-width:96px;}
+.slrow{font-size:12px;color:#555;padding:5px 0;border-bottom:1px dashed #e5e5e5;}
 </style>
 </head>
 <body>
@@ -454,6 +462,29 @@
 </div>
 
 <div id="tab-health" class="hidden">
+  <div class="card">
+    <div class="chead" data-chead="area:sleep" onclick="toggleArea('area:sleep')">
+      <span class="chev">&#9654;</span><span class="ct">&#127769; 睡眠メモ</span><span class="cs">服用・眠気・就床・飲酒</span>
+    </div>
+    <div class="cbody collapsed" data-cbody="area:sleep">
+      <div class="qhint">就床前にタップするだけ（保存ボタン不要・自動保存）。日付を変えるとその日の記録を読み出します。</div>
+      <div class="sform">
+        <label>日付<input type="date" id="slDate" onchange="slLoad()"></label>
+        <label>服用時刻<input type="time" id="slDose" onchange="slSet('dose',this.value)"></label>
+        <label>就床時刻<input type="time" id="slBed" onchange="slSet('bed',this.value)"></label>
+        <label>眠気が来た時刻<input type="time" id="slSleepy" onchange="slSet('sleepy',this.value)"></label>
+        <label>起床時の症状<select id="slWakesym" onchange="slSet('wakesym',this.value)"><option value="">--</option><option>なし</option><option>軽い</option><option>強い</option></select></label>
+        <label>飲酒<select id="slAlc" onchange="slSet('alc',this.value)"><option value="">--</option><option>なし</option><option>あり</option></select></label>
+      </div>
+      <div class="sbtn">
+        <button type="button" class="btn btn-ghost" onclick="slSleepy(true)">眠気が来た</button>
+        <button type="button" class="btn btn-ghost" onclick="slSleepy(false)">眠気なし</button>
+        <button type="button" class="btn btn-ghost" onclick="slNow()">いま就床</button>
+      </div>
+      <div class="qhint" id="slStatus" style="margin-top:8px;"></div>
+      <div id="slRecent" style="margin-top:6px;"></div>
+    </div>
+  </div>
   <div class="card">
     <div class="chead" data-chead="area:h7" onclick="toggleArea('area:h7')">
       <span class="chev">▼</span><span class="ct">直近の状況</span><span class="cs" data-csum="area:h7"></span>
@@ -2248,7 +2279,7 @@ function exportJSON(){
   commitActive();
   var rows=allRows();
   if(!rows.length){ toast("出力する記録がありません（先に保存してください）"); return; }
-  download(JSON.stringify({exported_at:new Date().toISOString(),notes:notes,links:links,review:reviewFlags,records:rows},null,2),"training_log.json","application/json");
+  download(JSON.stringify({exported_at:new Date().toISOString(),notes:notes,links:links,review:reviewFlags,sleep:slAll(),records:rows},null,2),"training_log.json","application/json");
 }
 function download(content,fname,mime){
   var blob=new Blob([content],{type:mime+";charset=utf-8"});
@@ -2806,8 +2837,58 @@ function toast(msg){
   clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.style.display="none"; },1800);
 }
 
+
+/* ---------- v7.9: 睡眠メモ ---------- */
+var LS_SLEEP="tl_sleep_v1";
+function slP2(n){ return (n<10?"0":"")+n; }
+function slTodayStr(){ var d=new Date(); return d.getFullYear()+"-"+slP2(d.getMonth()+1)+"-"+slP2(d.getDate()); }
+function slAll(){ try{ return JSON.parse(localStorage.getItem(LS_SLEEP)||"{}"); }catch(e){ return {}; } }
+function slSaveAll(a){ try{ localStorage.setItem(LS_SLEEP,JSON.stringify(a)); }catch(e){} }
+function slCurDate(){ var e=document.getElementById("slDate"); return (e&&e.value)?e.value:slTodayStr(); }
+function slLoad(){
+  var a=slAll(), k=slCurDate(), r=a[k]||{};
+  document.getElementById("slDate").value=k;
+  document.getElementById("slDose").value=r.dose||"";
+  document.getElementById("slBed").value=r.bed||"";
+  document.getElementById("slSleepy").value=r.sleepy||"";
+  document.getElementById("slWakesym").value=r.wakesym||"";
+  document.getElementById("slAlc").value=r.alc||"";
+  slRender();
+}
+function slSet(k,v){
+  var a=slAll(), d=slCurDate(); if(!a[d]) a[d]={};
+  a[d][k]=v; slSaveAll(a); slRender(); toast("睡眠メモを保存しました");
+}
+function slSleepy(yn){
+  var a=slAll(), d=slCurDate(); if(!a[d]) a[d]={};
+  a[d].sleepyyn=yn?"yes":"no";
+  if(yn){ var t=document.getElementById("slSleepy"); if(!t.value){ var n=new Date(); t.value=slP2(n.getHours())+":"+slP2(n.getMinutes()); } a[d].sleepy=t.value; }
+  slSaveAll(a); document.getElementById("slSleepy").value=a[d].sleepy||"";
+  slRender(); toast(yn?"「眠気が来た」を記録しました":"「眠気なし」を記録しました");
+}
+function slNow(){
+  var n=new Date(), v=slP2(n.getHours())+":"+slP2(n.getMinutes());
+  document.getElementById("slBed").value=v; slSet("bed",v);
+}
+function slRender(){
+  var a=slAll(), ds=Object.keys(a).sort().reverse().slice(0,7);
+  var el=document.getElementById("slRecent"), st=document.getElementById("slStatus");
+  if(!el||!st) return;
+  if(!ds.length){ el.innerHTML='<div class="slrow">まだ記録がありません。</div>'; st.textContent="記録 0日"; return; }
+  st.textContent="記録 "+Object.keys(a).length+"日（直近7日を表示）";
+  var h="";
+  ds.forEach(function(d){
+    var r=a[d]||{};
+    var sl=(r.sleepyyn==="yes")?("あり "+(r.sleepy||"")):(r.sleepyyn==="no"?"なし":"—");
+    h+='<div class="slrow"><b>'+d+'</b>　服用 '+(r.dose||"—")+' ／ 眠気 '+sl+' ／ 就床 '+(r.bed||"—")+' ／ 飲酒 '+(r.alc||"—")+' ／ 起床時 '+(r.wakesym||"—")+'</div>';
+  });
+  el.innerHTML=h;
+}
+function slInit(){ var e=document.getElementById("slDate"); if(!e) return; e.value=slTodayStr(); slLoad(); }
+
 initQuick();
 init();
+slInit();
 
 </script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
