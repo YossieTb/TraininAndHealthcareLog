@@ -305,6 +305,10 @@
   .dnrow{display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px;}
   .dnrow input[type=checkbox]{width:auto; margin:0; flex:0 0 auto;}
   .dnrecent{margin-top:8px;}
+  /* ===== v8.1: 要復習リストに種目メモを表示 ===== */
+  .revmemotxt{font-size:13px; line-height:1.55; color:var(--text); background:var(--card2);
+    border-left:3px solid var(--accent2); border-radius:8px; padding:8px 10px;
+    margin:4px 0 6px; white-space:pre-wrap; word-break:break-word;}
   /* v7.9: 睡眠メモ */
 .sform{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
 .sform label{display:flex;flex-direction:column;font-size:12px;color:#666;gap:4px;}
@@ -316,7 +320,7 @@
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）</div>
 <div class="toast" id="toast"></div>
 <div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div><div id="reviewBox"></div>
 <!-- v7.1: 保存前の日付確認 -->
@@ -1983,6 +1987,13 @@ function renderReviewList(){
     var a=getLinks(nm);
     var since=(reviewFlags[nm]&&reviewFlags[nm].since)||"";
     h+='<div class="revitem"><div class="revname">'+esc(nm)+(since?'<span class="revsince">'+esc(since)+' に登録</span>':'')+'</div>';
+    /* v8.1: 何を復習すべきかは種目メモに書いてあるので、そのまま表示する */
+    var memo=getNote(nm);
+    if(memo){
+      h+='<div class="revmemotxt">'+esc(memo).replace(/\n/g,"<br>")+'</div>';
+    } else {
+      h+='<div class="linknone">種目メモは未入力（種目カードの「メモ」に、復習したい点を書いてください）</div>';
+    }
     if(a.length){
       h+='<div class="revlinks">';
       a.forEach(function(x){ h+='<a class="exlink" href="'+esc(x.u)+'" target="_blank" rel="noopener noreferrer">'+esc(x.l||x.u)+'</a>'; });
