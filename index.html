@@ -310,17 +310,21 @@
     border-left:3px solid var(--accent2); border-radius:8px; padding:8px 10px;
     margin:4px 0 6px; white-space:pre-wrap; word-break:break-word;}
   /* v7.9: 睡眠メモ */
-.sform{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
-.sform label{display:flex;flex-direction:column;font-size:12px;color:#666;gap:4px;}
-.sform input,.sform select{font-size:16px;padding:8px;border:1px solid #ccc;border-radius:8px;width:100%;box-sizing:border-box;background:#fff;color:#111;}
+/* v8.2: 1fr だと input[type=time] の最小幅でセルからはみ出し、隣の欄と重なるため minmax(0,1fr) にする */
+.sform{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px;}
+.sform label{display:flex;flex-direction:column;font-size:12px;color:#666;gap:4px;min-width:0;}
+.sform input,.sform select{font-size:16px;padding:8px;border:1px solid #ccc;border-radius:8px;min-width:0;max-width:100%;box-sizing:border-box;background:#fff;color:#111;}
+.slhelp{font-size:11px;line-height:1.65;color:var(--sub);background:var(--card2);border-radius:8px;padding:9px 11px;margin-top:9px;}
 .sbtn{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
 .sbtn .btn{flex:1 1 auto;min-width:96px;}
 .slrow{font-size:12px;color:#555;padding:5px 0;border-bottom:1px dashed #e5e5e5;}
+  /* v8.2: 固定の「▲」ボタンが最下部の行に重ならないよう、本文の下余白を確保する */
+  body{padding-bottom:calc(158px + env(safe-area-inset-bottom));}
 </style>
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）</div>
 <div class="toast" id="toast"></div>
 <div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div><div id="reviewBox"></div>
 <!-- v7.1: 保存前の日付確認 -->
@@ -512,9 +516,10 @@
         <label>服用時刻<input type="time" id="slDose" onchange="slSet('dose',this.value)"></label>
         <label>就床時刻<input type="time" id="slBed" onchange="slSet('bed',this.value)"></label>
         <label>眠気が来た時刻<input type="time" id="slSleepy" onchange="slSet('sleepy',this.value)"></label>
-        <label>起床時の症状<select id="slWakesym" onchange="slSet('wakesym',this.value)"><option value="">--</option><option>なし</option><option>軽い</option><option>強い</option></select></label>
+        <label>起床時の症状<select id="slWakesym" onchange="slSet('wakesym',this.value)"><option value="">--</option><option value="なし">なし（気にならない）</option><option value="軽い">軽い（気になるが支障なし）</option><option value="強い">強い（支障がある）</option></select></label>
         <label>飲酒<select id="slAlc" onchange="slSet('alc',this.value)"><option value="">--</option><option>なし</option><option>あり</option></select></label>
       </div>
+      <div class="slhelp"><b>「起床時の症状」</b>＝朝目覚めた直後に<b>自分で感じた不調</b>の強さです。眠気の残り・頭重感・だるさ・ふらつき・筋肉痛・のどの渇きなどをまとめて1つ選びます。<br>なし＝気にならない／軽い＝気になるが活動に支障なし／強い＝支障がある（横になっていたい、二度寝したくなる 等）。自分自身の主観で選んでください。</div>
       <div class="sbtn">
         <button type="button" class="btn btn-ghost" onclick="slSleepy(true)">眠気が来た</button>
         <button type="button" class="btn btn-ghost" onclick="slSleepy(false)">眠気なし</button>
