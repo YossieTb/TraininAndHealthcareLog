@@ -1,0 +1,6 @@
+{
+  "generated_at": "2026-10-13T09:00:00+09:00",
+  "generator": "manual-placeholder",
+  "note": "このファイルは目標自動生成ワークフローの出力先です。goals[] に {date,text,source,ts} を入れてください。アプリは起動時に自動取得します。",
+  "goals": []
+}
