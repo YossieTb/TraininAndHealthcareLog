@@ -298,7 +298,14 @@
     word-break:break-word; line-height:1.35;}
   .excard .exbtns{flex:1 1 100%; justify-content:flex-end; gap:8px; margin-top:2px;}
 
-/* v7.9: 睡眠メモ */
+/* ===== v8.0: 1日の概要メモ（日付に紐づく） ===== */
+  .dntxt{min-height:72px; line-height:1.5;}
+  .dnin{font-size:15px;}
+  .dnhint{font-size:11px; color:var(--sub); margin-top:6px; line-height:1.5;}
+  .dnrow{display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px;}
+  .dnrow input[type=checkbox]{width:auto; margin:0; flex:0 0 auto;}
+  .dnrecent{margin-top:8px;}
+  /* v7.9: 睡眠メモ */
 .sform{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
 .sform label{display:flex;flex-direction:column;font-size:12px;color:#666;gap:4px;}
 .sform input,.sform select{font-size:16px;padding:8px;border:1px solid #ccc;border-radius:8px;width:100%;box-sizing:border-box;background:#fff;color:#111;}
@@ -309,7 +316,7 @@
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）</div>
 <div class="toast" id="toast"></div>
 <div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div><div id="reviewBox"></div>
 <!-- v7.1: 保存前の日付確認 -->
@@ -343,6 +350,34 @@
     </div>
     <div class="cbody" data-cbody="area:date">
       <input type="date" id="date">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="chead" data-chead="area:daynote" onclick="toggleArea('area:daynote')">
+      <span class="chev">▼</span><span class="ct">📝 1日の概要</span><span class="cs" data-csum="area:daynote"></span>
+    </div>
+    <div class="cbody" data-cbody="area:daynote">
+      <div class="dnhint">この項目は「選んでいる日付」に紐づきます（種目ではなく日単位）。</div>
+      <div class="dnhint" id="dnDateLine"></div>
+      <label>この日の概要・気づき</label>
+      <textarea id="dnSum" class="dntxt" placeholder="例：胸の日。ベンチの調子は良かった。右肩に少し違和感あり。" onblur="dnSet('sum',this.value)"></textarea>
+      <div class="dnrow">
+        <input type="checkbox" id="dnRest" onchange="dnRest(this.checked)">
+        <span>この日はトレーニングをしなかった（休養日）</span>
+      </div>
+      <label>休養・中止の理由</label>
+      <input type="text" id="dnReason" class="dnin" placeholder="例：出張で時間が取れず / 肩の違和感 / 疲労" onblur="dnSet('reason',this.value)">
+      <label>目標（自分で入力）</label>
+      <textarea id="dnGoal" class="dntxt" placeholder="例：来週はベンチ 60kg×8 を3セット" onblur="dnGoalManual(this.value)"></textarea>
+      <div class="dnhint" id="dnGoalSrc">—</div>
+      <label>目標（自動生成ワークフローから取込）</label>
+      <div class="dnhint" id="dnWf">まだ取り込んでいません。</div>
+      <div class="dnhint" id="dnFetch"></div>
+      <div class="sbtn"><button type="button" class="btn btn-ghost" onclick="fetchGoals(true)">🎯 目標ファイルを再取込</button></div>
+      <div class="dnhint" id="dnSaved"></div>
+      <div class="dnhint" id="dnStatus">記録 0日</div>
+      <div class="dnrecent" id="dnRecent"></div>
     </div>
   </div>
 
@@ -1449,6 +1484,7 @@ function init(){
   loadHealthLocal();
   loadDraft();
   dEl.value=session.date;
+  dnLoad();
   var onDatePicked=function(){ setSessionDate(dEl.value); };
   dEl.addEventListener("change",onDatePicked);
   dEl.addEventListener("blur",onDatePicked);
@@ -1459,6 +1495,7 @@ function init(){
   applyAreaUI();
   initToTop();
   fetchTrainingMaster(false);
+  fetchGoals(false);
 }
 function buildExSelect(){
   var sel=document.getElementById("exSelect"); if(!sel) return;
@@ -1622,6 +1659,7 @@ function saveUI(){ try{ localStorage.setItem(LS_UI, JSON.stringify(UIOPEN)); }ca
 function uiDefault(k){
   if(k==="area:add") return session.exercises.length===0;   // 登録は最初だけ開く
   if(k==="area:date"||k==="area:list"||k==="area:history") return true;
+  if(k==="area:daynote") return true;
   if(k==="area:h7"||k==="area:hma"||k==="area:hchart"||k==="area:htable"||k==="area:hwaist") return true;
   return false;
 }
@@ -2125,6 +2163,7 @@ function setSessionDate(nd){
     toast(nd+" は新規の記録です");
   }
   var dEl=document.getElementById("date"); if(dEl) dEl.value=nd;
+  dnLoad();
   resetExUI(); saveDraft(); render();
 }
 /* 入力中の内容を保ったまま日付だけ移す（保存確定前の「日付を変える」用） */
@@ -2132,6 +2171,7 @@ function moveSessionDate(nd){
   if(!nd||nd===session.date) return;
   session.date=nd;
   var dEl=document.getElementById("date"); if(dEl) dEl.value=nd;
+  dnLoad();
   saveDraft(); render();
 }
 /* ---- カレンダー ---- */
@@ -2183,6 +2223,7 @@ function loadSession(date){
   var h=getHist().filter(function(x){ return x.date===date; })[0]; if(!h) return;
   session={date:h.date, menuName:(typeof h.menuName==="string"?h.menuName:""), exercises:(h.exercises||[]).map(normExercise)};
   document.getElementById("date").value=session.date;
+    dnLoad();
     saveDraft(); render(); showTab(0); toast(date+" を読み込みました");
 }
 function deleteSession(date){
@@ -2279,7 +2320,7 @@ function exportJSON(){
   commitActive();
   var rows=allRows();
   if(!rows.length){ toast("出力する記録がありません（先に保存してください）"); return; }
-  download(JSON.stringify({exported_at:new Date().toISOString(),notes:notes,links:links,review:reviewFlags,sleep:slAll(),records:rows},null,2),"training_log.json","application/json");
+  download(JSON.stringify({exported_at:new Date().toISOString(),notes:notes,links:links,review:reviewFlags,sleep:slAll(),daynotes:dnAll(),records:rows},null,2),"training_log.json","application/json");
 }
 function download(content,fname,mime){
   var blob=new Blob([content],{type:mime+";charset=utf-8"});
@@ -2837,6 +2878,144 @@ function toast(msg){
   clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.style.display="none"; },1800);
 }
 
+
+/* ---------- v8.0: 1日の概要メモ（日付キー／目標の自動取込に対応） ---------- */
+var LS_DAY="tl_daynote_v1";
+var GOALS_FILE="training_goals.json";
+function dnAll(){
+  try{
+    var o=JSON.parse(localStorage.getItem(LS_DAY)||"null");
+    return (o&&typeof o==="object"&&!Array.isArray(o))?o:{};
+  }catch(e){ return {}; }
+}
+function dnSaveAll(a){ try{ localStorage.setItem(LS_DAY,JSON.stringify(a)); }catch(e){} }
+function dnCurDate(){ var e=document.getElementById("date"); return (e&&e.value)?e.value:todayStr(); }
+function dnRec(){ var a=dnAll(), d=dnCurDate(), r=a[d]; return (r&&typeof r==="object")?r:{}; }
+
+/* 1日単位のキーで上書き保存（空文字は削除） */
+function dnPut(patch, quiet){
+  var a=dnAll(), d=dnCurDate(), r=(a[d]&&typeof a[d]==="object")?a[d]:{};
+  for(var k in patch){
+    if(!Object.prototype.hasOwnProperty.call(patch,k)) continue;
+    var v=patch[k];
+    if(v===""||v==null) delete r[k]; else r[k]=v;
+  }
+  r.updatedAt=new Date().toISOString();
+  a[d]=r; dnSaveAll(a); dnRender();
+  if(!quiet) dnMsg();
+  return r;
+}
+
+/* 目標の upsert（ワークフローからの取込口）。
+   - source:"manual" … ユーザー入力。gtext/gts を更新（空なら削除）
+   - それ以外        … 自動生成。gwf/gwfsrc/gwfts に保存し gtext には一切触れない
+   同一 date + 同一 text + 同一 ts の再送は書き込まず false を返す（冪等） */
+function dnUpsertGoal(date, text, src, ts){
+  if(!date||typeof date!=="string") return false;
+  var a=dnAll(), r=(a[date]&&typeof a[date]==="object")?a[date]:{};
+  var t=String(text==null?"":text);
+  var source=src||"workflow";
+  var stamp=ts||new Date().toISOString();
+  if(source==="manual"){
+    if(t.trim()===""){
+      if(r.gtext===undefined) return false;
+      delete r.gtext; delete r.gsrc; delete r.gts;
+    } else {
+      if(r.gtext===t&&r.gsrc==="manual") return false;
+      r.gtext=t; r.gsrc="manual"; r.gts=stamp;
+    }
+  } else {
+    if(t.trim()==="") return false;
+    if(r.gwf===t&&r.gwfts===stamp) return false;      /* 冪等: 同じ内容の再送は無変更 */
+    r.gwf=t; r.gwfsrc=source; r.gwfts=stamp;
+  }
+  r.updatedAt=new Date().toISOString();
+  a[date]=r; dnSaveAll(a); dnRender();
+  if(date===dnCurDate()) dnGoalLines();
+  return true;
+}
+
+var dnTmr=null;
+function dnMsg(){
+  var e=document.getElementById("dnSaved"); if(!e) return;
+  e.textContent="✓ 自動保存 "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+  clearTimeout(dnTmr); dnTmr=setTimeout(function(){ e.textContent=""; },2500);
+}
+function dnSet(k, v){ var p={}; p[k]=String(v==null?"":v); dnPut(p); }
+function dnGoalManual(v){ dnUpsertGoal(dnCurDate(), String(v==null?"":v), "manual", new Date().toISOString()); dnMsg(); }
+function dnRest(on){
+  var a=dnAll(), d=dnCurDate(), r=(a[d]&&typeof a[d]==="object")?a[d]:{};
+  r.rest=!!on; if(!on) delete r.rest;
+  r.updatedAt=new Date().toISOString();
+  a[d]=r; dnSaveAll(a); dnRender(); dnMsg();
+}
+function dnGoalLines(){
+  var r=dnRec();
+  var src=document.getElementById("dnGoalSrc");
+  if(src) src.textContent = r.gts ? ("自分で入力 / 最終更新 "+mstG(r.gts)) : "—";
+  var wf=document.getElementById("dnWf");
+  if(wf) wf.textContent = r.gwf ? (r.gwf+"　（"+(r.gwfsrc||"workflow")+" / "+mstG(r.gwfts)+"）") : "まだ取り込んでいません。";
+}
+function dnLoad(){
+  var d=dnCurDate();
+  var dl=document.getElementById("dnDateLine");
+  if(dl) dl.textContent="対象日："+d+"（この日付に保存します）";
+  var r=dnRec();
+  var fv=function(id,v){ var el=document.getElementById(id); if(el) el.value=(typeof v==="string")?v:""; };
+  fv("dnSum", r.sum); fv("dnReason", r.reason); fv("dnGoal", r.gtext);
+  var c=document.getElementById("dnRest"); if(c) c.checked=!!r.rest;
+  dnGoalLines();
+  dnRender();
+  var cs=document.querySelector('[data-csum="area:daynote"]');
+  if(cs){ var has=(r.sum||r.gtext||r.gwf||r.rest); cs.textContent = has ? (r.rest?"休養日":"記入あり") : "未記入"; }
+}
+function dnRender(){
+  var a=dnAll(), ds=Object.keys(a).sort().reverse().slice(0,14);
+  var el=document.getElementById("dnRecent"), st=document.getElementById("dnStatus");
+  var total=Object.keys(a).length;
+  var rests=Object.keys(a).filter(function(k){ return a[k]&&a[k].rest; }).length;
+  if(st) st.textContent="記録 "+total+"日（休養理由 "+rests+"件 / 直近14日を表示）";
+  if(!el) return;
+  if(!ds.length){ el.innerHTML='<div class="slrow">まだ記録がありません。</div>'; return; }
+  var out="";
+  ds.forEach(function(d){
+    var r=a[d]||{}, bits=[];
+    if(r.rest) bits.push("🚫休養"+(r.reason?("："+r.reason):""));
+    else if(r.reason) bits.push("理由："+r.reason);
+    if(r.sum) bits.push("📝"+r.sum);
+    if(r.gtext) bits.push("🎯"+r.gtext);
+    if(r.gwf) bits.push("🤖"+r.gwf);
+    out+='<div class="slrow"><b>'+esc(d)+'</b>　'+(bits.length?esc(bits.join(" / ")):"—")+'</div>';
+  });
+  el.innerHTML=out;
+}
+
+/* 目標ファイル（training_goals.json）を読み、日付ごとに upsert する。
+   ファイルが無い場合は失敗にしない（未運用として正常扱い） */
+function fetchGoals(manual){
+  if(typeof fetch!=="function") return Promise.resolve(null);
+  var st=document.getElementById("dnFetch");
+  return fetch(GOALS_FILE+"?ts="+Date.now(), {cache:"no-store"}).then(function(r){
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(j){
+    var arr=(j&&Array.isArray(j.goals))?j.goals:[];
+    var n=0, dates=0;
+    arr.forEach(function(g){
+      if(!g||typeof g.date!=="string"||typeof g.text!=="string"||!g.text.trim()) return;
+      if(dnUpsertGoal(g.date, g.text, g.source||"workflow", g.ts||j.generated_at)) n++;
+      dates++;
+    });
+    if(st) st.textContent = arr.length ? ("ファイル読込: 対象 "+dates+"日 / 反映 "+n+"件（"+(j.generated_at||"日時不明")+"）") : "目標ファイルに有効な目標がありません。";
+    dnLoad();
+    if(manual) toast("目標を取り込みました（反映 "+n+"件）");
+    return {total:arr.length, applied:n};
+  }).catch(function(e){
+    if(st) st.textContent="目標ファイル未取得（training_goals.json が未作成なら正常です）";
+    if(manual) toast("目標ファイルを取得できませんでした");
+    return null;
+  });
+}
 
 /* ---------- v7.9: 睡眠メモ ---------- */
 var LS_SLEEP="tl_sleep_v1";
