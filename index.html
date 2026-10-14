@@ -325,11 +325,20 @@
   /* ===== v8.3: タブの選択状態を明確化（背景＋上辺インジケータ） ===== */
   .tabbar button{position:relative; border-top:3px solid transparent; padding-top:9px;}
   .tabbar button.on{background:var(--card2); border-top-color:var(--accent); color:var(--accent);}
+  /* ===== v8.4: 睡眠メモを flex+padding 方式に変更（Safariの最小幅/gap問題を回避） ===== */
+  .sform{display:flex; flex-wrap:wrap; gap:0; margin:8px -4px 0;}
+  .sform label{flex:1 1 50%; min-width:0; padding:0 4px 10px; box-sizing:border-box;}
+  .sform input,.sform select{width:100%; min-width:0; max-width:100%; box-sizing:border-box;}
+  /* ===== v8.4: 記録タブのカテゴリ枠（開閉可） ===== */
+  .gcat{border:1px solid var(--line); border-radius:16px; padding:10px 10px 2px; margin-bottom:16px; background:rgba(255,255,255,.02);}
+  .ghead{display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; padding:2px 0 8px;}
+  .ghead .gct{flex:0 0 auto; font-size:14px; font-weight:800; color:var(--text);}
+  .ghead .gsub{font-size:11px; color:var(--sub); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 </style>
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）/ タブ選択状態を明確化・睡眠メモと腹囲胸囲を記録タブへ（v8.3）</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）/ タブ選択状態を明確化・睡眠メモと腹囲胸囲を記録タブへ（v8.3）/ 日付欄を統一・記録タブにカテゴリ枠（v8.4）</div>
 <div class="toast" id="toast"></div>
 <div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div><div id="reviewBox"></div>
 <!-- v7.1: 保存前の日付確認 -->
@@ -357,6 +366,7 @@
 <button type="button" class="totop" id="toTop" onclick="scrollTopSmooth()" aria-label="ページ先頭へ戻る">▲</button>
 
 <div id="tab-entry">
+  <div class="gcat"><div class="ghead" data-ghead="cat:life" onclick="toggleCat('cat:life')"><span class="chev">▼</span><span class="gct">📅 日付・生活の記録</span><span class="gsub">日付 / 1日の概要 / 睡眠メモ / 腹囲・胸囲</span></div><div class="gbody" data-gbody="cat:life">
   <div class="card">
     <div class="chead" data-chead="area:date" onclick="toggleArea('area:date')">
       <span class="chev">▼</span><span class="ct">日付</span><span class="cs" data-csum="area:date"></span>
@@ -399,9 +409,9 @@
       <span class="chev">&#9654;</span><span class="ct">&#127769; 睡眠メモ</span><span class="cs">服用・眠気・就床・飲酒</span>
     </div>
     <div class="cbody collapsed" data-cbody="area:sleep">
-      <div class="qhint">就床前にタップするだけ（保存ボタン不要・自動保存）。日付を変えるとその日の記録を読み出します。</div>
+      <div class="qhint">就床前にタップするだけ（保存ボタン不要・自動保存）。日付はこの画面の先頭にある「日付」欄と共通です。</div>
+      <div class="dnhint" id="slDateLine"></div>
       <div class="sform">
-        <label>日付<input type="date" id="slDate" onchange="slLoad()"></label>
         <label>服用時刻<input type="time" id="slDose" onchange="slSet('dose',this.value)"></label>
         <label>就床時刻<input type="time" id="slBed" onchange="slSet('bed',this.value)"></label>
         <label>眠気が来た時刻<input type="time" id="slSleepy" onchange="slSet('sleepy',this.value)"></label>
@@ -438,6 +448,9 @@
     </div>
   </div>
 
+  </div></div>
+
+  <div class="gcat"><div class="ghead" data-ghead="cat:gym" onclick="toggleCat('cat:gym')"><span class="chev">▼</span><span class="gct">🏋️ トレーニング（ジム）の記録</span><span class="gsub">種目の追加 / 今日の記録 / 保存・出力</span></div><div class="gbody" data-gbody="cat:gym">
   <div class="card">
     <div class="chead" data-chead="area:add" onclick="toggleArea('area:add')">
       <span class="chev">▼</span><span class="ct">種目を追加</span><span class="cs" data-csum="area:add"></span>
@@ -539,6 +552,8 @@
     <button class="btn btn-primary" onclick="exportCSV()">CSV 出力</button>
     <button class="btn btn-primary" onclick="exportJSON()">JSON 出力</button>
   </div>
+  </div>
+</div>
 </div>
 
 <div id="tab-history" class="hidden">
@@ -1500,7 +1515,7 @@ function init(){
   loadHealthLocal();
   loadDraft();
   dEl.value=session.date;
-  dnLoad();
+  dnLoad(); slLoad();
   var onDatePicked=function(){ setSessionDate(dEl.value); };
   dEl.addEventListener("change",onDatePicked);
   dEl.addEventListener("blur",onDatePicked);
@@ -1676,6 +1691,7 @@ function uiDefault(k){
   if(k==="area:add") return session.exercises.length===0;   // 登録は最初だけ開く
   if(k==="area:date"||k==="area:list"||k==="area:history") return true;
   if(k==="area:daynote") return true;
+  if(k.indexOf("cat:")===0) return true;
   if(k==="area:h7"||k==="area:hma"||k==="area:hchart"||k==="area:htable"||k==="area:hwaist") return true;
   return false;
 }
@@ -1689,6 +1705,13 @@ function applyAreaUI(){
     var h=document.querySelector('[data-chead="'+k+'"]');
     if(h){ var c=h.querySelector(".chev"); if(c) c.textContent=open?"▼":"▶"; }
   }
+  var gnodes=document.querySelectorAll("[data-gbody]");
+  for(var gm=0;gm<gnodes.length;gm++){
+    var ge=gnodes[gm], gk=ge.getAttribute("data-gbody"), gopen=uiGet(gk);
+    if(gopen) ge.classList.remove("collapsed"); else ge.classList.add("collapsed");
+    var gh=document.querySelector('[data-ghead="'+gk+'"]');
+    if(gh){ var gc=gh.querySelector(".chev"); if(gc) gc.textContent=gopen?"▼":"▶"; }
+  }
   var cs=document.querySelector('[data-csum="area:list"]');
   if(cs){
     var n2=session.exercises.length, dn=session.exercises.filter(function(e){ return e.done; }).length;
@@ -1698,6 +1721,7 @@ function applyAreaUI(){
   if(ds) ds.textContent=session.date;
 }
 function toggleArea(k){ uiSet(k,!uiGet(k)); applyAreaUI(); }
+function toggleCat(k){ uiSet(k,!uiGet(k)); applyAreaUI(); }
 function exKey(n){ return "ex:"+n; }
 function exIsOpen(name,i,total){
   var v=UIOPEN[exKey(name)];
@@ -2186,7 +2210,7 @@ function setSessionDate(nd){
     toast(nd+" は新規の記録です");
   }
   var dEl=document.getElementById("date"); if(dEl) dEl.value=nd;
-  dnLoad();
+  dnLoad(); slLoad();
   resetExUI(); saveDraft(); render();
 }
 /* 入力中の内容を保ったまま日付だけ移す（保存確定前の「日付を変える」用） */
@@ -2194,7 +2218,7 @@ function moveSessionDate(nd){
   if(!nd||nd===session.date) return;
   session.date=nd;
   var dEl=document.getElementById("date"); if(dEl) dEl.value=nd;
-  dnLoad();
+  dnLoad(); slLoad();
   saveDraft(); render();
 }
 /* ---- カレンダー ---- */
@@ -2246,7 +2270,7 @@ function loadSession(date){
   var h=getHist().filter(function(x){ return x.date===date; })[0]; if(!h) return;
   session={date:h.date, menuName:(typeof h.menuName==="string"?h.menuName:""), exercises:(h.exercises||[]).map(normExercise)};
   document.getElementById("date").value=session.date;
-    dnLoad();
+    dnLoad(); slLoad();
     saveDraft(); render(); showTab(0); toast(date+" を読み込みました");
 }
 function deleteSession(date){
@@ -3046,10 +3070,10 @@ function slP2(n){ return (n<10?"0":"")+n; }
 function slTodayStr(){ var d=new Date(); return d.getFullYear()+"-"+slP2(d.getMonth()+1)+"-"+slP2(d.getDate()); }
 function slAll(){ try{ return JSON.parse(localStorage.getItem(LS_SLEEP)||"{}"); }catch(e){ return {}; } }
 function slSaveAll(a){ try{ localStorage.setItem(LS_SLEEP,JSON.stringify(a)); }catch(e){} }
-function slCurDate(){ var e=document.getElementById("slDate"); return (e&&e.value)?e.value:slTodayStr(); }
+function slCurDate(){ var e=document.getElementById("date"); return (e&&e.value)?e.value:slTodayStr(); }
 function slLoad(){
   var a=slAll(), k=slCurDate(), r=a[k]||{};
-  document.getElementById("slDate").value=k;
+  var dl=document.getElementById("slDateLine"); if(dl) dl.textContent="対象日："+k;
   document.getElementById("slDose").value=r.dose||"";
   document.getElementById("slBed").value=r.bed||"";
   document.getElementById("slSleepy").value=r.sleepy||"";
@@ -3086,7 +3110,7 @@ function slRender(){
   });
   el.innerHTML=h;
 }
-function slInit(){ var e=document.getElementById("slDate"); if(!e) return; e.value=slTodayStr(); slLoad(); }
+function slInit(){ slLoad(); }
 
 initQuick();
 init();
