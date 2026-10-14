@@ -37,7 +37,7 @@
     background:var(--card2); color:var(--accent); border:1px solid var(--line);}
   .stepper button:active{background:var(--accent2); color:#fff;}
   .stepper input{
-    flex:1; text-align:center; font-size:20px; font-weight:700; padding:10px 4px;
+    flex:1; min-width:0; text-align:center; font-size:22px; font-weight:700; padding:14px 6px;
     border-radius:10px; border:1px solid var(--line); background:var(--card2); color:var(--text);}
   .setrow{display:flex; align-items:center; gap:8px; background:var(--card2);
     border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:8px;}
@@ -334,11 +334,20 @@
   .ghead{display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; padding:2px 0 8px;}
   .ghead .gct{flex:0 0 auto; font-size:14px; font-weight:800; color:var(--text);}
   .ghead .gsub{font-size:11px; color:var(--sub); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  /* ===== v8.5: 睡眠メモの高さずれを修正（ラベル高さが違っても入力欄の下端を揃える） ===== */
+  .sform{align-items:flex-end;}
+  /* ===== v8.5: セットの数値入力を縦並びへ（重量の行 → 回数の行）。入力欄を広く大きく ===== */
+  .setflds{display:block;}
+  .setflds .fld{width:100%; min-width:0; margin-bottom:10px;}
+  .setflds .fld:last-child{margin-bottom:0;}
+  .setflds .fld .cap{text-align:left; font-size:12px; font-weight:700; margin-bottom:5px;}
+  .setflds .fld.bwnone{min-height:48px; justify-content:flex-start; padding-left:12px;}
+  .setflds .stepper{width:100%;}
 </style>
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）/ タブ選択状態を明確化・睡眠メモと腹囲胸囲を記録タブへ（v8.3）/ 日付欄を統一・記録タブにカテゴリ枠（v8.4）</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）/ タブ選択状態を明確化・睡眠メモと腹囲胸囲を記録タブへ（v8.3）/ 日付欄を統一・記録タブにカテゴリ枠（v8.4）/ 日付を最上位へ・睡眠メモの高さずれ修正・セット入力を縦並び化（v8.5）</div>
 <div class="toast" id="toast"></div>
 <div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div><div id="reviewBox"></div>
 <!-- v7.1: 保存前の日付確認 -->
@@ -366,7 +375,6 @@
 <button type="button" class="totop" id="toTop" onclick="scrollTopSmooth()" aria-label="ページ先頭へ戻る">▲</button>
 
 <div id="tab-entry">
-  <div class="gcat"><div class="ghead" data-ghead="cat:life" onclick="toggleCat('cat:life')"><span class="chev">▼</span><span class="gct">📅 日付・生活の記録</span><span class="gsub">日付 / 1日の概要 / 睡眠メモ / 腹囲・胸囲</span></div><div class="gbody" data-gbody="cat:life">
   <div class="card">
     <div class="chead" data-chead="area:date" onclick="toggleArea('area:date')">
       <span class="chev">▼</span><span class="ct">日付</span><span class="cs" data-csum="area:date"></span>
@@ -376,6 +384,7 @@
     </div>
   </div>
 
+  <div class="gcat"><div class="ghead" data-ghead="cat:life" onclick="toggleCat('cat:life')"><span class="chev">▼</span><span class="gct">🛏️ 生活の記録</span><span class="gsub">1日の概要 / 睡眠メモ / 腹囲・胸囲</span></div><div class="gbody" data-gbody="cat:life">
   <div class="card">
     <div class="chead" data-chead="area:daynote" onclick="toggleArea('area:daynote')">
       <span class="chev">▼</span><span class="ct">📝 1日の概要</span><span class="cs" data-csum="area:daynote"></span>
