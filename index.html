@@ -320,11 +320,16 @@
 .slrow{font-size:12px;color:#555;padding:5px 0;border-bottom:1px dashed #e5e5e5;}
   /* v8.2: 固定の「▲」ボタンが最下部の行に重ならないよう、本文の下余白を確保する */
   body{padding-bottom:calc(158px + env(safe-area-inset-bottom));}
+  /* ===== v8.3: 睡眠メモ入力欄のはみ出し強化（Safariのdate/time入力も確実にセル幅に収める） ===== */
+  .sform input,.sform select{width:100%; min-width:0; max-width:100%; box-sizing:border-box;}
+  /* ===== v8.3: タブの選択状態を明確化（背景＋上辺インジケータ） ===== */
+  .tabbar button{position:relative; border-top:3px solid transparent; padding-top:9px;}
+  .tabbar button.on{background:var(--card2); border-top-color:var(--accent); color:var(--accent);}
 </style>
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）/ タブ選択状態を明確化・睡眠メモと腹囲胸囲を記録タブへ（v8.3）</div>
 <div class="toast" id="toast"></div>
 <div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div><div id="reviewBox"></div>
 <!-- v7.1: 保存前の日付確認 -->
@@ -386,6 +391,50 @@
       <div class="dnhint" id="dnSaved"></div>
       <div class="dnhint" id="dnStatus">記録 0日</div>
       <div class="dnrecent" id="dnRecent"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="chead" data-chead="area:sleep" onclick="toggleArea('area:sleep')">
+      <span class="chev">&#9654;</span><span class="ct">&#127769; 睡眠メモ</span><span class="cs">服用・眠気・就床・飲酒</span>
+    </div>
+    <div class="cbody collapsed" data-cbody="area:sleep">
+      <div class="qhint">就床前にタップするだけ（保存ボタン不要・自動保存）。日付を変えるとその日の記録を読み出します。</div>
+      <div class="sform">
+        <label>日付<input type="date" id="slDate" onchange="slLoad()"></label>
+        <label>服用時刻<input type="time" id="slDose" onchange="slSet('dose',this.value)"></label>
+        <label>就床時刻<input type="time" id="slBed" onchange="slSet('bed',this.value)"></label>
+        <label>眠気が来た時刻<input type="time" id="slSleepy" onchange="slSet('sleepy',this.value)"></label>
+        <label>起床時の症状<select id="slWakesym" onchange="slSet('wakesym',this.value)"><option value="">--</option><option value="なし">なし（気にならない）</option><option value="軽い">軽い（気になるが支障なし）</option><option value="強い">強い（支障がある）</option></select></label>
+        <label>飲酒<select id="slAlc" onchange="slSet('alc',this.value)"><option value="">--</option><option>なし</option><option>あり</option></select></label>
+      </div>
+      <div class="slhelp"><b>「起床時の症状」</b>＝朝目覚めた直後に<b>自分で感じた不調</b>の強さです。眠気の残り・頭重感・だるさ・ふらつき・筋肉痛・のどの渇きなどをまとめて1つ選びます。<br>なし＝気にならない／軽い＝気になるが活動に支障なし／強い＝支障がある（横になっていたい、二度寝したくなる 等）。自分自身の主観で選んでください。</div>
+      <div class="sbtn">
+        <button type="button" class="btn btn-ghost" onclick="slSleepy(true)">眠気が来た</button>
+        <button type="button" class="btn btn-ghost" onclick="slSleepy(false)">眠気なし</button>
+        <button type="button" class="btn btn-ghost" onclick="slNow()">いま就床</button>
+      </div>
+      <div class="qhint" id="slStatus" style="margin-top:8px;"></div>
+      <div id="slRecent" style="margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="chead" data-chead="area:hwaist" onclick="toggleArea('area:hwaist')">
+      <span class="chev">▼</span><span class="ct">腹囲・胸囲（メタボ基準 85cm未満）</span><span class="cs" data-csum="area:hwaist"></span>
+    </div>
+    <div class="cbody" data-cbody="area:hwaist">
+      <div class="qhint">朝イチ・空腹時・同じ姿勢で測ります。腹囲は臍（へそ）の高さ、胸囲は乳頭の高さで、息を軽く吐いた状態で測ります。健診では腹囲 男性85cm未満が基準です。同じ日付で腹囲・胸囲をまとめて記録でき、記録はこの端末に保存されます（グラフには85cmの基準線を表示）。</div>
+      <div class="wform">
+        <div class="fcell ffull"><span class="flabel">日付</span>
+          <input type="date" id="waistDate"></div>
+        <div class="fcell"><span class="flabel">腹囲（cm）</span>
+          <input type="number" id="waistCm" step="0.1" min="40" max="160" inputmode="decimal" placeholder="cm"></div>
+        <div class="fcell"><span class="flabel">胸囲（cm）</span>
+          <input type="number" id="chestCm" step="0.1" min="40" max="200" inputmode="decimal" placeholder="cm"></div>
+        <div class="ffull"><button type="button" class="btn" onclick="addWaist()">追加 / 更新</button></div>
+      </div>
+      <div id="waistList"></div>
     </div>
   </div>
 
@@ -506,30 +555,6 @@
 
 <div id="tab-health" class="hidden">
   <div class="card">
-    <div class="chead" data-chead="area:sleep" onclick="toggleArea('area:sleep')">
-      <span class="chev">&#9654;</span><span class="ct">&#127769; 睡眠メモ</span><span class="cs">服用・眠気・就床・飲酒</span>
-    </div>
-    <div class="cbody collapsed" data-cbody="area:sleep">
-      <div class="qhint">就床前にタップするだけ（保存ボタン不要・自動保存）。日付を変えるとその日の記録を読み出します。</div>
-      <div class="sform">
-        <label>日付<input type="date" id="slDate" onchange="slLoad()"></label>
-        <label>服用時刻<input type="time" id="slDose" onchange="slSet('dose',this.value)"></label>
-        <label>就床時刻<input type="time" id="slBed" onchange="slSet('bed',this.value)"></label>
-        <label>眠気が来た時刻<input type="time" id="slSleepy" onchange="slSet('sleepy',this.value)"></label>
-        <label>起床時の症状<select id="slWakesym" onchange="slSet('wakesym',this.value)"><option value="">--</option><option value="なし">なし（気にならない）</option><option value="軽い">軽い（気になるが支障なし）</option><option value="強い">強い（支障がある）</option></select></label>
-        <label>飲酒<select id="slAlc" onchange="slSet('alc',this.value)"><option value="">--</option><option>なし</option><option>あり</option></select></label>
-      </div>
-      <div class="slhelp"><b>「起床時の症状」</b>＝朝目覚めた直後に<b>自分で感じた不調</b>の強さです。眠気の残り・頭重感・だるさ・ふらつき・筋肉痛・のどの渇きなどをまとめて1つ選びます。<br>なし＝気にならない／軽い＝気になるが活動に支障なし／強い＝支障がある（横になっていたい、二度寝したくなる 等）。自分自身の主観で選んでください。</div>
-      <div class="sbtn">
-        <button type="button" class="btn btn-ghost" onclick="slSleepy(true)">眠気が来た</button>
-        <button type="button" class="btn btn-ghost" onclick="slSleepy(false)">眠気なし</button>
-        <button type="button" class="btn btn-ghost" onclick="slNow()">いま就床</button>
-      </div>
-      <div class="qhint" id="slStatus" style="margin-top:8px;"></div>
-      <div id="slRecent" style="margin-top:6px;"></div>
-    </div>
-  </div>
-  <div class="card">
     <div class="chead" data-chead="area:h7" onclick="toggleArea('area:h7')">
       <span class="chev">▼</span><span class="ct">直近の状況</span><span class="cs" data-csum="area:h7"></span>
     </div>
@@ -543,24 +568,6 @@
     </div>
     <div class="cbody" data-cbody="area:hma">
       <div id="healthMa"></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="chead" data-chead="area:hwaist" onclick="toggleArea('area:hwaist')">
-      <span class="chev">▼</span><span class="ct">腹囲・胸囲（メタボ基準 85cm未満）</span><span class="cs" data-csum="area:hwaist"></span>
-    </div>
-    <div class="cbody" data-cbody="area:hwaist">
-      <div class="qhint">朝イチ・空腹時・同じ姿勢で測ります。腹囲は臍（へそ）の高さ、胸囲は乳頭の高さで、息を軽く吐いた状態で測ります。健診では腹囲 男性85cm未満が基準です。同じ日付で腹囲・胸囲をまとめて記録でき、記録はこの端末に保存されます（グラフには85cmの基準線を表示）。</div>
-      <div class="wform">
-        <div class="fcell ffull"><span class="flabel">日付</span>
-          <input type="date" id="waistDate"></div>
-        <div class="fcell"><span class="flabel">腹囲（cm）</span>
-          <input type="number" id="waistCm" step="0.1" min="40" max="160" inputmode="decimal" placeholder="cm"></div>
-        <div class="fcell"><span class="flabel">胸囲（cm）</span>
-          <input type="number" id="chestCm" step="0.1" min="40" max="200" inputmode="decimal" placeholder="cm"></div>
-        <div class="ffull"><button type="button" class="btn" onclick="addWaist()">追加 / 更新</button></div>
-      </div>
-      <div id="waistList"></div>
     </div>
   </div>
   <div class="card">
