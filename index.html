@@ -343,6 +343,53 @@
   .setflds .fld .cap{text-align:left; font-size:12px; font-weight:700; margin-bottom:5px;}
   .setflds .fld.bwnone{min-height:48px; justify-content:flex-start; padding-left:12px;}
   .setflds .stepper{width:100%;}
+
+  /* ===== v8.1: 種目検索 ===== */
+  .exs{position:relative;}
+  .exs input{width:100%; font-size:16px; padding:11px; border:1px solid #3a424d; border-radius:10px; background:#0f1318; color:#e6edf3; box-sizing:border-box;}
+  .exs input::placeholder{color:#6b7480;}
+  .sugg{position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:60;
+    background:#fff; color:#111; border:1px solid #ccd; border-radius:10px;
+    max-height:270px; overflow:auto; display:none; box-shadow:0 8px 20px rgba(0,0,0,.45);}
+  .sugg.on{display:block;}
+  .sugg>div{padding:11px 13px; font-size:15px; border-bottom:1px solid #eef0f4; cursor:pointer;}
+  .sugg>div:last-child{border-bottom:none;}
+  .sugg>div.cur{background:#e3efff;}
+  .sugg>div .u{color:#98a1ad; font-size:11px; margin-left:6px;}
+  .sugg>div.snew{color:#0a7d3f; font-weight:600; background:#f2fbf5;}
+  .sugg>div.sempty{color:#8b949e; font-size:13px; text-align:center; cursor:default;}
+
+  /* ===== v8.1: 履歴マトリクス ===== */
+  .mtxbar{display:flex; align-items:center; gap:8px; margin:2px 0 8px; flex-wrap:wrap;}
+  .mtxb{appearance:none; border:1px solid #3a424d; background:#1c2128; color:#c9d1d9;
+    padding:6px 14px; border-radius:999px; font-size:13px; cursor:pointer; user-select:none;}
+  .mtxb.on{background:#2f6fdb; border-color:#2f6fdb; color:#fff; font-weight:600;}
+  .mtxz{display:flex; align-items:center; gap:5px; font-size:12px; color:#9aa4af; cursor:pointer;}
+  .mtxz input{width:15px; height:15px;}
+  .mtxnote{font-size:12px; color:#c9d1d9; background:#1a1f26; border-left:3px solid #d9822b;
+    padding:7px 9px; border-radius:4px; margin-bottom:8px; line-height:1.5;}
+  .mtxnote.ok{border-left-color:#2ea043;}
+  .mtxscroll{overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid #2a313a; border-radius:8px;}
+  table.mtx{border-collapse:separate; border-spacing:0; font-size:11px; white-space:nowrap;}
+  table.mtx th,table.mtx td{border-bottom:1px solid #2a313a; border-right:1px solid #2a313a;
+    padding:4px 5px; text-align:center; color:#c9d1d9; height:30px;}
+  table.mtx thead th{background:#1c2128; color:#9aa4af; font-weight:600; font-size:10px; line-height:1.25; position:sticky; top:0; z-index:3;}
+  table.mtx th.nm,table.mtx td.nm{position:sticky; left:0; background:#1c2128; z-index:4;
+    text-align:left; min-width:142px; max-width:142px; overflow:hidden; text-overflow:ellipsis; font-size:12px;}
+  table.mtx thead th.nm{z-index:6;}
+  table.mtx td.nm.zero{color:#5c6570;}
+  table.mtx th.dt{min-width:38px;}
+  table.mtx th.tdyt{color:#58a6ff; background:#1f2a38;}
+  table.mtx td.emp{background:#151a20;}
+  table.mtx td.hit b{font-weight:700; font-size:12px; display:block; line-height:1.1;}
+  table.mtx td.hit .sub{font-size:9px; color:#8f9aa6; display:block;}
+  table.mtx th.g7,table.mtx td.g7{background:#182029; min-width:44px;}
+  table.mtx th.g30,table.mtx td.g30{background:#141b23; min-width:48px;}
+  table.mtx th.g7{color:#7ee0a3;} table.mtx th.g30{color:#8fb8f0;}
+  .gapb{display:inline-block; font-size:9px; line-height:1; padding:2px 4px; margin-left:5px;
+    border-radius:3px; background:#d9822b; color:#12161b; font-weight:700; vertical-align:middle;}
+  .gapb.dim{background:#3a424d; color:#8b949e;}
+  .mtxlegend{font-size:10px; color:#6b7480; margin-top:6px; line-height:1.5;}
 </style>
 </head>
 <body>
@@ -465,8 +512,11 @@
       <span class="chev">▼</span><span class="ct">種目を追加</span><span class="cs" data-csum="area:add"></span>
     </div>
     <div class="cbody" data-cbody="area:add">
-    <label>種目を選択</label>
-    <select id="exSelect"></select>
+    <label>種目を検索</label>
+    <div class="exs" id="exSearchWrap">
+      <input type="text" id="exSearch" placeholder="種目名を入力（例：らっと／Vばー／れっぐ）" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div class="sugg" id="exSuggest"></div>
+    </div>
     <div class="chips" id="chipBox"></div>
     <button type="button" class="btn btn-ghost" id="qToggle" style="margin-top:10px; padding:10px;" onclick="toggleQuickEdit()">⚙ クイックボタンを編集</button>
     <div class="qedit hidden" id="quickEdit">
@@ -566,6 +616,14 @@
 </div>
 
 <div id="tab-history" class="hidden">
+  <div class="card">
+    <div class="chead" data-chead="area:mtx" onclick="toggleArea('area:mtx')">
+      <span class="chev">▼</span><span class="ct">種目 × 日付（実施マトリクス）</span><span class="cs">7日／30日合計つき</span>
+    </div>
+    <div class="cbody" data-cbody="area:mtx">
+      <div id="mtxWrap"></div>
+    </div>
+  </div>
   <div class="card">
     <div class="exhead" data-chead="area:history">
       <span class="exl" onclick="toggleArea('area:history')">
@@ -1532,6 +1590,7 @@ function init(){
   if(exBox) exBox.addEventListener("focusout",function(){ commitActive(); autoSave(); });
   migrateV66();
   buildExSelect(); buildPresetSelect(); buildChips(); render();
+  try{ mtxLoad(); initExSearch(); renderMatrix(); }catch(e){}
   applyAreaUI();
   initToTop();
   fetchTrainingMaster(false);
@@ -2296,6 +2355,7 @@ function clearAll(){
 /* ---------- 履歴 ---------- */
 /* v6.7: エリア・種目の折りたたみ対応 */
 function renderHistory(){
+  try{ renderMatrix(); }catch(e){}
   var box=document.getElementById("historyList"); var hist=getHist();
   if(!hist.length){ box.innerHTML='<div style="color:var(--sub);font-size:13px;">まだ記録がありません</div>'; return; }
   box.innerHTML="";
@@ -3130,6 +3190,302 @@ slInit();
 
 <script>
 window.addEventListener("load",function(){try{var h=location.hash;if(h==="#health")showTab(2);else if(h==="#history")showTab(1);}catch(e){}});
+
+/* ================= v8.1 ================= */
+/* ===== v8.1: 種目検索 + 履歴マトリクス ===== */
+
+/* ---------- 検索用の正規化 ---------- */
+function mtxNorm(s){
+  s=String(s==null?"":s);
+  s=s.replace(/[\u30a1-\u30f6]/g,function(c){ return String.fromCharCode(c.charCodeAt(0)-0x60); }); /* カタカナ→ひらがな */
+  s=s.replace(/[\uff10-\uff19\uff21-\uff3a\uff41-\uff5a]/g,function(c){ return String.fromCharCode(c.charCodeAt(0)-0xfee0); }); /* 全角英数→半角 */
+  s=s.toLowerCase();
+  s=s.replace(/[\s\u3000()\uff08\uff09\[\]\u3010\u3011\u30fb\u3001,\uff0c._\-\u30fc]/g,"");
+  return s;
+}
+
+/* ---------- 日付ユーティリティ ---------- */
+function mtxAddDays(base, delta){
+  var p=String(base).split("-");
+  var d=new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+  d.setDate(d.getDate()+delta);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+
+/* ---------- 履歴の集計（種目 → 日付 → セット/回数/ボリューム） ---------- */
+function mtxAggregate(hist){
+  var map={};
+  (hist||[]).forEach(function(h){
+    if(!h||!h.date) return;
+    (h.exercises||[]).forEach(function(e){
+      var nm=e&&e.name; if(!nm) return;
+      (e.sets||[]).forEach(function(s){
+        var r=(s&&s.r!=null)?String(s.r):"";
+        if(r==="") return;
+        var rn=parseFloat(r); if(isNaN(rn)) return;
+        var bw=(s.bw===true);
+        var w=(s.w!=null)?String(s.w):"";
+        if(!bw && w==="") return;
+        var wn=parseFloat(w);
+        if(!map[nm]) map[nm]={};
+        if(!map[nm][h.date]) map[nm][h.date]={sets:0,reps:0,vol:0};
+        var c=map[nm][h.date];
+        c.sets++; c.reps+=rn;
+        if(!bw && !isNaN(wn)) c.vol+=wn*rn;
+      });
+    });
+  });
+  return map;
+}
+function mtxSumOver(map, name, dateList){
+  var out={sets:0,reps:0,vol:0};
+  var m=map[name]; if(!m) return out;
+  dateList.forEach(function(d){
+    var c=m[d]; if(!c) return;
+    out.sets+=c.sets; out.reps+=c.reps; out.vol+=c.vol;
+  });
+  out.vol=Math.round(out.vol);
+  return out;
+}
+function mtxCompute(hist, names, today, days){
+  var map=mtxAggregate(hist);
+  var viewDates=[]; for(var i=days-1;i>=0;i--) viewDates.push(mtxAddDays(today,-i));
+  var d7=[];  for(var j=6;j>=0;j--)  d7.push(mtxAddDays(today,-j));
+  var d30=[]; for(var k=29;k>=0;k--) d30.push(mtxAddDays(today,-k));
+
+  var order=[], seen={};
+  (names||[]).forEach(function(n){ if(n&&!seen[n]){ seen[n]=1; order.push(n); } });
+  Object.keys(map).forEach(function(n){ if(!seen[n]){ seen[n]=1; order.push(n); } });
+
+  var rows=order.map(function(n){
+    var cells={}, m=map[n]||{};
+    viewDates.forEach(function(d){ if(m[d]) cells[d]=m[d]; });
+    return { name:n, cells:cells, s7:mtxSumOver(map,n,d7), s30:mtxSumOver(map,n,d30) };
+  });
+  var maxVol=0;
+  rows.forEach(function(r){ Object.keys(r.cells).forEach(function(d){ if(r.cells[d].vol>maxVol) maxVol=r.cells[d].vol; }); });
+  return {dates:viewDates, rows:rows, maxVol:maxVol, map:map, d7:d7, d30:d30};
+}
+
+/* ---------- マトリクスの表示状態 ---------- */
+var LS_MTX="tl_mtx_v1";
+var MTX={range:30, hideZero:false};
+function mtxLoad(){
+  try{
+    var o=JSON.parse(localStorage.getItem(LS_MTX)||"null");
+    if(o&&typeof o==="object"){
+      if(o.range===7||o.range===30) MTX.range=o.range;
+      MTX.hideZero=!!o.hideZero;
+    }
+  }catch(e){}
+}
+function mtxSaveState(){ try{ localStorage.setItem(LS_MTX, JSON.stringify(MTX)); }catch(e){} }
+
+/* ---------- 種目プール（使用頻度順） ---------- */
+function exUsageCount(){
+  var c={};
+  getHist().forEach(function(h){
+    (h.exercises||[]).forEach(function(e){
+      if(!e||!e.name) return;
+      var n=(e.sets||[]).filter(isValidSet).length;
+      c[e.name]=(c[e.name]||0)+Math.max(n,1);
+    });
+  });
+  return c;
+}
+function exPool(){
+  var seen={}, out=[];
+  function push(n){
+    n=String(n==null?"":n).trim();
+    if(!n||seen[n]) return;
+    seen[n]=1; out.push(n);
+  }
+  MASTER.forEach(function(m){ push(m.n); });
+  (customEx||[]).forEach(push);
+  (quickEx||[]).forEach(push);
+  try{ Object.keys(notes||{}).forEach(push); }catch(e){}
+  try{ Object.keys(reviewFlags||{}).forEach(push); }catch(e){}
+  var u=exUsageCount();
+  Object.keys(u).forEach(push);
+  out.sort(function(a,b){
+    var d=(u[b]||0)-(u[a]||0);
+    if(d!==0) return d;
+    return a<b?-1:(a>b?1:0);
+  });
+  return out;
+}
+
+/* ---------- 種目の検索入力 ---------- */
+var SUGG={items:[], idx:-1};
+function exSearchEl(){ return document.getElementById("exSearch"); }
+function suggEl(){ return document.getElementById("exSuggest"); }
+function buildSuggest(q){
+  var box=suggEl(); if(!box) return;
+  var nq=mtxNorm(q);
+  var pool=exPool();
+  var U=exUsageCount();
+  var hits=[];
+  pool.forEach(function(n){
+    var nn=mtxNorm(n);
+    var score=-1;
+    if(nq==="") score=0;
+    else if(nn.indexOf(nq)===0) score=3;
+    else if(nn.indexOf(nq)>0) score=2;
+    else if(nn.indexOf(nq)<0) score=-1;
+    if(score>=0) hits.push({n:n,s:score});
+  });
+  /* 前方一致を先に、その中は使用頻度順（プールの並びを維持） */
+  hits.sort(function(a,b){ if(a.s!==b.s) return b.s-a.s; return 0; });
+  SUGG.items=hits.slice(0,40).map(function(h){ return h.n; });
+  SUGG.idx=-1;
+
+  var html="";
+  if(nq!=="" && !pool.some(function(n){ return n===q; })){
+    html+='<div class="snew" data-new="1" onclick="exSearchAddNew()">＋ 「'+esc(String(q).trim())+'」を新しい種目として追加</div>';
+  }
+  SUGG.items.forEach(function(n,i){
+    var u=U[n]||0;
+    html+='<div data-i="'+i+'" onclick="exSearchPick('+i+')">'+esc(n)
+      +(u?(' <span class="u">'+u+'回</span>'):'')+'</div>';
+  });
+  if(!html) html='<div class="sempty">該当なし</div>';
+  box.innerHTML=html;
+  box.classList.add("on");
+}
+function exSearchPick(i){
+  var n=SUGG.items[i]; if(!n) return;
+  hideSuggest();
+  var el=exSearchEl(); if(el) el.value="";
+  addExercise(n);
+}
+function exSearchAddNew(){
+  var el=exSearchEl(); if(!el) return;
+  var v=el.value.trim(); if(!v) return;
+  el.value="";
+  hideSuggest();
+  if(!masterEntry(v) && (customEx||[]).indexOf(v)<0){ customEx.push(v); saveCustom(); buildExSelect(); }
+  addExercise(v);
+}
+function hideSuggest(){ var b=suggEl(); if(b){ b.classList.remove("on"); b.innerHTML=""; } SUGG.items=[]; SUGG.idx=-1; }
+function moveSugg(d){
+  if(!SUGG.items.length) return;
+  SUGG.idx+=d;
+  if(SUGG.idx<0) SUGG.idx=SUGG.items.length-1;
+  if(SUGG.idx>=SUGG.items.length) SUGG.idx=0;
+  var box=suggEl(); if(!box) return;
+  var rows=box.querySelectorAll("[data-i]");
+  for(var i=0;i<rows.length;i++){
+    var on=Number(rows[i].getAttribute("data-i"))===SUGG.idx;
+    rows[i].className=on?"cur":"";
+    if(on&&rows[i].scrollIntoView) rows[i].scrollIntoView({block:"nearest"});
+  }
+}
+function initExSearch(){
+  var el=exSearchEl(); if(!el||el.getAttribute("data-bound")==="1") return;
+  el.setAttribute("data-bound","1");
+  el.addEventListener("input",function(){ buildSuggest(el.value); });
+  el.addEventListener("focus",function(){ buildSuggest(el.value); });
+  el.addEventListener("keydown",function(ev){
+    if(ev.key==="ArrowDown"){ ev.preventDefault(); moveSugg(1); }
+    else if(ev.key==="ArrowUp"){ ev.preventDefault(); moveSugg(-1); }
+    else if(ev.key==="Enter"){
+      ev.preventDefault();
+      if(SUGG.idx>=0){ exSearchPick(SUGG.idx); }
+      else if(SUGG.items.length){ exSearchPick(0); }
+      else if(el.value.trim()){ exSearchAddNew(); }
+    }
+    else if(ev.key==="Escape"){ hideSuggest(); }
+  });
+  document.addEventListener("click",function(ev){
+    var box=suggEl(), wrap=document.getElementById("exSearchWrap");
+    if(!box||!wrap) return;
+    if(!wrap.contains(ev.target)) hideSuggest();
+  });
+}
+
+/* ---------- 履歴マトリクス ---------- */
+function fmtKg(v){
+  if(!v) return "-";
+  if(v>=10000) return Math.round(v/1000)+"t";
+  if(v>=1000) return (Math.round(v/100)/10)+"k";
+  return String(Math.round(v));
+}
+function mtxSetRange(d){ MTX.range=d; mtxSaveState(); renderMatrix(); }
+function mtxToggleZero(cb){ MTX.hideZero=!!(cb&&cb.checked); mtxSaveState(); renderMatrix(); }
+
+function renderMatrix(){
+  var wrap=document.getElementById("mtxWrap"); if(!wrap) return;
+  var hist=getHist();
+  var today=todayStr();
+  var res=mtxCompute(hist, exPool(), today, MTX.range);
+
+  var rows=res.rows.slice();
+  if(MTX.hideZero) rows=rows.filter(function(r){ return r.s30.sets>0; });
+  rows.sort(function(a,b){
+    if(b.s30.sets!==a.s30.sets) return b.s30.sets-a.s30.sets;
+    if(b.s7.sets!==a.s7.sets) return b.s7.sets-a.s7.sets;
+    return a.name<b.name?-1:1;
+  });
+
+  var gap=rows.filter(function(r){ return r.s7.sets===0 && r.s30.sets>0; });
+
+  var head='<tr><th class="nm">種目</th>';
+  res.dates.forEach(function(d){
+    var isT=(d===today);
+    head+='<th class="dt'+(isT?" tdyt":"")+'">'+Number(d.slice(5,7))+'/'+Number(d.slice(8,10))+'</th>';
+  });
+  head+='<th class="g7">7日<br>セット</th><th class="g7">7日<br>回数</th><th class="g7">7日<br>Vol</th>'
+      + '<th class="g30">30日<br>セット</th><th class="g30">30日<br>回数</th><th class="g30">30日<br>Vol</th></tr>';
+
+  var body="";
+  rows.forEach(function(r){
+    var nmCls="nm";
+    if(r.s30.sets===0) nmCls+=" zero";
+    body+='<tr><td class="'+nmCls+'" title="'+esc(r.name)+'">'+esc(r.name)
+      + (r.s7.sets===0&&r.s30.sets>0?'<span class="gapb">休</span>':'')
+      + (r.s30.sets===0?'<span class="gapb dim">未</span>':'')
+      + '</td>';
+    res.dates.forEach(function(d){
+      var c=r.cells[d];
+      if(!c){ body+='<td class="emp"></td>'; return; }
+      var a=res.maxVol>0?Math.min(1,c.vol/res.maxVol):0.35;
+      var bg=a>0?('background:rgba(64,160,255,'+(0.10+a*0.55).toFixed(2)+');'):'background:rgba(64,160,255,0.12);';
+      var main=c.vol>0?String(c.sets):String(c.reps);
+      var sub=c.vol>0?fmtKg(c.vol):'自重';
+      body+='<td class="hit" style="'+bg+'" title="'+esc(r.name+' '+d+'／'+c.sets+'セット・'+c.reps+'回・'+Math.round(c.vol)+'kg')+'">'
+        +'<b>'+main+'</b><span class="sub">'+sub+'</span></td>';
+    });
+    body+='<td class="g7">'+r.s7.sets+'</td><td class="g7">'+r.s7.reps+'</td><td class="g7">'+fmtKg(r.s7.vol)+'</td>'
+      + '<td class="g30">'+r.s30.sets+'</td><td class="g30">'+r.s30.reps+'</td><td class="g30">'+fmtKg(r.s30.vol)+'</td></tr>';
+  });
+
+  if(!rows.length){
+    wrap.innerHTML='<div style="padding:12px;color:var(--sub,#8b949e);font-size:13px;">表示できる記録がありません</div>';
+    return;
+  }
+
+  var bar='<div class="mtxbar">'
+    +'<button type="button" class="mtxb'+(MTX.range===7?" on":"")+'" onclick="mtxSetRange(7)">7日</button>'
+    +'<button type="button" class="mtxb'+(MTX.range===30?" on":"")+'" onclick="mtxSetRange(30)">30日</button>'
+    +'<label class="mtxz"><input type="checkbox" '+(MTX.hideZero?"checked":"")+' onchange="mtxToggleZero(this)"><span>記録なしを隠す</span></label>'
+    +'</div>';
+
+  var note='';
+  if(gap.length){
+    note='<div class="mtxnote">直近7日で未実施：<b>'+gap.length+'</b>種目（'
+      + gap.slice(0,6).map(function(r){ return esc(r.name); }).join('、')
+      + (gap.length>6?' ほか':'')+'）</div>';
+  } else {
+    note='<div class="mtxnote ok">直近7日で全種目を実施済み</div>';
+  }
+
+  var legend='<div class="mtxlegend">セルの数字＝セット数（太字）／下段＝重量換算ボリューム。色が濃いほどその日のボリューム大。右端は合計。</div>';
+
+  wrap.innerHTML=bar+note
+    +'<div class="mtxscroll"><table class="mtx"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>'
+    +legend;
+}
+
 </script>
 </body>
 </html>
