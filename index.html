@@ -389,6 +389,10 @@
   .gapb{display:inline-block; font-size:9px; line-height:1; padding:2px 4px; margin-left:5px;
     border-radius:3px; background:#d9822b; color:#12161b; font-weight:700; vertical-align:middle;}
   .gapb.dim{background:#3a424d; color:#8b949e;}
+  /* v8.7: 進捗判定のバッジ */
+  .mtx .pg{font-size:11px; font-weight:700; text-align:center; white-space:nowrap; cursor:pointer;}
+  .mtx .pg.up{color:#4ade80;} .mtx .pg.cap{color:#60a5fa;}
+  .mtx .pg.keep{color:#9aa4af;} .mtx .pg.flat{color:#f87171;} .mtx .pg.na{color:#4b5563;}
   .mtxlegend{font-size:10px; color:#6b7480; margin-top:6px; line-height:1.5;}
 </style>
 </head>
@@ -3423,6 +3427,119 @@ function fmtKg(v){
 function mtxSetRange(d){ MTX.range=d; mtxSaveState(); renderMatrix(); }
 function mtxToggleZero(cb){ MTX.hideZero=!!(cb&&cb.checked); mtxSaveState(); renderMatrix(); }
 
+/* ===== v8.7 START ===== */
+/* 種目ごとの負荷進捗判定。
+   重量・「同じ重量での回数」・Vol を別々に評価する。
+   指導で重量を変えない種目（重量固定）は回数とVolだけで判定し、
+   回数上限に達した状態を「停滞」ではなく「上限（天井）」として扱う。 */
+var LS_PROG="tl_prog_v1";
+var PROG={cfg:{}};
+var PROG_WIN=6, PROG_MIN=3, PROG_EPS=0.02, PROG_DEFCAP=20;
+
+function progLoad(){
+  try{
+    var o=JSON.parse(localStorage.getItem(LS_PROG)||"null");
+    if(o&&typeof o==="object"&&o.cfg&&typeof o.cfg==="object") PROG.cfg=o.cfg;
+  }catch(e){}
+}
+function progSave(){ try{ localStorage.setItem(LS_PROG, JSON.stringify(PROG)); }catch(e){} }
+function progCfg(name){
+  var c=PROG.cfg[name];
+  return {fix:!!(c&&c.fix===true), cap:(c&&c.cap>0)?c.cap:PROG_DEFCAP};
+}
+function progToggle(name){
+  var c=progCfg(name);
+  PROG.cfg[name]={fix:!c.fix, cap:c.cap};
+  progSave();
+  try{ renderMatrix(); }catch(e){}
+  try{ toast("「"+name+"」を"+(c.fix?"通常（重量も追う）":"重量固定（回数で追う）")+"にしました"); }catch(e){}
+}
+function progSessions(name, hist){
+  var out=[];
+  (hist||[]).forEach(function(h){
+    if(!h||!h.date) return;
+    (h.exercises||[]).forEach(function(e){
+      if(!e||e.name!==name) return;
+      var sets=0, reps=0, vol=0, best=0, repsAtBest=0, maxReps=0, anyW=false;
+      (e.sets||[]).forEach(function(x){
+        var r=(x&&x.r!=null)?parseFloat(String(x.r)):NaN;
+        if(isNaN(r)) return;
+        sets++; reps+=r; if(r>maxReps) maxReps=r;
+        var w=(x.w!=null)?parseFloat(String(x.w)):NaN;
+        if(x.bw===true||isNaN(w)||w<=0) return;
+        anyW=true; vol+=w*r;
+        if(w>best){ best=w; repsAtBest=r; }
+        else if(w===best){ repsAtBest+=r; }
+      });
+      if(!sets) return;
+      out.push({date:h.date, sets:sets, reps:reps, vol:Math.round(vol),
+                best:best, repsAtBest:repsAtBest, maxReps:maxReps, bw:!anyW});
+    });
+  });
+  out.sort(function(a,b){ return a.date<b.date?-1:(a.date>b.date?1:0); });
+  var merged=[], byDate={};
+  out.forEach(function(x){
+    if(byDate[x.date]){
+      var m=byDate[x.date];
+      m.sets+=x.sets; m.reps+=x.reps; m.vol+=x.vol;
+      if(x.best>m.best){ m.best=x.best; m.repsAtBest=x.repsAtBest; }
+      else if(x.best===m.best){ m.repsAtBest+=x.repsAtBest; }
+      if(x.maxReps>m.maxReps) m.maxReps=x.maxReps;
+      m.bw=m.bw&&x.bw;
+    } else { var c={date:x.date,sets:x.sets,reps:x.reps,vol:x.vol,best:x.best,
+                    repsAtBest:x.repsAtBest,maxReps:x.maxReps,bw:x.bw};
+               byDate[x.date]=c; merged.push(c); }
+  });
+  return merged;
+}
+function progStatus(name, hist){
+  var ss=progSessions(name,hist);
+  if(!ss.length) return {state:"na",label:"—",why:"記録なし"};
+  if(ss.length<PROG_MIN)
+    return {state:"na",label:"—",why:"セッション"+ss.length+"回（判定は"+PROG_MIN+"回から）"};
+  var win=ss.slice(-PROG_WIN), cur=win[win.length-1], prev=win.slice(0,-1);
+  var c=progCfg(name);
+  var autoFix=(prev.length>=3) && prev.every(function(x){
+    return Math.abs(x.best-cur.best)<=Math.max(cur.best,1)*0.001;
+  }) && cur.best>0;
+  var isFix=c.fix||autoFix||cur.bw;
+  var cap=c.cap;
+
+  var prevBest=Math.max.apply(null, prev.map(function(x){return x.best;}));
+  var prevMaxReps=Math.max.apply(null, prev.map(function(x){return x.maxReps;}));
+  var prevRepsAtW=0;
+  prev.forEach(function(x){
+    if(Math.abs(x.best-cur.best)<=Math.max(cur.best,1)*PROG_EPS && x.repsAtBest>prevRepsAtW) prevRepsAtW=x.repsAtBest;
+  });
+  var avgVol=prev.reduce(function(a,b){return a+b.vol;},0)/prev.length;
+
+  if(!isFix){
+    if(cur.best>prevBest*(1+PROG_EPS))
+      return {state:"up",label:"↑重",why:"重量 "+prevBest+"→"+cur.best+"kg"};
+    if(Math.abs(cur.best-prevBest)<=Math.max(prevBest,1)*PROG_EPS && cur.repsAtBest>prevRepsAtW)
+      return {state:"up",label:"↑回",why:"同じ "+cur.best+"kg で "+prevRepsAtW+"→"+cur.repsAtBest+"回"};
+    if(avgVol>0 && cur.vol>avgVol*(1+PROG_EPS))
+      return {state:"up",label:"↑V",why:"Vol "+Math.round(avgVol)+"→"+cur.vol};
+  }else{
+    if(cur.maxReps>prevMaxReps)
+      return {state:"up",label:"↑回",why:"同重量で最多 "+prevMaxReps+"→"+cur.maxReps+"回"};
+    if(cur.maxReps>=cap && prevMaxReps>=cap)
+      return {state:"cap",label:"上限",why:"重量固定（"+(cur.best>0?cur.best+"kg":"自重")+"）で"+cur.maxReps+"回。上限"+cap+"回に到達済み。停滞ではなく天井。回数上限を上げるかセット数で進める"};
+    if(avgVol>0 && cur.vol>avgVol*(1+PROG_EPS))
+      return {state:"up",label:"↑V",why:"Vol "+Math.round(avgVol)+"→"+cur.vol};
+  }
+  var l3=win.slice(-3), flat=true;
+  for(var i=1;i<l3.length;i++){
+    var a=l3[i-1], b=l3[i];
+    if(b.best>a.best*(1+PROG_EPS)){ flat=false; break; }
+    if(Math.abs(b.best-a.best)<=Math.max(a.best,1)*PROG_EPS && b.repsAtBest>a.repsAtBest){ flat=false; break; }
+    if(b.maxReps>a.maxReps){ flat=false; break; }
+    if(a.vol>0 && b.vol>a.vol*(1+PROG_EPS)){ flat=false; break; }
+  }
+  if(flat) return {state:"flat",label:"停",why:"直近3セッションで重量・回数・Volのいずれも増加なし"};
+  return {state:"keep",label:"維",why:"増加なし（変動域内）"};
+}
+/* ===== v8.7 END ===== */
 function renderMatrix(){
   var wrap=document.getElementById("mtxWrap"); if(!wrap) return;
   var hist=getHist();
@@ -3445,14 +3562,15 @@ function renderMatrix(){
     head+='<th class="dt'+(isT?" tdyt":"")+'">'+Number(d.slice(5,7))+'/'+Number(d.slice(8,10))+'</th>';
   });
   head+='<th class="g7">7日<br>セット</th><th class="g7">7日<br>回数</th><th class="g7">7日<br>Vol</th>'
-      + '<th class="g30">30日<br>セット</th><th class="g30">30日<br>回数</th><th class="g30">30日<br>Vol</th></tr>';
+      + '<th class="g30">30日<br>セット</th><th class="g30">30日<br>回数</th><th class="g30">30日<br>Vol</th>'
+      + '<th class="pg">推移</th></tr>';
 
   var body="";
   rows.forEach(function(r){
     var nmCls="nm";
     if(r.s30.sets===0) nmCls+=" zero";
     body+='<tr><td class="'+nmCls+'" title="'+esc(r.name)+'">'+esc(r.name)
-      + (r.s7.sets===0&&r.s30.sets>0?'<span class="gapb">休</span>':'')
+      + (r.s7.sets===0&&r.s30.sets>0?'<span class="gapb" title="直近7日は未実施（停滞の意味ではない）">休</span>':'')
       + (r.s30.sets===0?'<span class="gapb dim">未</span>':'')
       + '</td>';
     res.dates.forEach(function(d){
@@ -3466,7 +3584,9 @@ function renderMatrix(){
         +'<b>'+main+'</b><span class="sub">'+sub+'</span></td>';
     });
     body+='<td class="g7">'+r.s7.sets+'</td><td class="g7">'+r.s7.reps+'</td><td class="g7">'+fmtKg(r.s7.vol)+'</td>'
-      + '<td class="g30">'+r.s30.sets+'</td><td class="g30">'+r.s30.reps+'</td><td class="g30">'+fmtKg(r.s30.vol)+'</td></tr>';
+      + '<td class="g30">'+r.s30.sets+'</td><td class="g30">'+r.s30.reps+'</td><td class="g30">'+fmtKg(r.s30.vol)+'</td>';
+    var pg=progStatus(r.name,hist);
+    body+='<td class="pg '+pg.state+'" title="'+esc(pg.why)+'" onclick="progToggle(decodeURIComponent(\''+encodeURIComponent(r.name)+'\'))">'+esc(pg.label)+'</td></tr>';
   });
 
   if(!rows.length){
@@ -3489,7 +3609,11 @@ function renderMatrix(){
     note='<div class="mtxnote ok">直近7日で全種目を実施済み</div>';
   }
 
-  var legend='<div class="mtxlegend">セルの数字＝セット数（太字）／下段＝重量換算ボリューム。色が濃いほどその日のボリューム大。右端は合計。</div>';
+  var legend='<div class="mtxlegend">セルの数字＝セット数（太字）／下段＝重量換算ボリューム。色が濃いほどその日のボリューム大。右端は合計。<br>'
+    +'<b>推移</b>：重量・同じ重量での回数・Volを別々に比較（直近'+PROG_WIN+'セッション、±'+Math.round(PROG_EPS*100)+'%以内は増加とみなさない）。'
+    +'<b>↑重</b>重量更新／<b>↑回</b>同重量で回数更新／<b>↑V</b>Vol更新／<b>上限</b>重量固定で回数上限に到達（停滞ではない）／<b>維</b>変動域内／<b>停</b>3セッション伸びなし。'
+    +'バッジをタップすると重量固定モードを切替。<br>'
+    +'<b>休</b>＝直近7日で未実施（重量停滞の意味ではない）／<b>未</b>＝30日記録なし。</div>';
 
   wrap.innerHTML=bar+note
     +'<div class="mtxscroll"><table class="mtx"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>'
@@ -3504,6 +3628,7 @@ function renderMatrix(){
    ここで定義後に必ずバインドし直す。 */
 function v86BootSearch(){
   try{ mtxLoad(); }catch(e){}
+  try{ progLoad(); }catch(e){}
   try{ initExSearch(); }catch(e){}
   try{ renderMatrix(); }catch(e){}
 }
