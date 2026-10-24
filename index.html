@@ -394,7 +394,7 @@
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）/ タブ選択状態を明確化・睡眠メモと腹囲胸囲を記録タブへ（v8.3）/ 日付欄を統一・記録タブにカテゴリ枠（v8.4）/ 日付を最上位へ・睡眠メモの高さずれ修正・セット入力を縦並び化（v8.5）</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）/ タブ選択状態を明確化・睡眠メモと腹囲胸囲を記録タブへ（v8.3）/ 日付欄を統一・記録タブにカテゴリ枠（v8.4）/ 日付を最上位へ・睡眠メモの高さずれ修正・セット入力を縦並び化（v8.5）/ インナーマッスル系プリセット10種を追加・種目検索の初期化順バグを修正（v8.6b）</div>
 <div class="toast" id="toast"></div>
 <div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div><div id="reviewBox"></div>
 <!-- v7.1: 保存前の日付確認 -->
@@ -747,7 +747,17 @@ var DEFAULT_MASTER=[
   {n:"ケーブルクランチ",bw:"never"},
   {n:"アブローラー",bw:"sometimes"},
   {n:"プランク",bw:"always"},
-  {n:"サイドプランク",bw:"always"}
+  {n:"サイドプランク",bw:"always"},
+  {n:"ウォールスライド",bw:"always"},
+  {n:"プッシュアッププラス",bw:"always"},
+  {n:"プランクショルダータップ",bw:"always"},
+  {n:"バードドッグ",bw:"always"},
+  {n:"サイドライイング外旋",bw:"sometimes"},
+  {n:"サイドライイング内旋",bw:"sometimes"},
+  {n:"スタンディング外旋（チューブ）",bw:"sometimes"},
+  {n:"フェイスプル",bw:"never"},
+  {n:"デッドバグ",bw:"sometimes"},
+  {n:"パロフプレス",bw:"never"}
 ];
 
 /* ---- クイックボタンの組み込み既定（トレーナーメニュー） ---- */
@@ -3485,6 +3495,46 @@ function renderMatrix(){
     +'<div class="mtxscroll"><table class="mtx"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>'
     +legend;
 }
+
+/* ===== v8.6b: 初期化順の修正 =====
+   init() は上のscriptブロック内で実行されるが、initExSearch / mtxLoad / renderMatrix は
+   このブロック（後のscript）で定義される。そのため init() 内の
+   try{ mtxLoad(); initExSearch(); renderMatrix(); }catch(e){} は
+   ReferenceError を握りつぶし、検索欄に入力ハンドラが1つも付いていなかった。
+   ここで定義後に必ずバインドし直す。 */
+function v86BootSearch(){
+  try{ mtxLoad(); }catch(e){}
+  try{ initExSearch(); }catch(e){}
+  try{ renderMatrix(); }catch(e){}
+}
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded", v86BootSearch);
+} else {
+  v86BootSearch();
+}
+window.addEventListener("load", v86BootSearch);
+
+/* タブ切替・記録追加後にも検索/マトリクスを確実に生かす */
+(function(){
+  if(typeof window.showTab==="function" && !window.showTab.__v86){
+    var _show=window.showTab;
+    window.showTab=function(i){
+      var r=_show.apply(this,arguments);
+      try{ initExSearch(); renderMatrix(); }catch(e){}
+      return r;
+    };
+    window.showTab.__v86=1;
+  }
+  if(typeof window.render==="function" && !window.render.__v86){
+    var _r=window.render;
+    window.render=function(){
+      var x=_r.apply(this,arguments);
+      try{ if(document.getElementById("exSearch")) initExSearch(); }catch(e){}
+      return x;
+    };
+    window.render.__v86=1;
+  }
+})();
 
 </script>
 </body>
