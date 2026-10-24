@@ -394,12 +394,19 @@
   .mtx .pg.up{color:#4ade80;} .mtx .pg.cap{color:#60a5fa;}
   .mtx .pg.keep{color:#9aa4af;} .mtx .pg.flat{color:#f87171;} .mtx .pg.na{color:#4b5563;}
   .mtx .pg.below{color:#fbbf24;}
+  /* v8.8: セットごとの効き具合 */
+  .effgrp{display:inline-flex; gap:3px; margin-left:8px; vertical-align:middle;}
+  .effbtn{font:inherit; font-size:10px; line-height:1; padding:4px 7px; border-radius:6px;
+    border:1px solid var(--line); background:var(--bg); color:var(--sub); cursor:pointer;}
+  .effbtn.on{background:var(--accent2); border-color:var(--accent2); color:#fff; font-weight:700;}
+  .effbtn.giri.on{background:#d94a4a; border-color:#d94a4a;}
+  .effm{font-size:10px; color:#98a1ad; font-style:normal;}
   .mtxlegend{font-size:10px; color:#6b7480; margin-top:6px; line-height:1.5;}
 </style>
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）/ タブ選択状態を明確化・睡眠メモと腹囲胸囲を記録タブへ（v8.3）/ 日付欄を統一・記録タブにカテゴリ枠（v8.4）/ 日付を最上位へ・睡眠メモの高さずれ修正・セット入力を縦並び化（v8.5）/ インナーマッスル系プリセット10種を追加・種目検索の初期化順バグを修正（v8.6b）/ 履歴に推移判定・重量固定モード・余力判定（v8.7）</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）/ タブ選択状態を明確化・睡眠メモと腹囲胸囲を記録タブへ（v8.3）/ 日付欄を統一・記録タブにカテゴリ枠（v8.4）/ 日付を最上位へ・睡眠メモの高さずれ修正・セット入力を縦並び化（v8.5）/ インナーマッスル系プリセット10種を追加・種目検索の初期化順バグを修正（v8.6b）/ 履歴に推移判定・重量固定モード・余力判定（v8.7）/ インナー種目を【インナー】表記に統一・ブックオープン等9種追加・セット追加時に回数も引継ぎ・セットごとの効き具合（v8.8）</div>
 <div class="toast" id="toast"></div>
 <div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div><div id="reviewBox"></div>
 <!-- v7.1: 保存前の日付確認 -->
@@ -708,6 +715,7 @@ var LS_DRAFT="tl_draft_v1", LS_HIST="tl_history_v1", LS_CUSTOM="tl_custom_ex_v1"
 var QUICK_VERSION=2;   // 2 = トレーナーメニュー8種が既定
 
 var BW_LABEL={always:"自重種目", sometimes:"自重でも行う種目", never:"重量種目", custom:"カスタム種目"};
+var EFF_LABEL={yoyu:"余裕", futsu:"適正", giri:"ギリ"};
 
 /* ---- 種目マスター（自重区分つき） ---- */
 var DEFAULT_MASTER=[
@@ -753,16 +761,25 @@ var DEFAULT_MASTER=[
   {n:"アブローラー",bw:"sometimes"},
   {n:"プランク",bw:"always"},
   {n:"サイドプランク",bw:"always"},
-  {n:"ウォールスライド",bw:"always"},
-  {n:"プッシュアッププラス",bw:"always"},
-  {n:"プランクショルダータップ",bw:"always"},
-  {n:"バードドッグ",bw:"always"},
-  {n:"サイドライイング外旋",bw:"sometimes"},
-  {n:"サイドライイング内旋",bw:"sometimes"},
-  {n:"スタンディング外旋（チューブ）",bw:"sometimes"},
-  {n:"フェイスプル",bw:"never"},
-  {n:"デッドバグ",bw:"sometimes"},
-  {n:"パロフプレス",bw:"never"}
+  {n:"【インナー】ウォールスライド",bw:"always"},
+  {n:"【インナー】プッシュアッププラス",bw:"always"},
+  {n:"【インナー】スキャプラプッシュアップ",bw:"always"},
+  {n:"【インナー】プランクショルダータップ",bw:"always"},
+  {n:"【インナー】バードドッグ",bw:"always"},
+  {n:"【インナー】ブックオープン",bw:"always"},
+  {n:"【インナー】サイドライイング外旋",bw:"sometimes"},
+  {n:"【インナー】サイドライイング内旋",bw:"sometimes"},
+  {n:"【インナー】スタンディング外旋（チューブ）",bw:"sometimes"},
+  {n:"【インナー】バンド外旋",bw:"sometimes"},
+  {n:"【インナー】チューブ内旋",bw:"sometimes"},
+  {n:"【インナー】ケーブル外旋",bw:"never"},
+  {n:"【インナー】ケーブル内旋",bw:"never"},
+  {n:"【インナー】Yレイズ",bw:"sometimes"},
+  {n:"【インナー】Tレイズ",bw:"sometimes"},
+  {n:"【インナー】Wレイズ",bw:"sometimes"},
+  {n:"【インナー】フェイスプル",bw:"never"},
+  {n:"【インナー】デッドバグ",bw:"sometimes"},
+  {n:"【インナー】パロフプレス",bw:"never"}
 ];
 
 /* ---- クイックボタンの組み込み既定（トレーナーメニュー） ---- */
@@ -814,6 +831,7 @@ function normSet(s, exName){
   s=s||{};
   var out={ w:(s.w!=null?String(s.w):""), r:(s.r!=null?String(s.r):"") };
   out.bw=isBwSet(s, exName);
+  out.eff=(s.eff==null?"":String(s.eff));
   return out;
 }
 function normExercise(e){
@@ -877,11 +895,13 @@ function registerName(name){
 
 /* ---------- 集計 ---------- */
 function exStats(ex){
-  var out={sets:0, wSets:0, bwSets:0, vol:0, best:0, reps:0, totalReps:0};
+  var out={sets:0, wSets:0, bwSets:0, vol:0, best:0, reps:0, totalReps:0, giri:0,yoyu:0};
   (ex.sets||[]).forEach(function(s){
     var n=normSet(s, ex.name);
     if(!isValidSet(n)) return;
     out.sets++;
+    if(n.eff==="giri") out.giri++;
+    if(n.eff==="yoyu") out.yoyu++;
     var r=parseFloat(n.r);
     if(!isNaN(r)) out.totalReps+=r;
     if(n.bw){ out.bwSets++; if(!isNaN(r)) out.reps+=r; }
@@ -1588,7 +1608,67 @@ function fetchTrainingMasterForce(){
   fetchTrainingMaster(true,true);
 }
 
+/* ===== v8.8: インナーマッスル種目を【インナー】表記へ移行（旧記録を壊さない） ===== */
+var LS_INNER="tl_inner_v1";
+var INNER_RENAME={
+  "ウォールスライド":"【インナー】ウォールスライド",
+  "プッシュアッププラス":"【インナー】プッシュアッププラス",
+  "プランクショルダータップ":"【インナー】プランクショルダータップ",
+  "バードドッグ":"【インナー】バードドッグ",
+  "サイドライイング外旋":"【インナー】サイドライイング外旋",
+  "サイドライイング内旋":"【インナー】サイドライイング内旋",
+  "スタンディング外旋（チューブ）":"【インナー】スタンディング外旋（チューブ）",
+  "フェイスプル":"【インナー】フェイスプル",
+  "デッドバグ":"【インナー】デッドバグ",
+  "パロフプレス":"【インナー】パロフプレス"
+};
+function innerRN(n){ return (typeof n==="string"&&INNER_RENAME[n])?INNER_RENAME[n]:n; }
+function migrateInner(){
+  try{ if(localStorage.getItem(LS_INNER)==="1") return; }catch(e){ return; }
+  try{
+    var h=JSON.parse(localStorage.getItem(LS_HIST)||"[]");
+    if(Array.isArray(h)){
+      h.forEach(function(day){
+        (day&&day.exercises||[]).forEach(function(ex){
+          if(!ex) return;
+          ex.name=innerRN(ex.name);
+          (ex.sets||[]).forEach(function(st){
+            if(!st) return;
+            if(st.ex!==undefined) delete st.ex;
+          });
+        });
+      });
+      localStorage.setItem(LS_HIST, JSON.stringify(h));
+    }
+  }catch(e){}
+  try{
+    var m=JSON.parse(localStorage.getItem(LS_MASTER)||"null");
+    if(Array.isArray(m)){
+      var seen={}, out=[];
+      m.forEach(function(x){
+        if(!x) return; var n=innerRN(x.n); if(!n||seen[n]) return; seen[n]=1;
+        out.push({n:n, bw:x.bw});
+      });
+      localStorage.setItem(LS_MASTER, JSON.stringify(out));
+    }
+  }catch(e){}
+  [["tl_custom_ex_v1","arr"],["tl_quick_v1","arr"],
+   ["tl_exnote_v1","obj"],["tl_review_v1","obj"],["tl_exlink_v1","obj"]].forEach(function(pair){
+    try{
+      var d=JSON.parse(localStorage.getItem(pair[0])||"null");
+      if(pair[1]==="arr"&&Array.isArray(d)){
+        localStorage.setItem(pair[0], JSON.stringify(d.map(innerRN)));
+      }else if(pair[1]==="obj"&&d&&typeof d==="object"&&!Array.isArray(d)){
+        var out={};
+        for(var k in d){ if(Object.prototype.hasOwnProperty.call(d,k)) out[innerRN(k)]=d[k]; }
+        localStorage.setItem(pair[0], JSON.stringify(out));
+      }
+    }catch(e){}
+  });
+  try{ localStorage.setItem(LS_INNER,"1"); }catch(e){}
+}
 function init(){
+  migrateInner();
   var dEl=document.getElementById("date");
   loadNotes();
   loadLinks();
@@ -1684,7 +1764,8 @@ function addSet(i){
   // 追加するセットの重量は、直前のセットの重量を引き継ぐ（前が空なら空のまま）
   var prev=ex.sets[ex.sets.length-1];
   var carryW=(prev&&prev.w!=null)?prev.w:"";
-  ex.sets.push({w:carryW,r:"",bw:!!ex.bw}); focusExUI(ex.name); autoSave(); render();
+  var carryR=(prev&&prev.r!=null&&String(prev.r).trim()!=="")?prev.r:"";
+  ex.sets.push({w:carryW,r:carryR,bw:!!ex.bw,eff:""}); focusExUI(ex.name); autoSave(); render();
 }
 function removeSet(i,j){
   session.exercises[i].sets.splice(j,1);
@@ -1750,6 +1831,20 @@ function copyPrev(i){
 }
 
 /* ---------- 描画 ---------- */
+function effHTML(i,j){
+  var cur=(session.exercises[i].sets[j]||{}).eff||"";
+  var h='<span class="effgrp">';
+  [["yoyu","余裕"],["futsu","適正"],["giri","ギリ"]].forEach(function(o){
+    h+='<button type="button" class="effbtn'+(cur===o[0]?" on":"")+(o[0]==="giri"?" giri":"")
+      +'" onclick="setEff('+i+','+j+',\''+o[0]+'\')">'+o[1]+'</button>';
+  });
+  return h+'</span>';
+}
+function setEff(i,j,v){
+  var ex=session.exercises[i]; if(!ex||!ex.sets[j]) return;
+  ex.sets[j].eff=(ex.sets[j].eff===v)?"":v;
+  autoSave(); render();
+}
 function stepHTML(i,j,k,isW){
   var stepV=isW?2.5:1;
   var val=isW?session.exercises[i].sets[j].w:session.exercises[i].sets[j].r;
@@ -1879,6 +1974,7 @@ function render(){
     var esum=(st.sets? st.sets+"セット":"未入力");
     if(!ex.bw&&st.vol>0) esum+=" / "+Math.round(st.vol).toLocaleString()+"kg";
     else if(ex.bw&&st.reps>0) esum+=" / "+st.reps+"回";
+    if(st.giri>0) esum+=" / ギリ"+st.giri;
     var html='<div class="exhead">'
       +'<span class="exl" onclick="toggleEx('+i+')">'
       +'<span class="chev">'+(open?"▼":"▶")+'</span>'
@@ -1904,7 +2000,8 @@ function render(){
       });
       html+='<div class="prevbox"><div class="pttl">📈 前回（'+d+'）</div>'
         +'<div class="psets">'+prev.sets.map(function(s,j){
-            return (j+1)+': '+(s.bw?('自重 × '+esc(s.r)+'回'):(esc(s.w)+'kg × '+esc(s.r)+'回'));
+            var ef=s.eff?(' <i class="effm">'+esc(EFF_LABEL[s.eff]||"")+'</i>'):"";
+            return (j+1)+': '+(s.bw?('自重 × '+esc(s.r)+'回'):(esc(s.w)+'kg × '+esc(s.r)+'回'))+ef;
           }).join('　')+'</div>'
         +'<div class="pmeta">'+(pVol>0
             ? ('前回ボリューム '+Math.round(pVol).toLocaleString()+' kg / ベスト '+pBest+' kg')
@@ -1926,7 +2023,8 @@ function render(){
     ex.sets.forEach(function(s,j){
       var rowBw=(ex.bw||s.bw===true);
       html+='<div class="setframe'+(rowBw?' bwm':'')+'">'
-        +'<div class="sethead"><div class="settag"><div class="setnum">'+(j+1)+'</div><span class="cap">セット</span></div>'
+        +'<div class="sethead"><div class="settag"><div class="setnum">'+(j+1)+'</div><span class="cap">セット</span>'
+        +effHTML(i,j)+'</div>'
         +'<button type="button" class="del" onclick="removeSet('+i+','+j+')">×</button></div>'
         +'<div class="setflds">';
       if(rowBw){
