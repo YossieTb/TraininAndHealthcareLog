@@ -393,12 +393,13 @@
   .mtx .pg{font-size:11px; font-weight:700; text-align:center; white-space:nowrap; cursor:pointer;}
   .mtx .pg.up{color:#4ade80;} .mtx .pg.cap{color:#60a5fa;}
   .mtx .pg.keep{color:#9aa4af;} .mtx .pg.flat{color:#f87171;} .mtx .pg.na{color:#4b5563;}
+  .mtx .pg.below{color:#fbbf24;}
   .mtxlegend{font-size:10px; color:#6b7480; margin-top:6px; line-height:1.5;}
 </style>
 </head>
 <body>
 <h1>🏋️ トレーニング記録</h1>
-<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）/ タブ選択状態を明確化・睡眠メモと腹囲胸囲を記録タブへ（v8.3）/ 日付欄を統一・記録タブにカテゴリ枠（v8.4）/ 日付を最上位へ・睡眠メモの高さずれ修正・セット入力を縦並び化（v8.5）/ インナーマッスル系プリセット10種を追加・種目検索の初期化順バグを修正（v8.6b）</div>
+<div class="sub">種目・セット・回数・重量を記録 / 自重種目対応 / 前回記録の自動表示 / CSV・JSON出力 / エリアと種目を折りたたみ可 / ヘルスケア表示 / 参考リンク欄を全幅化・種目名を見やすく（v7.8）/ 1日の概要メモ・目標の自動取込（v8.0）/ 要復習に種目メモを表示（v8.1）/ 睡眠メモの重なり修正・症状欄の説明追加（v8.2）/ タブ選択状態を明確化・睡眠メモと腹囲胸囲を記録タブへ（v8.3）/ 日付欄を統一・記録タブにカテゴリ枠（v8.4）/ 日付を最上位へ・睡眠メモの高さずれ修正・セット入力を縦並び化（v8.5）/ インナーマッスル系プリセット10種を追加・種目検索の初期化順バグを修正（v8.6b）/ 履歴に推移判定・重量固定モード・余力判定（v8.7）</div>
 <div class="toast" id="toast"></div>
 <div id="mstBar" style="margin:8px 0 6px;padding:9px 11px;border:1px solid #e2e2e2;border-radius:10px;background:#fafafa;"><div id="mstStatus" style="font-size:12px;line-height:1.5;color:#444;">トレーニング記録（マスタ）: 未取得</div><div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;"><button type="button" onclick="fetchTrainingMaster(true)" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ再取得</button><button type="button" onclick="fetchTrainingMasterForce()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #ccc;background:#fff;">マスタ優先で上書き</button></div></div><div id="reviewBox"></div>
 <!-- v7.1: 保存前の日付確認 -->
@@ -3460,11 +3461,11 @@ function progSessions(name, hist){
     if(!h||!h.date) return;
     (h.exercises||[]).forEach(function(e){
       if(!e||e.name!==name) return;
-      var sets=0, reps=0, vol=0, best=0, repsAtBest=0, maxReps=0, anyW=false;
+      var sets=0, reps=0, vol=0, best=0, repsAtBest=0, maxReps=0, anyW=false, lastReps=0;
       (e.sets||[]).forEach(function(x){
         var r=(x&&x.r!=null)?parseFloat(String(x.r)):NaN;
         if(isNaN(r)) return;
-        sets++; reps+=r; if(r>maxReps) maxReps=r;
+        sets++; reps+=r; if(r>maxReps) maxReps=r; lastReps=r;
         var w=(x.w!=null)?parseFloat(String(x.w)):NaN;
         if(x.bw===true||isNaN(w)||w<=0) return;
         anyW=true; vol+=w*r;
@@ -3473,7 +3474,7 @@ function progSessions(name, hist){
       });
       if(!sets) return;
       out.push({date:h.date, sets:sets, reps:reps, vol:Math.round(vol),
-                best:best, repsAtBest:repsAtBest, maxReps:maxReps, bw:!anyW});
+                best:best, repsAtBest:repsAtBest, maxReps:maxReps, anyW:anyW, lastReps:lastReps});
     });
   });
   out.sort(function(a,b){ return a.date<b.date?-1:(a.date>b.date?1:0); });
@@ -3485,11 +3486,13 @@ function progSessions(name, hist){
       if(x.best>m.best){ m.best=x.best; m.repsAtBest=x.repsAtBest; }
       else if(x.best===m.best){ m.repsAtBest+=x.repsAtBest; }
       if(x.maxReps>m.maxReps) m.maxReps=x.maxReps;
-      m.bw=m.bw&&x.bw;
+      if(x.lastReps) m.lastReps=x.lastReps;
+      m.anyW=m.anyW||x.anyW;
     } else { var c={date:x.date,sets:x.sets,reps:x.reps,vol:x.vol,best:x.best,
-                    repsAtBest:x.repsAtBest,maxReps:x.maxReps,bw:x.bw};
+                    repsAtBest:x.repsAtBest,maxReps:x.maxReps,anyW:x.anyW,lastReps:x.lastReps};
                byDate[x.date]=c; merged.push(c); }
   });
+  merged.forEach(function(m){ m.bw=!m.anyW; });
   return merged;
 }
 function progStatus(name, hist){
@@ -3523,8 +3526,11 @@ function progStatus(name, hist){
   }else{
     if(cur.maxReps>prevMaxReps)
       return {state:"up",label:"↑回",why:"同重量で最多 "+prevMaxReps+"→"+cur.maxReps+"回"};
-    if(cur.maxReps>=cap && prevMaxReps>=cap)
-      return {state:"cap",label:"上限",why:"重量固定（"+(cur.best>0?cur.best+"kg":"自重")+"）で"+cur.maxReps+"回。上限"+cap+"回に到達済み。停滞ではなく天井。回数上限を上げるかセット数で進める"};
+    if(cur.maxReps>=cap && prevMaxReps>=cap){
+      if(cur.lastReps>0 && cur.lastReps<cap)
+        return {state:"below",label:"余力",why:"重量固定（"+(cur.best>0?cur.best+"kg":"自重")+"）で上限"+cap+"回に到達しているが、最終セットは"+cur.lastReps+"回。まだ余力あり。最終セットが"+cap+"回になるまで伸ばせる"};
+      return {state:"cap",label:"上限",why:"重量固定（"+(cur.best>0?cur.best+"kg":"自重")+"）で"+cur.maxReps+"回、最終セットも"+cur.lastReps+"回。上限"+cap+"回で完全に天井。停滞ではなく到達。回数上限を上げるかセット数を増やす"};
+    }
     if(avgVol>0 && cur.vol>avgVol*(1+PROG_EPS))
       return {state:"up",label:"↑V",why:"Vol "+Math.round(avgVol)+"→"+cur.vol};
   }
