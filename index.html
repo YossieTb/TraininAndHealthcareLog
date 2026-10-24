@@ -3461,7 +3461,7 @@ function progSessions(name, hist){
     if(!h||!h.date) return;
     (h.exercises||[]).forEach(function(e){
       if(!e||e.name!==name) return;
-      var sets=0, reps=0, vol=0, best=0, repsAtBest=0, maxReps=0, anyW=false, lastReps=0;
+      var sets=0, reps=0, vol=0, best=0, repsAtBest=0, maxReps=0, anyW=false, lastReps=0, firstW=0, lastSetW=0;
       (e.sets||[]).forEach(function(x){
         var r=(x&&x.r!=null)?parseFloat(String(x.r)):NaN;
         if(isNaN(r)) return;
@@ -3469,12 +3469,15 @@ function progSessions(name, hist){
         var w=(x.w!=null)?parseFloat(String(x.w)):NaN;
         if(x.bw===true||isNaN(w)||w<=0) return;
         anyW=true; vol+=w*r;
+        if(!firstW) firstW=w;
+        lastSetW=w;
         if(w>best){ best=w; repsAtBest=r; }
         else if(w===best){ repsAtBest+=r; }
       });
       if(!sets) return;
       out.push({date:h.date, sets:sets, reps:reps, vol:Math.round(vol),
-                best:best, repsAtBest:repsAtBest, maxReps:maxReps, anyW:anyW, lastReps:lastReps});
+                best:best, repsAtBest:repsAtBest, maxReps:maxReps, anyW:anyW, lastReps:lastReps,
+                firstW:firstW, lastSetW:lastSetW});
     });
   });
   out.sort(function(a,b){ return a.date<b.date?-1:(a.date>b.date?1:0); });
@@ -3487,9 +3490,12 @@ function progSessions(name, hist){
       else if(x.best===m.best){ m.repsAtBest+=x.repsAtBest; }
       if(x.maxReps>m.maxReps) m.maxReps=x.maxReps;
       if(x.lastReps) m.lastReps=x.lastReps;
+      if(!m.firstW && x.firstW) m.firstW=x.firstW;
+      if(x.lastSetW) m.lastSetW=x.lastSetW;
       m.anyW=m.anyW||x.anyW;
     } else { var c={date:x.date,sets:x.sets,reps:x.reps,vol:x.vol,best:x.best,
-                    repsAtBest:x.repsAtBest,maxReps:x.maxReps,anyW:x.anyW,lastReps:x.lastReps};
+                    repsAtBest:x.repsAtBest,maxReps:x.maxReps,anyW:x.anyW,lastReps:x.lastReps,
+                    firstW:x.firstW,lastSetW:x.lastSetW};
                byDate[x.date]=c; merged.push(c); }
   });
   merged.forEach(function(m){ m.bw=!m.anyW; });
@@ -3527,6 +3533,8 @@ function progStatus(name, hist){
     if(cur.maxReps>prevMaxReps)
       return {state:"up",label:"↑回",why:"同重量で最多 "+prevMaxReps+"→"+cur.maxReps+"回"};
     if(cur.maxReps>=cap && prevMaxReps>=cap){
+      if(cur.firstW>0 && cur.lastSetW>0 && cur.lastSetW<cur.firstW*0.98)
+        return {state:"below",label:"上限↓",why:"重量固定（"+cur.firstW+"kg）で上限"+cap+"回に到達。ただしセッション内で"+cur.firstW+"kg→"+cur.lastSetW+"kgに重量が落ちている＝"+cur.firstW+"kg×"+cap+"回×全セットは限界近い。回数上限を上げるのではなく、セット数増かケーブル等の別種目で追う"};
       if(cur.lastReps>0 && cur.lastReps<cap)
         return {state:"below",label:"余力",why:"重量固定（"+(cur.best>0?cur.best+"kg":"自重")+"）で上限"+cap+"回に到達しているが、最終セットは"+cur.lastReps+"回。まだ余力あり。最終セットが"+cap+"回になるまで伸ばせる"};
       return {state:"cap",label:"上限",why:"重量固定（"+(cur.best>0?cur.best+"kg":"自重")+"）で"+cur.maxReps+"回、最終セットも"+cur.lastReps+"回。上限"+cap+"回で完全に天井。停滞ではなく到達。回数上限を上げるかセット数を増やす"};
