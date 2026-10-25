@@ -439,7 +439,29 @@
       <span class="chev">▼</span><span class="ct">日付</span><span class="cs" data-csum="area:date"></span>
     </div>
     <div class="cbody" data-cbody="area:date">
-      <input type="date" id="date">
+      <input type="date" id="date" onchange="if(window.g3SyncDate)g3SyncDate();">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="chead" data-chead="area:goal3" onclick="toggleArea('area:goal3')">
+      <span class="chev">▼</span><span class="ct">🎯 今日の目標3種目</span><span class="cs" data-csum="area:goal3">未設定</span>
+    </div>
+    <div class="cbody" data-cbody="area:goal3">
+      <div class="dnhint">その日の「最低ライン」を3つだけ決めます。4種目目以降は自由に足してOK（「追加」タグが付くだけ）。</div>
+      <div class="g3row"><span class="g3num">1</span><input class="g3in" id="g3_1" list="g3pool" autocomplete="off" placeholder="例：レッグプレス" oninput="g3SetVal(0,this.value)" onchange="g3Refresh()"></div>
+      <div class="g3row"><span class="g3num">2</span><input class="g3in" id="g3_2" list="g3pool" autocomplete="off" placeholder="例：ルーマニアンデッドリフト" oninput="g3SetVal(1,this.value)" onchange="g3Refresh()"></div>
+      <div class="g3row"><span class="g3num">3</span><input class="g3in" id="g3_3" list="g3pool" autocomplete="off" placeholder="例：ラットプルダウン" oninput="g3SetVal(2,this.value)" onchange="g3Refresh()"></div>
+      <datalist id="g3pool"></datalist>
+      <div class="g3bar">
+        <span class="g3cnt" id="g3cnt">未設定</span>
+        <button class="btn btn-ghost" style="margin-top:0;flex:0 0 auto;" onclick="g3Clear()">クリア</button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div><input type="date" id="g3src"></div>
+        <div style="flex:0 0 110px;"><button class="btn btn-ghost" style="margin-top:0;" onclick="g3Copy()">📋 複製</button></div>
+      </div>
+      <div class="qhint">過去日を選んで「複製」→その日の目標（無ければ実施した種目）を今日の3種目にコピーします。</div>
     </div>
   </div>
 
@@ -1981,6 +2003,7 @@ function render(){
       +'<span class="name">'+esc(ex.name)+'</span>'
       +(ex.bw?'<span class="bwbadge">自重</span>':'')
       +(ex.done?'<span class="badge">完了</span>':'')+(isReview(ex.name)?'<span class="revbadge">要復習</span>':'')
+      +((typeof isExtraEx==="function"&&isExtraEx(ex.name))?'<span class="pg extra">追加</span>':'')
       +'<span class="excl">'+esc(esum)+'</span></span>'
       +'<span class="exbtns"><label class="revchk"><input type="checkbox" onclick="toggleReview('+i+')"'+(isReview(ex.name)?' checked':'')+'><span>要復習</span></label><button class="rm" onclick="toggleDone('+i+')">'+(ex.done?'戻す':'完了')+'</button>'
       +'<button class="rm" onclick="removeExercise('+i+')">削除</button></span></div>'
@@ -3773,6 +3796,197 @@ window.addEventListener("load", v86BootSearch);
   }
 })();
 
+</script>
+<script>
+/* =====================================================================
+   v8.9: 今日の目標3種目 / 追加タグ / テンプレ複製（過去日からコピー）
+   ・保存先は既存の「1日の概要」と同じ日付キー（tl_daynote_v1）の p3 フィールド
+   ・既存データ（p3 なし）はそのまま読める
+   ===================================================================== */
+var G3_N=3;
+var g3LastKey="";
+var G3_STYLE=false;
+function g3Style(){
+  if(G3_STYLE) return; G3_STYLE=true;
+  var st=document.createElement("style");
+  st.textContent=
+    ".g3row{display:flex;align-items:center;gap:8px;margin:6px 0;}"
+   +".g3num{flex:0 0 20px;text-align:center;font-weight:800;color:#8a93a6;}"
+   +".g3in{flex:1 1 auto;min-width:0;width:100%;}"
+   +".g3bar{display:flex;align-items:center;gap:10px;margin-top:8px;}"
+   +".g3cnt{display:inline-block;padding:4px 12px;border-radius:999px;background:#eef1f6;color:#54607a;font-weight:800;font-size:13px;}"
+   +".g3cnt.mid{background:#eaf0ff;color:#2f4f9e;}"
+   +".g3cnt.ok{background:#e3f6e8;color:#1f7a3d;}"
+   +".pg.extra{background:#fff2e0;color:#a8621b;border:1px solid #f2cfa4;font-weight:700;}";
+  document.head.appendChild(st);
+}
+/* 全角/半角・カタカナ/ひらがな・空白括弧を吸収して照合用の文字列にする */
+function g3Norm(s){
+  s=String(s==null?"":s).trim();
+  s=s.replace(/[\u30a1-\u30f6]/g,function(c){ return String.fromCharCode(c.charCodeAt(0)-0x60); });
+  s=s.replace(/[\uff10-\uff19\uff21-\uff3a\uff41-\uff5a]/g,function(c){ return String.fromCharCode(c.charCodeAt(0)-0xfee0); });
+  s=s.toLowerCase();
+  s=s.replace(/[\s\u3000()\uff08\uff09\[\]\u3010\u3011\u30fb\u3001,\uff0c._\-\u30fc]/g,"");
+  return s;
+}
+function g3Key(){
+  try{ if(typeof session!=="undefined"&&session&&session.date) return session.date; }catch(e){}
+  var el=document.getElementById("date");
+  return (el&&el.value)?el.value:(typeof todayStr==="function"?todayStr():"");
+}
+function g3Rec(date){
+  var a=(typeof dnAll==="function")?dnAll():{};
+  var r=a[date];
+  return (r&&typeof r==="object")?r:{};
+}
+function g3Get(date){
+  var r=g3Rec(date||g3Key()), v=r?r.p3:null;
+  var arr=Array.isArray(v)?v.map(function(x){ return String(x==null?"":x); }):[];
+  while(arr.length<G3_N) arr.push("");
+  return arr.slice(0,G3_N);
+}
+function g3Set(date, arr){
+  var d=date||g3Key();
+  if(typeof dnAll!=="function"||typeof dnSaveAll!=="function") return [];
+  var a=dnAll(), r=(a[d]&&typeof a[d]==="object")?a[d]:{};
+  var clean=(arr||[]).map(function(x){ return String(x==null?"":x).trim(); }).slice(0,G3_N);
+  while(clean.length<G3_N) clean.push("");
+  if(clean.every(function(x){ return x===""; })) delete r.p3; else r.p3=clean;
+  r.updatedAt=new Date().toISOString();
+  a[d]=r; dnSaveAll(a);
+  try{ if(typeof dnRender==="function") dnRender(); }catch(e){}
+  return clean;
+}
+function g3Goals(date){
+  return g3Get(date).filter(function(x){ return x!==""; });
+}
+/* 目標のうち「その日、有効なセットが1本以上入っている」ものだけを達成と数える */
+function g3Count(){
+  var g=g3Goals(), c=0;
+  var exs=[]; try{ exs=(session.exercises||[]); }catch(e){ exs=[]; }
+  g.forEach(function(gname){
+    var gn=g3Norm(gname);
+    var hit=exs.some(function(ex){
+      if(!ex||g3Norm(ex.name)!==gn) return false;
+      return (ex.sets||[]).some(function(s){ return (typeof isValidSet==="function")?isValidSet(s):!(s.r===""||s.r==null); });
+    });
+    if(hit) c++;
+  });
+  return {total:g.length, done:c};
+}
+/* 今日の目標に入っていない実施種目 → 「追加」（記録は止めない。タグのみ） */
+function isExtraEx(name){
+  var g=g3Goals();
+  if(!g.length) return false;
+  var n=g3Norm(name);
+  return !g.some(function(x){ return g3Norm(x)===n; });
+}
+function g3Paint(){
+  var c=g3Count();
+  var el=document.getElementById("g3cnt");
+  if(el){
+    el.textContent=c.total?(c.done+" / "+c.total):"未設定";
+    el.className="g3cnt"+(c.total?((c.done>=c.total)?" ok":" mid"):"");
+  }
+  var cs=document.querySelector('[data-csum="area:goal3"]');
+  if(cs) cs.textContent=c.total?(c.done+"/"+c.total+" 達成"):"未設定";
+}
+function g3Fill(){
+  g3Style();
+  var arr=g3Get();
+  for(var i=0;i<G3_N;i++){
+    var el=document.getElementById("g3_"+(i+1));
+    if(el&&el.value!==arr[i]) el.value=arr[i];
+  }
+  var dl=document.getElementById("g3pool");
+  if(dl&&!dl.childNodes.length&&typeof exPool==="function"){
+    var pool=exPool(), out="";
+    pool.forEach(function(n){ out+='<option value="'+String(n).replace(/"/g,"&quot;")+'"></option>'; });
+    dl.innerHTML=out;
+  }
+  var sd=document.getElementById("g3src");
+  if(sd&&!sd.value){
+    var dd=new Date(); dd.setDate(dd.getDate()-1);
+    sd.value=dd.toISOString().slice(0,10);
+  }
+  g3LastKey=g3Key();
+  g3Paint();
+}
+function g3Tick(){
+  g3Style();
+  if(g3Key()!==g3LastKey) g3Fill(); else g3Paint();
+}
+function g3SyncDate(){ g3LastKey=""; g3Tick(); }
+function g3SetVal(i,v){
+  var arr=g3Get();
+  arr[i]=v;
+  g3Set(null,arr);
+  g3Paint();
+}
+function g3Refresh(){
+  g3Fill();
+  try{ if(typeof render==="function") render(); }catch(e){}
+}
+function g3Clear(){
+  if(!g3Goals().length){ toast("すでに空です"); return; }
+  if(!(window.confirm?confirm("この日の目標3種目を空にしますか？（実施した記録は消えません）"):true)) return;
+  g3Set(null,["","",""]);
+  g3Fill();
+  try{ if(typeof render==="function") render(); }catch(e){}
+  toast("目標をクリアしました");
+}
+/* 過去日（または履歴）から目標3種目を複製する。種目名のみコピーし、セットはコピーしない */
+function g3Copy(){
+  var sd=document.getElementById("g3src");
+  var src=sd?sd.value:"";
+  if(!src){ toast("複製元の日付を選んでください"); return; }
+  if(src===g3Key()){ toast("今日と同じ日付です"); return; }
+  var arr=g3Goals(src);
+  var from="目標";
+  if(!arr.length){
+    var h=[]; try{ h=(typeof getHist==="function")?getHist():[]; }catch(e){ h=[]; }
+    var row=null;
+    h.forEach(function(x){ if(x&&x.date===src) row=x; });
+    var names=[];
+    if(row&&row.exercises){
+      row.exercises.forEach(function(ex){
+        if(!ex||!ex.name) return;
+        var ok=(ex.sets||[]).some(function(s){ return (typeof isValidSet==="function")?isValidSet(s):!(s.r===""||s.r==null); });
+        if(ok&&names.indexOf(ex.name)<0) names.push(ex.name);
+      });
+    }
+    arr=names.slice(0,G3_N);
+    from="実施記録";
+    if(!arr.length){ toast("その日の目標も記録も見つかりません"); return; }
+  }
+  arr=arr.slice(0,G3_N);
+  var cur=g3Goals();
+  if(cur.length&&cur.join("\u0001")!==arr.join("\u0001")){
+    var msg="今日の目標（"+cur.length+"種目）を上書きしますか？\n\n→ "+arr.join(" / ");
+    if(!(window.confirm?confirm(msg):true)) return;
+  }
+  g3Set(null,arr);
+  g3Fill();
+  try{ if(typeof render==="function") render(); }catch(e){}
+  toast("「"+src+"」の"+from+"から複製しました");
+}
+/* render() の後に必ずカウンタを更新する（目標達成判定は記録のセットに依存するため） */
+(function(){
+  function boot(){
+    g3Fill();
+    try{
+      if(typeof window.render==="function"&&!window.render.__g3){
+        var base=window.render;
+        var wrapped=function(){ var r=base.apply(null,arguments); try{ g3Tick(); }catch(e){} return r; };
+        wrapped.__g3=1;
+        window.render=wrapped;
+      }
+    }catch(e){}
+  }
+  if(document.readyState==="complete"||document.readyState==="interactive"){ setTimeout(boot,0); }
+  else { window.addEventListener("DOMContentLoaded", function(){ setTimeout(boot,0); }); }
+  window.addEventListener("load", function(){ setTimeout(boot,0); });
+})();
 </script>
 </body>
 </html>
