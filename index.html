@@ -633,6 +633,17 @@
     </div>
   </div>
 
+  <div class="card">
+    <div class="chead" data-chead="area:imp" onclick="toggleArea('area:imp')">
+      <span class="chev">▶</span><span class="ct">📥 記録の復元（JSON読込）</span><span class="cs">書き出したJSONを突き合わせ</span>
+    </div>
+    <div class="cbody" data-cbody="area:imp">
+      <div class="dnhint">このアプリの「JSON 出力」ファイルを読み込むと、記録・種目メモ・要復習・睡眠メモ・1日の概要を既存データに<b>追記</b>します（重複は自動で除外、既存の記録は消しません）。</div>
+      <input type="file" id="impFile" accept=".json,application/json" onchange="impTrainingLog(event)" style="margin-top:8px;">
+      <div id="impMsg" class="qhint" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
   <div class="chead" data-chead="area:list" onclick="toggleArea('area:list')" style="margin:16px 0 6px;">
     <span class="chev">▼</span><span class="ct">今日の記録</span><span class="cs" data-csum="area:list"></span>
   </div>
@@ -783,6 +794,7 @@ var DEFAULT_MASTER=[
   {n:"アブローラー",bw:"sometimes"},
   {n:"ロータリートルソー（マシン）",bw:"never"},
   {n:"アブドミナル（マシン）",bw:"never"},
+  {n:"アブドミナル／オブリーククランチ（マシン）",bw:"never"},
   {n:"リアデルト",bw:"never"},
   {n:"ラットプルダウン（パラレルナロー）",bw:"never"},
   {n:"アダクター",bw:"never"},
@@ -3977,6 +3989,120 @@ function g3Copy(){
   try{ if(typeof render==="function") render(); }catch(e){}
   toast("「"+src+"」の"+from+"から複製しました");
 }
+
+/* =====================================================================
+   v9.1: 書き出したJSON（records形式）から記録を復元・追記する
+   ・既存の履歴は消さない。同一日×同一種目はセット単位で重複排除して追記
+   ・notes / links / review / sleep / daynotes は「無いキーだけ」補完
+   ===================================================================== */
+function impSetKey(s){ return (s.bw?"bw":"")+"|"+String(s.w==null?"":s.w)+"|"+String(s.r==null?"":s.r); }
+function impMergeHist(existing, byDate, impName){
+  var idx={};
+  (existing||[]).forEach(function(h){ if(h&&h.date) idx[h.date]=h; });
+  var addedSets=0, addedEx=0, touched={};
+  Object.keys(byDate).forEach(function(d){
+    var sess=idx[d];
+    if(!sess){ sess={date:d, menuName:"", exercises:[]}; existing.push(sess); idx[d]=sess; }
+    if(!Array.isArray(sess.exercises)) sess.exercises=[];
+    var exIdx={};
+    sess.exercises.forEach(function(e){ if(e&&e.name) exIdx[e.name]=e; });
+    Object.keys(byDate[d]).forEach(function(n){
+      var rows=byDate[d][n].slice().sort(function(a,b){ return (a.set||0)-(b.set||0); });
+      var ex=exIdx[n];
+      if(!ex){ ex={name:n, sets:[], done:false, bw:false, review:false}; sess.exercises.push(ex); exIdx[n]=ex; addedEx++; }
+      if(!Array.isArray(ex.sets)) ex.sets=[];
+      /* セット位置（set番号）で突き合わせる。同じ「5kg×20」を5セット並べても潰さない */
+      rows.forEach(function(r,k){
+        var st={ w:(r.bodyweight?"":(r.weight_kg==null?"":String(r.weight_kg))),
+                 r:(r.reps==null?"":String(r.reps)),
+                 bw:!!r.bodyweight, eff:"" };
+        var slot=ex.sets[k];
+        if(slot){
+          var empty=(slot.r===""||slot.r==null);
+          if(empty){ ex.sets[k]={w:st.w,r:st.r,bw:st.bw,eff:(slot.eff||"")}; addedSets++; }
+          return; /* 既に埋まっている位置は触らない */
+        }
+        ex.sets.push(st); addedSets++;
+        if(!st.bw) ex.bw=false;
+      });
+    });
+    if(!sess.menuName && impName) sess.menuName=impName;
+    touched[d]=1;
+  });
+  return {addedSets:addedSets, addedEx:addedEx, dates:Object.keys(touched).length};
+}
+function impFillOnly(key, incoming){
+  var cur={};
+  try{ var o=JSON.parse(localStorage.getItem(key)||"null"); cur=(o&&typeof o==="object"&&!Array.isArray(o))?o:{}; }catch(e){ cur={}; }
+  var n=0;
+  Object.keys(incoming||{}).forEach(function(k){
+    if(cur[k]===undefined){ cur[k]=incoming[k]; n++; }
+  });
+  if(n) try{ localStorage.setItem(key, JSON.stringify(cur)); }catch(e){}
+  return n;
+}
+function impTrainingLog(ev){
+  var f=ev&&ev.target&&ev.target.files&&ev.target.files[0];
+  var msg=document.getElementById("impMsg");
+  if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    var j=null;
+    try{ j=JSON.parse(String(rd.result)); }catch(e){ if(msg) msg.textContent="JSONとして読めませんでした。"; return; }
+    var rows=(j&&Array.isArray(j.records))?j.records:null;
+    if(!rows && Array.isArray(j)) rows=null; /* セッション配列形式は別扱い */
+    var res={addedSets:0,addedEx:0,dates:0};
+    var hist=[];
+    try{ hist=JSON.parse(localStorage.getItem("tl_history_v1")||"[]"); if(!Array.isArray(hist)) hist=[]; }catch(e){ hist=[]; }
+    if(rows){
+      var byDate={};
+      rows.forEach(function(r){
+        if(!r||!r.date||!r.exercise) return;
+        var d=String(r.date), n=String(r.exercise);
+        (byDate[d]=byDate[d]||{});
+        (byDate[d][n]=byDate[d][n]||[]).push(r);
+      });
+      res=impMergeHist(hist, byDate, "");
+    } else if(Array.isArray(j)){
+      /* セッション配列（date + exercises[].sets[]）形式 */
+      var byDate2={};
+      j.forEach(function(s){
+        if(!s||!s.date) return;
+        (s.exercises||[]).forEach(function(e){
+          if(!e||!e.name) return;
+          (byDate2[s.date]=byDate2[s.date]||{});
+          (byDate2[s.date][e.name]=byDate2[s.date][e.name]||[]);
+          (e.sets||[]).forEach(function(st,i){
+            byDate2[s.date][e.name].push({set:i+1, weight_kg:st.w, reps:st.r, bodyweight:!!st.bw});
+          });
+        });
+      });
+      res=impMergeHist(hist, byDate2, "");
+    } else {
+      if(msg) msg.textContent="records もセッション配列も見つかりませんでした。";
+      return;
+    }
+    try{ localStorage.setItem("tl_history_v1", JSON.stringify(hist)); }catch(e){}
+    var nN=0;
+    if(j&&j.notes)     nN+=impFillOnly("tl_exnote_v1", j.notes);
+    if(j&&j.links)     nN+=impFillOnly("tl_exlink_v1", j.links);
+    if(j&&j.review)    nN+=impFillOnly("tl_review_v1", j.review);
+    if(j&&j.sleep)     nN+=impFillOnly("tl_sleep_v1", j.sleep);
+    if(j&&j.daynotes)  nN+=impFillOnly("tl_daynote_v1", j.daynotes);
+    try{ if(typeof dnLoad==="function") dnLoad(); }catch(e){}
+    try{ if(typeof renderHistory==="function") renderHistory(); }catch(e){}
+    try{ if(typeof mtxLoad==="function") mtxLoad(); }catch(e){}
+    try{ if(typeof sleepLoad==="function") sleepLoad(); }catch(e){}
+    try{ if(typeof render==="function") render(); }catch(e){}
+    var t="取込完了：セット +"+res.addedSets+"件 / 種目 +"+res.addedEx+"件 / 対象 "+res.dates+"日";
+    if(nN) t+=" ／ メモ等 +"+nN+"件";
+    if(!res.addedSets && !res.addedEx) t="取込完了：新しい記録はありませんでした（すでに反映済み）";
+    if(msg) msg.textContent=t;
+    if(typeof toast==="function") toast(t);
+  };
+  rd.readAsText(f);
+}
+
 /* render() の後に必ずカウンタを更新する（目標達成判定は記録のセットに依存するため） */
 (function(){
   function boot(){
