@@ -484,6 +484,9 @@
       </div>
       <label>休養・中止の理由</label>
       <input type="text" id="dnReason" class="dnin" placeholder="例：出張で時間が取れず / 肩の違和感 / 疲労" onblur="dnSet('reason',this.value)">
+      <label>例外タグ（通常日の評価から外す日だけ選ぶ。複数可）</label>
+      <div class="chips" id="dnExcChips"></div>
+      <div class="dnhint">「外食」「飲み会」「体調不良」「出張・帰省・旅行」「チートデイ」のいずれかを付けた日は、週次評価のコンプラ統計から除外し、注記として扱います。付けない日だけが厳密に判定されます。</div>
       <label>目標（自分で入力）</label>
       <textarea id="dnGoal" class="dntxt" placeholder="例：来週はベンチ 60kg×8 を3セット" onblur="dnGoalManual(this.value)"></textarea>
       <div class="dnhint" id="dnGoalSrc">—</div>
@@ -2594,7 +2597,14 @@ function exportJSON(){
   commitActive();
   var rows=allRows();
   if(!rows.length){ toast("出力する記録がありません（先に保存してください）"); return; }
-  download(JSON.stringify({exported_at:new Date().toISOString(),notes:notes,links:links,review:reviewFlags,sleep:slAll(),daynotes:dnAll(),records:rows},null,2),"training_log.json","application/json");
+  var out={exported_at:new Date().toISOString(),notes:notes,links:links,review:reviewFlags,sleep:slAll(),daynotes:dnAll(),records:rows};
+  try{
+    var w=loadWaist(), wk=Object.keys(w||{});
+    if(wk.length){
+      out.measurements=wk.map(function(k){ return {date:k, waist_cm:w[k].w, chest_cm:w[k].c}; });
+    }
+  }catch(e){}
+  download(JSON.stringify(out,null,2),"training_log.json","application/json");
 }
 function download(content,fname,mime){
   var blob=new Blob([content],{type:mime+";charset=utf-8"});
@@ -3215,6 +3225,27 @@ function dnMsg(){
   clearTimeout(dnTmr); dnTmr=setTimeout(function(){ e.textContent=""; },2500);
 }
 function dnSet(k, v){ var p={}; p[k]=String(v==null?"":v); dnPut(p); }
+var DN_EXC=["外食","飲み会","体調不良","出張・帰省・旅行","チートデイ"];
+function dnExcToggle(tag){
+  var a=dnAll(), d=dnCurDate(), r=(a[d]&&typeof a[d]==="object")?a[d]:{};
+  var tags=(r.exc&&Array.isArray(r.exc))?r.exc.slice():[];
+  var i=tags.indexOf(tag);
+  if(i>=0) tags.splice(i,1); else tags.push(tag);
+  if(tags.length) r.exc=tags; else delete r.exc;
+  r.updatedAt=new Date().toISOString();
+  a[d]=r; dnSaveAll(a); dnExcRender(); dnMsg();
+}
+function dnExcRender(){
+  var a=dnAll(), d=dnCurDate(), r=(a[d]&&typeof a[d]==="object")?a[d]:{};
+  var cur=(r.exc&&Array.isArray(r.exc))?r.exc:[];
+  var box=document.getElementById("dnExcChips"); if(!box) return;
+  var h="";
+  DN_EXC.forEach(function(t){
+    var on=cur.indexOf(t)>=0;
+    h+='<button type="button" class="btn '+(on?"btn-primary":"btn-ghost")+'" style="margin:2px 4px 2px 0;padding:4px 12px;font-size:12px;" onclick="dnExcToggle(\''+t+'\')">'+(on?"✓ ":"")+t+'</button>';
+  });
+  box.innerHTML=h;
+}
 function dnGoalManual(v){ dnUpsertGoal(dnCurDate(), String(v==null?"":v), "manual", new Date().toISOString()); dnMsg(); }
 function dnRest(on){
   var a=dnAll(), d=dnCurDate(), r=(a[d]&&typeof a[d]==="object")?a[d]:{};
@@ -3252,6 +3283,7 @@ function dnLoad(){
   var r=dnRec();
   var fv=function(id,v){ var el=document.getElementById(id); if(el) el.value=(typeof v==="string")?v:""; };
   fv("dnSum", r.sum); fv("dnReason", r.reason); fv("dnGoal", r.gtext);
+  if(typeof dnExcRender==="function")dnExcRender();
   var c=document.getElementById("dnRest"); if(c) c.checked=!!r.rest;
   dnGoalLines();
   dnRender();
