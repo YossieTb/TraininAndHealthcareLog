@@ -484,6 +484,8 @@
       </div>
       <label>休養・中止の理由</label>
       <input type="text" id="dnReason" class="dnin" placeholder="例：出張で時間が取れず / 肩の違和感 / 疲労" onblur="dnSet('reason',this.value)">
+      <label>この日の調子（1タップで記録・再タップで解除）</label>
+      <div class="chips" id="dnCondChips" style="margin-bottom:10px;"></div>
       <label>例外タグ（通常日の評価から外す日だけ選ぶ。複数可）</label>
       <div class="chips" id="dnExcChips"></div>
       <div class="dnhint">「外食」「飲み会」「体調不良」「出張・帰省・旅行」「チートデイ」のいずれかを付けた日は、週次評価のコンプラ統計から除外し、注記として扱います。付けない日だけが厳密に判定されます。</div>
@@ -3225,7 +3227,27 @@ function dnMsg(){
   clearTimeout(dnTmr); dnTmr=setTimeout(function(){ e.textContent=""; },2500);
 }
 function dnSet(k, v){ var p={}; p[k]=String(v==null?"":v); dnPut(p); }
-var DN_EXC=["外食","飲み会","体調不良","出張・帰省・旅行","チートデイ"];
+var DN_COND=["良い","普通","悪い"];
+function dnCondToggle(tag){
+  var a=dnAll(), d=dnCurDate(), r=(a[d]&&typeof a[d]==="object")?a[d]:{};
+  if(r.cond===tag){ delete r.cond; }
+  else { r.cond=tag; }
+  r.updatedAt=new Date().toISOString();
+  a[d]=r; dnSaveAll(a); dnCondRender(); dnMsg();
+}
+function dnCondRender(){
+  var a=dnAll(), d=dnCurDate(), r=(a[d]&&typeof a[d]==="object")?a[d]:{};
+  var cur=r.cond||"";
+  var box=document.getElementById("dnCondChips"); if(!box) return;
+  var col={"良い":"#2e9e5b","普通":"#7a8699","悪い":"#d64545"};
+  var h="";
+  DN_COND.forEach(function(t){
+    var on=cur===t;
+    var bd=on?("background:"+col[t]+";border-color:"+col[t]+";color:#fff;"):"";
+    h+='<button type="button" class="btn btn-ghost" style="margin:2px 6px 2px 0;padding:5px 16px;font-size:13px;'+bd+'" onclick="dnCondToggle(\''+t+'\')">'+(on?"● ":"")+t+'</button>';
+  });
+  box.innerHTML=h;
+}
 function dnExcToggle(tag){
   var a=dnAll(), d=dnCurDate(), r=(a[d]&&typeof a[d]==="object")?a[d]:{};
   var tags=(r.exc&&Array.isArray(r.exc))?r.exc.slice():[];
@@ -3284,6 +3306,7 @@ function dnLoad(){
   var fv=function(id,v){ var el=document.getElementById(id); if(el) el.value=(typeof v==="string")?v:""; };
   fv("dnSum", r.sum); fv("dnReason", r.reason); fv("dnGoal", r.gtext);
   if(typeof dnExcRender==="function")dnExcRender();
+  if(typeof dnCondRender==="function")dnCondRender();
   var c=document.getElementById("dnRest"); if(c) c.checked=!!r.rest;
   dnGoalLines();
   dnRender();
